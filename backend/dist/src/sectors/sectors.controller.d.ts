@@ -17,44 +17,44 @@ export declare class SectorsController {
         };
     } & {
         id: string;
-        workspaceId: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string | null;
+        workspaceId: string;
         isActive: boolean;
-        order: number;
         color: string;
         icon: string;
         isDefault: boolean;
+        order: number;
     })[]>;
     findOne(workspaceId: string, id: string): Promise<{
-        _count: {
-            conversations: number;
-        };
         kanbanBoard: {
             id: string;
-            workspaceId: string;
-            createdAt: Date;
             name: string;
+            createdAt: Date;
+            workspaceId: string;
             sectorId: string | null;
+        };
+        _count: {
+            conversations: number;
         };
         members: ({
             user: {
                 id: string;
+                email: string;
+                name: string;
+                password: string;
                 status: string;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
-                email: string;
-                password: string;
             };
         } & {
             id: string;
             createdAt: Date;
             userId: string;
-            role: import(".prisma/client").$Enums.SectorRole;
             sectorId: string;
+            role: import(".prisma/client").$Enums.SectorRole;
         })[];
         slaConfig: {
             id: string;
@@ -67,31 +67,31 @@ export declare class SectorsController {
         autoRules: {
             id: string;
             createdAt: Date;
+            value: string;
             isActive: boolean;
             sectorId: string;
-            value: string;
             type: import(".prisma/client").$Enums.AutoRuleType;
             priority: number;
         }[];
     } & {
         id: string;
-        workspaceId: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string | null;
+        workspaceId: string;
         isActive: boolean;
-        order: number;
         color: string;
         icon: string;
         isDefault: boolean;
+        order: number;
     }>;
     create(workspaceId: string, body: any): Promise<{
         kanbanBoard: {
             id: string;
-            workspaceId: string;
-            createdAt: Date;
             name: string;
+            createdAt: Date;
+            workspaceId: string;
             sectorId: string | null;
         };
         slaConfig: {
@@ -104,42 +104,42 @@ export declare class SectorsController {
         };
     } & {
         id: string;
-        workspaceId: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string | null;
+        workspaceId: string;
         isActive: boolean;
-        order: number;
         color: string;
         icon: string;
         isDefault: boolean;
+        order: number;
     }>;
     update(workspaceId: string, id: string, body: any): Promise<{
         id: string;
-        workspaceId: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string | null;
+        workspaceId: string;
         isActive: boolean;
-        order: number;
         color: string;
         icon: string;
         isDefault: boolean;
+        order: number;
     }>;
     delete(workspaceId: string, id: string): Promise<{
         id: string;
-        workspaceId: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string | null;
+        workspaceId: string;
         isActive: boolean;
-        order: number;
         color: string;
         icon: string;
         isDefault: boolean;
+        order: number;
     }>;
     addMember(workspaceId: string, sectorId: string, body: {
         userId: string;
@@ -147,26 +147,26 @@ export declare class SectorsController {
     }): Promise<{
         user: {
             id: string;
+            email: string;
+            name: string;
+            password: string;
             status: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
-            email: string;
-            password: string;
         };
     } & {
         id: string;
         createdAt: Date;
         userId: string;
-        role: import(".prisma/client").$Enums.SectorRole;
         sectorId: string;
+        role: import(".prisma/client").$Enums.SectorRole;
     }>;
     removeMember(workspaceId: string, sectorId: string, userId: string): Promise<{
         id: string;
         createdAt: Date;
         userId: string;
-        role: import(".prisma/client").$Enums.SectorRole;
         sectorId: string;
+        role: import(".prisma/client").$Enums.SectorRole;
     }>;
     updateMemberRole(workspaceId: string, sectorId: string, userId: string, body: {
         role: 'AGENT' | 'SUPERVISOR';
@@ -174,7 +174,7 @@ export declare class SectorsController {
         id: string;
         createdAt: Date;
         userId: string;
-        role: import(".prisma/client").$Enums.SectorRole;
         sectorId: string;
+        role: import(".prisma/client").$Enums.SectorRole;
     }>;
 }

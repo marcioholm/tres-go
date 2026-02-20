@@ -3,32 +3,32 @@ export declare class WorkspacesController {
     private readonly workspacesService;
     constructor(workspacesService: WorkspacesService);
     findOne(workspaceId: string): Promise<{
+        plan: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        plan: string;
-        name: string;
         isBlocked: boolean;
         blockReason: string | null;
     }>;
     update(workspaceId: string, data: any): Promise<{
+        plan: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        plan: string;
-        name: string;
         isBlocked: boolean;
         blockReason: string | null;
     }>;
     getMembers(workspaceId: string): Promise<({
         user: {
             id: string;
+            email: string;
+            name: string;
+            password: string;
             status: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
-            email: string;
-            password: string;
         };
     } & {
         id: string;
@@ -62,26 +62,26 @@ export declare class WorkspacesController {
     updateBusinessHours(workspaceId: string, hours: any[]): Promise<import(".prisma/client").Prisma.BatchPayload>;
     getQuickReplies(workspaceId: string): Promise<{
         id: string;
-        workspaceId: string;
         createdAt: Date;
         updatedAt: Date;
-        content: string;
+        workspaceId: string;
         shortcut: string;
+        content: string;
     }[]>;
     createQuickReply(workspaceId: string, data: any): Promise<{
         id: string;
-        workspaceId: string;
         createdAt: Date;
         updatedAt: Date;
-        content: string;
+        workspaceId: string;
         shortcut: string;
+        content: string;
     }>;
     deleteQuickReply(workspaceId: string, id: string): Promise<{
         id: string;
-        workspaceId: string;
         createdAt: Date;
         updatedAt: Date;
-        content: string;
+        workspaceId: string;
         shortcut: string;
+        content: string;
     }>;
 }

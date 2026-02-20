@@ -7,41 +7,41 @@ export declare class WorkspacesService {
     private billingService;
     constructor(prisma: PrismaService, sectorsService: SectorsService, billingService: BillingService);
     findOne(workspaceId: string): Promise<{
+        plan: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        plan: string;
-        name: string;
         isBlocked: boolean;
         blockReason: string | null;
     }>;
     update(workspaceId: string, data: any): Promise<{
+        plan: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        plan: string;
-        name: string;
         isBlocked: boolean;
         blockReason: string | null;
     }>;
     createDefaultWorkspace(userId: string): Promise<{
+        plan: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        plan: string;
-        name: string;
         isBlocked: boolean;
         blockReason: string | null;
     }>;
     getMembers(workspaceId: string): Promise<({
         user: {
             id: string;
+            email: string;
+            name: string;
+            password: string;
             status: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
-            email: string;
-            password: string;
         };
     } & {
         id: string;
@@ -75,23 +75,23 @@ export declare class WorkspacesService {
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        content: string;
         shortcut: string;
+        content: string;
     }[]>;
     createQuickReply(workspaceId: string, shortcut: string, content: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        content: string;
         shortcut: string;
+        content: string;
     }>;
     deleteQuickReply(workspaceId: string, id: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        content: string;
         shortcut: string;
+        content: string;
     }>;
 }

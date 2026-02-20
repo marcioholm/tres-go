@@ -13,16 +13,16 @@ export declare class SalesController {
         }[];
     } & {
         id: string;
-        workspaceId: string;
         status: import(".prisma/client").$Enums.SaleStatus;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
-        amount: number;
+        workspaceId: string;
+        agentId: string;
         contactId: string;
+        amount: number;
         conversationId: string | null;
         title: string;
-        agentId: string;
         saleDate: Date;
     }>;
     findAll(workspaceId: string, contactId?: string): Promise<({
@@ -39,16 +39,16 @@ export declare class SalesController {
         }[];
     } & {
         id: string;
-        workspaceId: string;
         status: import(".prisma/client").$Enums.SaleStatus;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
-        amount: number;
+        workspaceId: string;
+        agentId: string;
         contactId: string;
+        amount: number;
         conversationId: string | null;
         title: string;
-        agentId: string;
         saleDate: Date;
     })[]>;
     getSummary(workspaceId: string): Promise<{

@@ -17,17 +17,17 @@ export declare class UsersService {
         updatedAt: Date;
     }>;
     findOne(email: string): Promise<{
-        workspaces: {
-            id: string;
-            userId: string;
-            workspaceId: string;
-            role: string;
-        }[];
         superAdmin: {
             id: string;
             createdAt: Date;
             userId: string;
         };
+        workspaces: {
+            id: string;
+            workspaceId: string;
+            userId: string;
+            role: string;
+        }[];
     } & {
         id: string;
         email: string;
@@ -38,17 +38,17 @@ export declare class UsersService {
         updatedAt: Date;
     }>;
     findOneById(id: string): Promise<{
-        workspaces: {
-            id: string;
-            userId: string;
-            workspaceId: string;
-            role: string;
-        }[];
         superAdmin: {
             id: string;
             createdAt: Date;
             userId: string;
         };
+        workspaces: {
+            id: string;
+            workspaceId: string;
+            userId: string;
+            role: string;
+        }[];
     } & {
         id: string;
         email: string;

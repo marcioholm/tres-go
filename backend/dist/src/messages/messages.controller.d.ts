@@ -8,9 +8,9 @@ export declare class MessagesController {
         id: string;
         status: string;
         createdAt: Date;
-        conversationId: string;
         type: string;
         content: import("@prisma/client/runtime/library").JsonValue;
+        conversationId: string;
         fromAgent: boolean;
         isInternalNote: boolean;
         externalId: string | null;

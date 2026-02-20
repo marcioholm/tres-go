@@ -3,27 +3,14 @@ export declare class ConversationsController {
     private readonly conversationsService;
     constructor(conversationsService: ConversationsService);
     findAll(workspaceId: string, status?: string, unreadOnly?: string, search?: string, cursor?: string, limit?: string): Promise<({
-        sector: {
-            id: string;
-            workspaceId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            name: string;
-            description: string | null;
-            isActive: boolean;
-            order: number;
-            color: string;
-            icon: string;
-            isDefault: boolean;
-        };
         contact: {
             id: string;
-            workspaceId: string;
+            email: string | null;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
-            email: string | null;
             phone: string | null;
+            workspaceId: string;
             source: import(".prisma/client").$Enums.TrafficSource | null;
             sourceMedium: string | null;
             sourceCampaign: string | null;
@@ -33,11 +20,24 @@ export declare class ConversationsController {
             utmCampaign: string | null;
             referredBy: string | null;
         };
+        sector: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            description: string | null;
+            workspaceId: string;
+            isActive: boolean;
+            color: string;
+            icon: string;
+            isDefault: boolean;
+            order: number;
+        };
         ConversationToTag: ({
             Tag: {
                 id: string;
-                workspaceId: string | null;
                 name: string;
+                workspaceId: string | null;
                 color: string | null;
                 type: import(".prisma/client").$Enums.TagType;
             };
@@ -46,15 +46,15 @@ export declare class ConversationsController {
             B: string;
         })[];
     } & {
+        kanbanColumn: string | null;
         id: string;
-        workspaceId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
+        workspaceId: string;
         sectorId: string | null;
-        contactId: string;
         agentId: string | null;
-        kanbanColumn: string | null;
+        contactId: string;
         channelId: string;
     })[]>;
     getKanban(workspaceId: string): Promise<{
@@ -63,12 +63,12 @@ export declare class ConversationsController {
     findOne(workspaceId: string, id: string): Promise<{
         contact: {
             id: string;
-            workspaceId: string;
+            email: string | null;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
-            email: string | null;
             phone: string | null;
+            workspaceId: string;
             source: import(".prisma/client").$Enums.TrafficSource | null;
             sourceMedium: string | null;
             sourceCampaign: string | null;
@@ -82,23 +82,23 @@ export declare class ConversationsController {
             id: string;
             status: string;
             createdAt: Date;
-            conversationId: string;
             type: string;
             content: import("@prisma/client/runtime/library").JsonValue;
+            conversationId: string;
             fromAgent: boolean;
             isInternalNote: boolean;
             externalId: string | null;
         }[];
     } & {
+        kanbanColumn: string | null;
         id: string;
-        workspaceId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
+        workspaceId: string;
         sectorId: string | null;
-        contactId: string;
         agentId: string | null;
-        kanbanColumn: string | null;
+        contactId: string;
         channelId: string;
     }>;
     transfer(workspaceId: string, id: string, data: {
@@ -108,63 +108,63 @@ export declare class ConversationsController {
     }): Promise<{
         sector: {
             id: string;
-            workspaceId: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
             description: string | null;
+            workspaceId: string;
             isActive: boolean;
-            order: number;
             color: string;
             icon: string;
             isDefault: boolean;
+            order: number;
         };
     } & {
+        kanbanColumn: string | null;
         id: string;
-        workspaceId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
+        workspaceId: string;
         sectorId: string | null;
-        contactId: string;
         agentId: string | null;
-        kanbanColumn: string | null;
+        contactId: string;
         channelId: string;
     }>;
     assign(workspaceId: string, id: string, agentId: string): Promise<{
+        kanbanColumn: string | null;
         id: string;
-        workspaceId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
+        workspaceId: string;
         sectorId: string | null;
-        contactId: string;
         agentId: string | null;
-        kanbanColumn: string | null;
+        contactId: string;
         channelId: string;
     }>;
     resolve(workspaceId: string, id: string): Promise<{
+        kanbanColumn: string | null;
         id: string;
-        workspaceId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
+        workspaceId: string;
         sectorId: string | null;
-        contactId: string;
         agentId: string | null;
-        kanbanColumn: string | null;
+        contactId: string;
         channelId: string;
     }>;
     reopen(workspaceId: string, id: string): Promise<{
+        kanbanColumn: string | null;
         id: string;
-        workspaceId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
+        workspaceId: string;
         sectorId: string | null;
-        contactId: string;
         agentId: string | null;
-        kanbanColumn: string | null;
+        contactId: string;
         channelId: string;
     }>;
     updateKanban(workspaceId: string, id: string, body: {

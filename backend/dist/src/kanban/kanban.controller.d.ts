@@ -7,12 +7,12 @@ export declare class KanbanController {
             deals: ({
                 contact: {
                     id: string;
-                    workspaceId: string;
+                    email: string | null;
+                    name: string;
                     createdAt: Date;
                     updatedAt: Date;
-                    name: string;
-                    email: string | null;
                     phone: string | null;
+                    workspaceId: string;
                     source: import(".prisma/client").$Enums.TrafficSource | null;
                     sourceMedium: string | null;
                     sourceCampaign: string | null;
@@ -24,112 +24,112 @@ export declare class KanbanController {
                 };
                 agent: {
                     id: string;
+                    email: string;
+                    name: string;
+                    password: string;
                     status: string;
                     createdAt: Date;
                     updatedAt: Date;
-                    name: string;
-                    email: string;
-                    password: string;
                 };
                 tags: ({
                     tag: {
                         id: string;
-                        workspaceId: string | null;
                         name: string;
+                        workspaceId: string | null;
                         color: string | null;
                         type: import(".prisma/client").$Enums.TagType;
                     };
                 } & {
-                    dealId: string;
                     tagId: string;
+                    dealId: string;
                 })[];
             } & {
                 id: string;
-                workspaceId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                order: number;
-                contactId: string;
-                columnId: string;
-                conversationId: string | null;
-                title: string;
                 value: number | null;
+                workspaceId: string;
+                order: number;
                 agentId: string | null;
+                contactId: string;
+                conversationId: string | null;
                 notes: string | null;
+                title: string;
+                columnId: string;
                 expectedCloseAt: Date | null;
                 closedAt: Date | null;
             })[];
         } & {
             id: string;
             name: string;
-            order: number;
-            boardId: string;
             color: string;
+            order: number;
             isWon: boolean;
             isLost: boolean;
+            boardId: string;
         })[];
     } & {
         id: string;
-        workspaceId: string;
-        createdAt: Date;
         name: string;
+        createdAt: Date;
+        workspaceId: string;
         sectorId: string | null;
     }>;
     createDeal(workspaceId: string, data: any, req: any): Promise<{
         id: string;
-        workspaceId: string;
         createdAt: Date;
         updatedAt: Date;
-        order: number;
-        contactId: string;
-        columnId: string;
-        conversationId: string | null;
-        title: string;
         value: number | null;
+        workspaceId: string;
+        order: number;
         agentId: string | null;
+        contactId: string;
+        conversationId: string | null;
         notes: string | null;
+        title: string;
+        columnId: string;
         expectedCloseAt: Date | null;
         closedAt: Date | null;
     }>;
     updateDeal(workspaceId: string, id: string, data: any, req: any): Promise<{
         id: string;
-        workspaceId: string;
         createdAt: Date;
         updatedAt: Date;
-        order: number;
-        contactId: string;
-        columnId: string;
-        conversationId: string | null;
-        title: string;
         value: number | null;
+        workspaceId: string;
+        order: number;
         agentId: string | null;
+        contactId: string;
+        conversationId: string | null;
         notes: string | null;
+        title: string;
+        columnId: string;
         expectedCloseAt: Date | null;
         closedAt: Date | null;
     }>;
     deleteDeal(workspaceId: string, id: string, req: any): Promise<{
         id: string;
-        workspaceId: string;
         createdAt: Date;
         updatedAt: Date;
-        order: number;
-        contactId: string;
-        columnId: string;
-        conversationId: string | null;
-        title: string;
         value: number | null;
+        workspaceId: string;
+        order: number;
         agentId: string | null;
+        contactId: string;
+        conversationId: string | null;
         notes: string | null;
+        title: string;
+        columnId: string;
         expectedCloseAt: Date | null;
         closedAt: Date | null;
     }>;
     updateColumn(workspaceId: string, id: string, data: any, req: any): Promise<{
         id: string;
         name: string;
-        order: number;
-        boardId: string;
         color: string;
+        order: number;
         isWon: boolean;
         isLost: boolean;
+        boardId: string;
     }>;
 }

@@ -4,8 +4,8 @@ export declare class TagsController {
     constructor(tagsService: TagsService);
     findAll(workspaceId: string): Promise<{
         id: string;
-        workspaceId: string | null;
         name: string;
+        workspaceId: string | null;
         color: string | null;
         type: import(".prisma/client").$Enums.TagType;
     }[]>;
@@ -14,22 +14,22 @@ export declare class TagsController {
         color: string;
     }): Promise<{
         id: string;
-        workspaceId: string | null;
         name: string;
+        workspaceId: string | null;
         color: string | null;
         type: import(".prisma/client").$Enums.TagType;
     }>;
     update(workspaceId: string, id: string, data: any): Promise<{
         id: string;
-        workspaceId: string | null;
         name: string;
+        workspaceId: string | null;
         color: string | null;
         type: import(".prisma/client").$Enums.TagType;
     }>;
     remove(workspaceId: string, id: string): Promise<{
         id: string;
-        workspaceId: string | null;
         name: string;
+        workspaceId: string | null;
         color: string | null;
         type: import(".prisma/client").$Enums.TagType;
     }>;

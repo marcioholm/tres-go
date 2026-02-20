@@ -6,22 +6,22 @@ export declare class ChannelsService {
     constructor(prisma: PrismaService, billing: BillingService);
     create(workspaceId: string, data: any): Promise<{
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        name: string;
         isActive: boolean;
-        config: import("@prisma/client/runtime/library").JsonValue;
         type: string;
+        config: import("@prisma/client/runtime/library").JsonValue;
     }>;
     findAll(workspaceId: string): Promise<{
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        name: string;
         isActive: boolean;
-        config: import("@prisma/client/runtime/library").JsonValue;
         type: string;
+        config: import("@prisma/client/runtime/library").JsonValue;
     }[]>;
 }

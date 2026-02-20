@@ -17,17 +17,17 @@ export declare class AuthController {
     }>;
     getProfile(req: any): Promise<{
         isSuperAdmin: boolean;
-        workspaces: {
-            id: string;
-            userId: string;
-            workspaceId: string;
-            role: string;
-        }[];
         superAdmin: {
             id: string;
             createdAt: Date;
             userId: string;
         };
+        workspaces: {
+            id: string;
+            workspaceId: string;
+            userId: string;
+            role: string;
+        }[];
         id: string;
         email: string;
         name: string;

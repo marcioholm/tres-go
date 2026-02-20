@@ -143,7 +143,7 @@ export class SuperAdminService {
             redis: { status: 'ONLINE', latency: '2ms' },
             bullmq: { pendingJobs: 0 },
             services: {
-                asaas: await this.billing.getAsaasHealth() === 'ONLINE' ? 'UP' : 'DOWN'
+                asaas: (await this.billing.getAsaasHealth()).status === 'connected' ? 'UP' : 'DOWN'
             }
         };
     }

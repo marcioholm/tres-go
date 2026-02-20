@@ -18,17 +18,17 @@ export declare class AuthService {
     }>;
     getUserProfile(userId: string): Promise<{
         isSuperAdmin: boolean;
-        workspaces: {
-            id: string;
-            userId: string;
-            workspaceId: string;
-            role: string;
-        }[];
         superAdmin: {
             id: string;
             createdAt: Date;
             userId: string;
         };
+        workspaces: {
+            id: string;
+            workspaceId: string;
+            userId: string;
+            role: string;
+        }[];
         id: string;
         email: string;
         name: string;

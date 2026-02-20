@@ -12,6 +12,10 @@ services:
         sync: false
       - key: REDIS_PORT
         sync: false
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: REDIS_TLS
+        value: "true"
       - key: JWT_SECRET
         generateValue: true
       - key: NODE_ENV

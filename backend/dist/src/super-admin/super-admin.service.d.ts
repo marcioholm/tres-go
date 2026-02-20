@@ -33,11 +33,11 @@ export declare class SuperAdminService {
             subscription: {
                 plan: {
                     id: string;
+                    name: string;
                     createdAt: Date;
                     updatedAt: Date;
-                    name: string;
-                    slug: string;
                     description: string | null;
+                    slug: string;
                     priceMonthly: number;
                     priceYearly: number;
                     isActive: boolean;
@@ -62,9 +62,10 @@ export declare class SuperAdminService {
                 };
             } & {
                 id: string;
-                workspaceId: string;
-                planId: string;
                 status: import(".prisma/client").$Enums.SubscriptionStatus;
+                createdAt: Date;
+                updatedAt: Date;
+                workspaceId: string;
                 billingCycle: import(".prisma/client").$Enums.BillingCycle;
                 asaasCustomerId: string | null;
                 asaasSubscriptionId: string | null;
@@ -75,15 +76,14 @@ export declare class SuperAdminService {
                 blockedAt: Date | null;
                 priceOverride: number | null;
                 discountPercent: number | null;
-                createdAt: Date;
-                updatedAt: Date;
+                planId: string;
             };
         } & {
+            plan: string;
             id: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
-            plan: string;
-            name: string;
             isBlocked: boolean;
             blockReason: string | null;
         })[];
@@ -92,13 +92,18 @@ export declare class SuperAdminService {
         limit: number;
     }>;
     getAllUsers(search?: string): Promise<({
+        superAdmin: {
+            id: string;
+            createdAt: Date;
+            userId: string;
+        };
         workspaces: ({
             workspace: {
+                plan: string;
                 id: string;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                plan: string;
-                name: string;
                 isBlocked: boolean;
                 blockReason: string | null;
             };
@@ -108,29 +113,24 @@ export declare class SuperAdminService {
             userId: string;
             role: string;
         })[];
-        superAdmin: {
-            id: string;
-            createdAt: Date;
-            userId: string;
-        };
     } & {
         id: string;
+        email: string;
+        name: string;
+        password: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        email: string;
-        password: string;
     })[]>;
     getAdmins(): Promise<({
         user: {
             id: string;
+            email: string;
+            name: string;
+            password: string;
             status: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
-            email: string;
-            password: string;
         };
     } & {
         id: string;
@@ -177,11 +177,11 @@ export declare class SuperAdminService {
         subscription: {
             plan: {
                 id: string;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
-                slug: string;
                 description: string | null;
+                slug: string;
                 priceMonthly: number;
                 priceYearly: number;
                 isActive: boolean;
@@ -209,11 +209,11 @@ export declare class SuperAdminService {
                 status: import(".prisma/client").$Enums.InvoiceStatus;
                 createdAt: Date;
                 updatedAt: Date;
-                description: string | null;
-                subscriptionId: string;
-                asaasPaymentId: string | null;
-                amount: number;
                 dueDate: Date;
+                description: string | null;
+                asaasPaymentId: string | null;
+                subscriptionId: string;
+                amount: number;
                 paidAt: Date | null;
                 paymentMethod: string | null;
                 invoiceUrl: string | null;
@@ -222,9 +222,10 @@ export declare class SuperAdminService {
             }[];
         } & {
             id: string;
-            workspaceId: string;
-            planId: string;
             status: import(".prisma/client").$Enums.SubscriptionStatus;
+            createdAt: Date;
+            updatedAt: Date;
+            workspaceId: string;
             billingCycle: import(".prisma/client").$Enums.BillingCycle;
             asaasCustomerId: string | null;
             asaasSubscriptionId: string | null;
@@ -235,18 +236,17 @@ export declare class SuperAdminService {
             blockedAt: Date | null;
             priceOverride: number | null;
             discountPercent: number | null;
-            createdAt: Date;
-            updatedAt: Date;
+            planId: string;
         };
         users: ({
             user: {
                 id: string;
+                email: string;
+                name: string;
+                password: string;
                 status: string;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
-                email: string;
-                password: string;
             };
         } & {
             id: string;
@@ -255,11 +255,11 @@ export declare class SuperAdminService {
             role: string;
         })[];
     } & {
+        plan: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        plan: string;
-        name: string;
         isBlocked: boolean;
         blockReason: string | null;
     }>;
@@ -271,11 +271,11 @@ export declare class SuperAdminService {
     }>;
     getPlans(): Promise<{
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        slug: string;
         description: string | null;
+        slug: string;
         priceMonthly: number;
         priceYearly: number;
         isActive: boolean;
@@ -307,11 +307,11 @@ export declare class SuperAdminService {
     }>;
     createPlan(data: any): Promise<{
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        slug: string;
         description: string | null;
+        slug: string;
         priceMonthly: number;
         priceYearly: number;
         isActive: boolean;
@@ -336,11 +336,11 @@ export declare class SuperAdminService {
     }>;
     updatePlan(id: string, data: any): Promise<{
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        slug: string;
         description: string | null;
+        slug: string;
         priceMonthly: number;
         priceYearly: number;
         isActive: boolean;
@@ -374,11 +374,11 @@ export declare class SuperAdminService {
             status: import(".prisma/client").$Enums.InvoiceStatus;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
-            subscriptionId: string;
-            asaasPaymentId: string | null;
-            amount: number;
             dueDate: Date;
+            description: string | null;
+            asaasPaymentId: string | null;
+            subscriptionId: string;
+            amount: number;
             paidAt: Date | null;
             paymentMethod: string | null;
             invoiceUrl: string | null;
@@ -389,18 +389,17 @@ export declare class SuperAdminService {
     getAuditLogs(query: any): Promise<({
         user: {
             id: string;
+            email: string;
+            name: string;
+            password: string;
             status: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
-            email: string;
-            password: string;
         };
     } & {
         id: string;
-        workspaceId: string | null;
         createdAt: Date;
-        userId: string | null;
+        workspaceId: string | null;
         actionType: string;
         entityType: string | null;
         entityId: string | null;
@@ -409,5 +408,6 @@ export declare class SuperAdminService {
         ip: string | null;
         oldValue: import("@prisma/client/runtime/library").JsonValue | null;
         newValue: import("@prisma/client/runtime/library").JsonValue | null;
+        userId: string | null;
     })[]>;
 }

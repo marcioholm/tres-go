@@ -8,12 +8,12 @@ export declare class ContactsController {
     }[]>;
     findAll(workspaceId: string, search?: string, cursor?: string, limit?: string): Promise<{
         id: string;
-        workspaceId: string;
+        email: string | null;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        email: string | null;
         phone: string | null;
+        workspaceId: string;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -25,30 +25,30 @@ export declare class ContactsController {
     }[]>;
     findOne(workspaceId: string, id: string): Promise<{
         conversations: {
+            kanbanColumn: string | null;
             id: string;
-            workspaceId: string;
             status: string;
             createdAt: Date;
             updatedAt: Date;
+            workspaceId: string;
             sectorId: string | null;
-            contactId: string;
             agentId: string | null;
-            kanbanColumn: string | null;
+            contactId: string;
             channelId: string;
         }[];
         notes: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            contactId: string;
             agentId: string | null;
+            contactId: string;
             content: string;
         }[];
         ContactToTag: ({
             Tag: {
                 id: string;
-                workspaceId: string | null;
                 name: string;
+                workspaceId: string | null;
                 color: string | null;
                 type: import(".prisma/client").$Enums.TagType;
             };
@@ -58,12 +58,12 @@ export declare class ContactsController {
         })[];
     } & {
         id: string;
-        workspaceId: string;
+        email: string | null;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        email: string | null;
         phone: string | null;
+        workspaceId: string;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -75,12 +75,12 @@ export declare class ContactsController {
     }>;
     create(workspaceId: string, data: any): Promise<{
         id: string;
-        workspaceId: string;
+        email: string | null;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        email: string | null;
         phone: string | null;
+        workspaceId: string;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -92,12 +92,12 @@ export declare class ContactsController {
     }>;
     update(workspaceId: string, id: string, data: any, req: any): Promise<{
         id: string;
-        workspaceId: string;
+        email: string | null;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        email: string | null;
         phone: string | null;
+        workspaceId: string;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -109,12 +109,12 @@ export declare class ContactsController {
     }>;
     updateSource(workspaceId: string, id: string, data: any, req: any): Promise<{
         id: string;
-        workspaceId: string;
+        email: string | null;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        email: string | null;
         phone: string | null;
+        workspaceId: string;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -126,12 +126,12 @@ export declare class ContactsController {
     }>;
     remove(workspaceId: string, id: string, req: any): Promise<{
         id: string;
-        workspaceId: string;
+        email: string | null;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        email: string | null;
         phone: string | null;
+        workspaceId: string;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -143,8 +143,8 @@ export declare class ContactsController {
     }>;
     addTag(workspaceId: string, id: string, tagId: string): Promise<{
         id: string;
-        workspaceId: string | null;
         name: string;
+        workspaceId: string | null;
         color: string | null;
         type: import(".prisma/client").$Enums.TagType;
     }>;
@@ -156,8 +156,8 @@ export declare class ContactsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        contactId: string;
         agentId: string | null;
+        contactId: string;
         content: string;
     }>;
     importCsv(workspaceId: string, file: any): Promise<{
