@@ -6,53 +6,65 @@ export declare class UsersService {
         id: string;
         email: string;
         name: string;
+        firstName: string;
+        lastName: string;
+        niche: string;
     }[]>;
     update(id: string, data: any): Promise<{
         id: string;
         email: string;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        niche: string | null;
         password: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
     }>;
     findOne(email: string): Promise<{
+        workspaces: {
+            id: string;
+            userId: string;
+            workspaceId: string;
+            role: string;
+        }[];
         superAdmin: {
             id: string;
             createdAt: Date;
             userId: string;
         };
-        workspaces: {
-            id: string;
-            workspaceId: string;
-            userId: string;
-            role: string;
-        }[];
     } & {
         id: string;
         email: string;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        niche: string | null;
         password: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
     }>;
     findOneById(id: string): Promise<{
+        workspaces: {
+            id: string;
+            userId: string;
+            workspaceId: string;
+            role: string;
+        }[];
         superAdmin: {
             id: string;
             createdAt: Date;
             userId: string;
         };
-        workspaces: {
-            id: string;
-            workspaceId: string;
-            userId: string;
-            role: string;
-        }[];
     } & {
         id: string;
         email: string;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        niche: string | null;
         password: string;
         status: string;
         createdAt: Date;
@@ -61,7 +73,10 @@ export declare class UsersService {
     create(data: any): Promise<{
         id: string;
         email: string;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        niche: string | null;
         password: string;
         status: string;
         createdAt: Date;

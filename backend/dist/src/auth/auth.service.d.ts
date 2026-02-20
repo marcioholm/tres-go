@@ -10,7 +10,10 @@ export declare class AuthService {
     updateStatus(userId: string, status: string): Promise<{
         id: string;
         email: string;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        niche: string | null;
         password: string;
         status: string;
         createdAt: Date;
@@ -18,20 +21,23 @@ export declare class AuthService {
     }>;
     getUserProfile(userId: string): Promise<{
         isSuperAdmin: boolean;
+        workspaces: {
+            id: string;
+            userId: string;
+            workspaceId: string;
+            role: string;
+        }[];
         superAdmin: {
             id: string;
             createdAt: Date;
             userId: string;
         };
-        workspaces: {
-            id: string;
-            workspaceId: string;
-            userId: string;
-            role: string;
-        }[];
         id: string;
         email: string;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        niche: string | null;
         password: string;
         status: string;
         createdAt: Date;
@@ -44,7 +50,10 @@ export declare class AuthService {
     register(registerDto: any): Promise<{
         id: string;
         email: string;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        niche: string | null;
         password: string;
         status: string;
         createdAt: Date;

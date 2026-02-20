@@ -6,5 +6,8 @@ export declare class UsersController {
         id: string;
         email: string;
         name: string;
+        firstName: string;
+        lastName: string;
+        niche: string;
     }[]>;
 }

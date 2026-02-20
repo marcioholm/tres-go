@@ -72,6 +72,18 @@ let SuperAdminController = class SuperAdminController {
     async getAuditLogs(query) {
         return this.superAdminService.getAuditLogs(query);
     }
+    async exportUsers(res) {
+        const csv = await this.superAdminService.exportUsersToCSV();
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=users.csv');
+        return res.send(csv);
+    }
+    async exportContacts(res) {
+        const csv = await this.superAdminService.exportContactsToCSV();
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=contacts.csv');
+        return res.send(csv);
+    }
 };
 exports.SuperAdminController = SuperAdminController;
 __decorate([
@@ -195,6 +207,20 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], SuperAdminController.prototype, "getAuditLogs", null);
+__decorate([
+    (0, common_1.Get)('export/users'),
+    __param(0, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SuperAdminController.prototype, "exportUsers", null);
+__decorate([
+    (0, common_1.Get)('export/contacts'),
+    __param(0, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SuperAdminController.prototype, "exportContacts", null);
 exports.SuperAdminController = SuperAdminController = __decorate([
     (0, common_1.Controller)('super-admin'),
     (0, common_1.UseGuards)(jwt_strategy_1.JwtAuthGuard, super_admin_guard_1.SuperAdminGuard),

@@ -38,7 +38,9 @@ export declare class ConversationsService {
         contact: {
             id: string;
             email: string | null;
-            name: string;
+            name: string | null;
+            firstName: string | null;
+            lastName: string | null;
             createdAt: Date;
             updatedAt: Date;
             workspaceId: string;
@@ -93,7 +95,9 @@ export declare class ConversationsService {
         contact: {
             id: string;
             email: string | null;
-            name: string;
+            name: string | null;
+            firstName: string | null;
+            lastName: string | null;
             createdAt: Date;
             updatedAt: Date;
             workspaceId: string;

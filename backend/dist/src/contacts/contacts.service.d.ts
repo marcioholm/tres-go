@@ -7,7 +7,9 @@ export declare class ContactsService {
     findAll(workspaceId: string, params: any): Promise<{
         id: string;
         email: string | null;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
@@ -57,7 +59,9 @@ export declare class ContactsService {
     } & {
         id: string;
         email: string | null;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
@@ -74,7 +78,9 @@ export declare class ContactsService {
     create(workspaceId: string, data: any): Promise<{
         id: string;
         email: string | null;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
@@ -91,7 +97,9 @@ export declare class ContactsService {
     update(workspaceId: string, id: string, data: any, userId?: string): Promise<{
         id: string;
         email: string | null;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
@@ -108,7 +116,9 @@ export declare class ContactsService {
     updateSource(workspaceId: string, id: string, sourceData: any, userId?: string): Promise<{
         id: string;
         email: string | null;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
@@ -125,7 +135,9 @@ export declare class ContactsService {
     delete(workspaceId: string, id: string, userId?: string): Promise<{
         id: string;
         email: string | null;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;

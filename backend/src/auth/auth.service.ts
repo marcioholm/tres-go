@@ -70,6 +70,7 @@ export class AuthService {
 
     async register(registerDto: any) {
         const { workspaceName, taxId, ...userData } = registerDto;
+        // userData now contains firstName, lastName, niche, email, password
         const user = await this.usersService.create(userData);
         // Create default workspace for new user immediately with provided name and taxId
         await this.workspacesService.createDefaultWorkspace(user.id, workspaceName, taxId);

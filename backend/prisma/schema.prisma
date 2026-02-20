@@ -54,7 +54,9 @@ model Channel {
 model Contact {
   id             String                   @id @default(cuid())
   workspaceId    String
-  name           String
+  name           String?                  // Legado
+  firstName      String?
+  lastName       String?
   phone          String?
   email          String?
   source         TrafficSource?
@@ -325,7 +327,10 @@ model WorkspaceUser {
 model User {
   id                String             @id @default(cuid())
   email             String             @unique
-  name              String
+  name              String?            // Legado
+  firstName         String?
+  lastName          String?
+  niche             String?            // Farmácia, Gastronomia, Varejo, etc.
   password          String
   status            String             @default("ONLINE") // ONLINE, BUSY, OFFLINE
   createdAt         DateTime           @default(now())

@@ -1,5 +1,5 @@
 import {
-    Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, Request
+    Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, Request, Res
 } from '@nestjs/common';
 import { SuperAdminService } from './super-admin.service';
 import { JwtAuthGuard } from '../auth/jwt.strategy';
@@ -114,6 +114,22 @@ export class SuperAdminController {
     @Get('audit-logs')
     async getAuditLogs(@Query() query: any) {
         return this.superAdminService.getAuditLogs(query);
+    }
+
+    @Get('export/users')
+    async exportUsers(@Res() res) {
+        const csv = await this.superAdminService.exportUsersToCSV();
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=users.csv');
+        return res.send(csv);
+    }
+
+    @Get('export/contacts')
+    async exportContacts(@Res() res) {
+        const csv = await this.superAdminService.exportContactsToCSV();
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=contacts.csv');
+        return res.send(csv);
     }
 }
 

@@ -9,7 +9,10 @@ export declare class AuthController {
     register(registerDto: any): Promise<{
         id: string;
         email: string;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        niche: string | null;
         password: string;
         status: string;
         createdAt: Date;
@@ -17,20 +20,23 @@ export declare class AuthController {
     }>;
     getProfile(req: any): Promise<{
         isSuperAdmin: boolean;
+        workspaces: {
+            id: string;
+            userId: string;
+            workspaceId: string;
+            role: string;
+        }[];
         superAdmin: {
             id: string;
             createdAt: Date;
             userId: string;
         };
-        workspaces: {
-            id: string;
-            workspaceId: string;
-            userId: string;
-            role: string;
-        }[];
         id: string;
         email: string;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        niche: string | null;
         password: string;
         status: string;
         createdAt: Date;
@@ -39,7 +45,10 @@ export declare class AuthController {
     updateStatus(req: any, status: string): Promise<{
         id: string;
         email: string;
-        name: string;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        niche: string | null;
         password: string;
         status: string;
         createdAt: Date;

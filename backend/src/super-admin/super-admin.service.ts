@@ -215,6 +215,44 @@ export class SuperAdminService {
             include: { user: true }
         });
     }
+
+    async exportUsersToCSV() {
+        const users = await this.prisma.user.findMany({
+            select: {
+                firstName: true,
+                lastName: true,
+                email: true,
+                niche: true,
+                createdAt: true
+            }
+        });
+
+        const header = "Primeiro Nome,Sobrenome,Email,Nicho,Data de Cadastro\n";
+        const rows = users.map(u =>
+            `${u.firstName || ''},${u.lastName || ''},${u.email},${u.niche || ''},${u.createdAt.toISOString()}`
+        ).join("\n");
+
+        return header + rows;
+    }
+
+    async exportContactsToCSV() {
+        const contacts = await this.prisma.contact.findMany({
+            select: {
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true,
+                createdAt: true
+            }
+        });
+
+        const header = "Primeiro Nome,Sobrenome,Email,Telefone,Data de Criação\n";
+        const rows = contacts.map(c =>
+            `${c.firstName || ''},${c.lastName || ''},${c.email || ''},${c.phone || ''},${c.createdAt.toISOString()}`
+        ).join("\n");
+
+        return header + rows;
+    }
 }
 
 

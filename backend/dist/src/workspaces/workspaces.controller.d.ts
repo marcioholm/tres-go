@@ -26,7 +26,10 @@ export declare class WorkspacesController {
         user: {
             id: string;
             email: string;
-            name: string;
+            name: string | null;
+            firstName: string | null;
+            lastName: string | null;
+            niche: string | null;
             password: string;
             status: string;
             createdAt: Date;

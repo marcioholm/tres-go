@@ -43,7 +43,10 @@ export declare class SectorsController {
             user: {
                 id: string;
                 email: string;
-                name: string;
+                name: string | null;
+                firstName: string | null;
+                lastName: string | null;
+                niche: string | null;
                 password: string;
                 status: string;
                 createdAt: Date;
@@ -148,7 +151,10 @@ export declare class SectorsController {
         user: {
             id: string;
             email: string;
-            name: string;
+            name: string | null;
+            firstName: string | null;
+            lastName: string | null;
+            niche: string | null;
             password: string;
             status: string;
             createdAt: Date;

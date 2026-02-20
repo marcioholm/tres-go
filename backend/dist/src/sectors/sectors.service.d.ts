@@ -45,7 +45,10 @@ export declare class SectorsService {
             user: {
                 id: string;
                 email: string;
-                name: string;
+                name: string | null;
+                firstName: string | null;
+                lastName: string | null;
+                niche: string | null;
                 password: string;
                 status: string;
                 createdAt: Date;
@@ -147,7 +150,10 @@ export declare class SectorsService {
         user: {
             id: string;
             email: string;
-            name: string;
+            name: string | null;
+            firstName: string | null;
+            lastName: string | null;
+            niche: string | null;
             password: string;
             status: string;
             createdAt: Date;

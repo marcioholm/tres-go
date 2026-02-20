@@ -6,7 +6,9 @@ export declare class ConversationsController {
         contact: {
             id: string;
             email: string | null;
-            name: string;
+            name: string | null;
+            firstName: string | null;
+            lastName: string | null;
             createdAt: Date;
             updatedAt: Date;
             workspaceId: string;
@@ -64,7 +66,9 @@ export declare class ConversationsController {
         contact: {
             id: string;
             email: string | null;
-            name: string;
+            name: string | null;
+            firstName: string | null;
+            lastName: string | null;
             createdAt: Date;
             updatedAt: Date;
             workspaceId: string;
