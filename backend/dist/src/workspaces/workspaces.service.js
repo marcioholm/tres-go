@@ -40,13 +40,13 @@ let WorkspacesService = class WorkspacesService {
                 }
             }
         });
-        await this.sectorsService.ensureDefaultSectors(workspace.id);
         try {
             await this.billingService.startTrial(workspace.id, 'starter');
         }
         catch (error) {
             console.error('Failed to start trial for new workspace:', error);
         }
+        await this.sectorsService.ensureDefaultSectors(workspace.id);
         return workspace;
     }
     async getMembers(workspaceId) {

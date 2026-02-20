@@ -9,23 +9,23 @@ export declare class AuthService {
     validateUser(email: string, pass: string): Promise<any>;
     updateStatus(userId: string, status: string): Promise<{
         id: string;
-        email: string;
         name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
         status: string;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     getUserProfile(userId: string): Promise<{
         isSuperAdmin: boolean;
         workspaces: {
             id: string;
+            role: string;
             userId: string;
             workspaceId: string;
-            role: string;
         }[];
         superAdmin: {
             id: string;
@@ -33,15 +33,15 @@ export declare class AuthService {
             userId: string;
         };
         id: string;
-        email: string;
         name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
         status: string;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     login(user: any): Promise<{
         access_token: string;
@@ -49,14 +49,14 @@ export declare class AuthService {
     }>;
     register(registerDto: any): Promise<{
         id: string;
-        email: string;
         name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
         status: string;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
 }

@@ -8,23 +8,23 @@ export declare class AuthController {
     }>;
     register(registerDto: any): Promise<{
         id: string;
-        email: string;
         name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
         status: string;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     getProfile(req: any): Promise<{
         isSuperAdmin: boolean;
         workspaces: {
             id: string;
+            role: string;
             userId: string;
             workspaceId: string;
-            role: string;
         }[];
         superAdmin: {
             id: string;
@@ -32,26 +32,26 @@ export declare class AuthController {
             userId: string;
         };
         id: string;
-        email: string;
         name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
         status: string;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     updateStatus(req: any, status: string): Promise<{
         id: string;
-        email: string;
         name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
         status: string;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
 }
