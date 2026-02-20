@@ -69,48 +69,79 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#F4F5F7] flex flex-col items-center justify-center p-4">
-            <div className="mb-8 flex items-center gap-3">
-                <div className="h-10 w-10 rounded bg-red-600 flex items-center justify-center shadow-lg shadow-red-200">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                </div>
-                <span className="text-2xl font-bold text-slate-900 tracking-tight">NORTHWAY<span className="text-red-600">OMNI</span></span>
-            </div>
-
-            <div className="w-full max-w-md bg-white rounded-xl shadow-sm border border-slate-200 p-8 space-y-6">
-                <div className="space-y-1 text-center">
-                    <h1 className="text-xl font-bold text-slate-900">Bem-vindo de volta!</h1>
-                    <p className="text-slate-500 text-sm">Insira suas credenciais para acessar a plataforma.</p>
-                </div>
-
-                <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email Corporativo</Label>
-                        <Input id="email" type="email" placeholder="nome@empresa.com" required className="bg-slate-50 border-slate-200 focus:border-red-300 focus:ring-red-100" />
-                    </div>
-                    <div className="space-y-2">
-                        <div className="flex justify-between">
-                            <Label htmlFor="password">Senha</Label>
-                            <Link href="#" className="text-xs text-red-600 font-medium hover:underline">Esqueceu a senha?</Link>
+        <div className="min-h-screen grid lg:grid-cols-2">
+            {/* Lado Esquerdo: Formulário */}
+            <div className="flex flex-col items-center justify-center p-8 lg:p-12 bg-white">
+                <div className="w-full max-w-md space-y-8">
+                    <div className="flex flex-col items-center lg:items-start space-y-4">
+                        <div className="flex items-center gap-3">
+                            <img src="/logo-northway.png" alt="NorthWay Logo" className="h-12 w-12 object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                            <span className="text-2xl font-bold text-slate-900 tracking-tight">NORTHWAY<span className="text-red-600">OMNI</span></span>
                         </div>
-                        <Input id="password" type="password" placeholder="••••••••" required className="bg-slate-50 border-slate-200 focus:border-red-300 focus:ring-red-100" />
+                        <div className="space-y-1 text-center lg:text-left">
+                            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Bem-vindo de volta!</h1>
+                            <p className="text-slate-500">Insira suas credenciais para acessar a plataforma.</p>
+                        </div>
                     </div>
 
-                    <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-bold h-11" disabled={loading}>
-                        {loading ? "Entrando..." : "ENTRAR NA PLATAFORMA"}
-                    </Button>
-                </form>
+                    <form onSubmit={handleLogin} className="space-y-5">
+                        <div className="space-y-2">
+                            <Label htmlFor="email" className="text-sm font-semibold text-slate-700">Email Corporativo</Label>
+                            <Input id="email" type="email" placeholder="nome@empresa.com" required className="h-12 bg-slate-50 border-slate-200 focus:border-red-300 focus:ring-red-100 transition-all" />
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <Label htmlFor="password" className="text-sm font-semibold text-slate-700">Senha</Label>
+                                <Link href="#" className="text-xs text-red-600 font-bold hover:underline">Esqueceu a senha?</Link>
+                            </div>
+                            <Input id="password" type="password" placeholder="••••••••" required className="h-12 bg-slate-50 border-slate-200 focus:border-red-300 focus:ring-red-100 transition-all" />
+                        </div>
 
-                <div className="pt-2 text-center text-sm text-slate-500">
-                    Ainda não tem uma conta? <Link href="/register" className="text-red-600 font-bold hover:underline">Criar conta</Link>
+                        <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-bold h-12 shadow-lg shadow-red-200 transition-all transform hover:scale-[1.01]" disabled={loading}>
+                            {loading ? "Entrando..." : "ENTRAR NA PLATAFORMA"}
+                        </Button>
+                    </form>
+
+                    <div className="text-center text-sm text-slate-500">
+                        Ainda não tem uma conta? <Link href="/register" className="text-red-600 font-bold hover:underline">Criar conta gratuita</Link>
+                    </div>
+
+                    <p className="text-center lg:text-left text-xs text-slate-400 mt-12">
+                        © 2024 NorthWay Omni. Todos os direitos reservados.
+                    </p>
                 </div>
             </div>
 
-            <p className="mt-8 text-xs text-slate-400">© 2024 NorthWay Omni. Todos os direitos reservados.</p>
+            {/* Lado Direito: Capa Brandeada */}
+            <div className="hidden lg:flex relative bg-slate-900 items-center justify-center overflow-hidden">
+                <img
+                    src="/auth-cover.png"
+                    alt="NorthWay Manifesto"
+                    className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-red-900/40 to-transparent" />
+
+                <div className="relative z-10 w-full max-w-lg p-12 text-white">
+                    <div className="space-y-8">
+                        <div className="inline-flex items-center rounded-full bg-red-600/20 px-3 py-1 text-sm font-semibold text-red-100 ring-1 ring-inset ring-red-600/20">
+                            Manifesto NorthWay
+                        </div>
+                        <h2 className="text-4xl font-bold leading-tight">
+                            "Conectamos sua empresa a todos os canais em uma única experiência inteligente."
+                        </h2>
+                        <div className="space-y-4 text-lg text-slate-200 leading-relaxed">
+                            <p>✓ Atendimento Omnichannel Unificado</p>
+                            <p>✓ Tecnologia que gera proximidade</p>
+                            <p>✓ Resultados reais em escala</p>
+                        </div>
+                        <div className="pt-8 flex items-center gap-4">
+                            <div className="h-px flex-1 bg-white/20" />
+                            <span className="text-sm font-medium tracking-widest uppercase opacity-60">Impulsionando Negócios</span>
+                            <div className="h-px flex-1 bg-white/20" />
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
