@@ -1,0 +1,84 @@
+import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { WorkspacesModule } from './workspaces/workspaces.module';
+import { ChannelsModule } from './channels/channels.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { GatewayModule } from './gateway/gateway.module';
+import { ConversationsModule } from './conversations/conversations.module';
+import { MessagesModule } from './messages/messages.module';
+import { ReportsModule } from './reports/reports.module';
+import { TagsModule } from './tags/tags.module';
+import { CampaignsModule } from './campaigns/campaigns.module';
+import { ContactsModule } from './contacts/contacts.module';
+import { QueueModule } from './queue/queue.module';
+import { SalesModule } from './sales/sales.module';
+import { KanbanModule } from './kanban/kanban.module';
+import { UploadsModule } from './uploads/uploads.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { ScheduledMessagesModule } from './scheduled-messages/scheduled-messages.module';
+import { SectorsModule } from './sectors/sectors.module';
+import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ArchiveModule } from './archive/archive.module';
+import { BillingModule } from './billing/billing.module';
+import { BullModule } from '@nestjs/bullmq';
+import { SuperAdminModule } from './super-admin/super-admin.module';
+import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.middleware';
+
+@Module({
+  imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: Number(process.env.REDIS_PORT) || 6379,
+      },
+    }),
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    WorkspacesModule,
+    SectorsModule,
+    ConversationsModule,
+    MessagesModule,
+    ContactsModule,
+    TagsModule,
+    ChannelsModule,
+    CampaignsModule,
+    ScheduledMessagesModule,
+    GatewayModule,
+    AuditLogsModule,
+    BillingModule,
+    SuperAdminModule,
+    // New Modules
+    WebhooksModule,
+    ReportsModule,
+    QueueModule,
+    SalesModule,
+    KanbanModule,
+    ScheduleModule.forRoot(),
+    ArchiveModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(WorkspaceBlockMiddleware)
+      .exclude(
+        { path: 'auth/(.*)', method: RequestMethod.ALL },
+        { path: 'billing/webhook', method: RequestMethod.POST },
+        { path: 'super-admin/(.*)', method: RequestMethod.ALL },
+      )
+      .forRoutes({ path: 'workspaces/*', method: RequestMethod.ALL });
+  }
+}

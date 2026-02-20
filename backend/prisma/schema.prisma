@@ -1,0 +1,798 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Workspace {
+  id                String             @id @default(cuid())
+  name              String
+  plan              String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  campaigns         Campaign[]
+  channels          Channel[]
+  contacts          Contact[]
+  conversations     Conversation[]
+  flows             Flow[]
+  users             WorkspaceUser[]
+  businessHours     BusinessHours[]
+  quickReplies      QuickReply[]
+  knowledgeBase     KnowledgeBase[]
+  kanbanBoards      KanbanBoard[]
+  sectors           Sector[]
+  sales             Sale[]
+  scheduledMessages ScheduledMessage[]
+  mediaUploads      MediaUpload[]
+  deals             Deal[]
+  auditLogs         AuditLog[]
+  isBlocked         Boolean            @default(false)
+  blockReason       String?
+  subscription      Subscription?
+  usage             WorkspaceUsage[]
+}
+
+model Channel {
+  id            String         @id @default(cuid())
+  workspaceId   String
+  type          String
+  config        Json
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  name          String
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id])
+  conversations Conversation[]
+  scheduledMessages ScheduledMessage[]
+}
+
+// ── Contact: adicionar campos de origem
+model Contact {
+  id             String                   @id @default(cuid())
+  workspaceId    String
+  name           String
+  phone          String?
+  email          String?
+  source         TrafficSource?
+  sourceMedium   String?
+  sourceCampaign String?
+  sourceContent  String?
+  utmSource      String?
+  utmMedium      String?
+  utmCampaign    String?
+  referredBy     String?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  workspace      Workspace                @relation(fields: [workspaceId], references: [id])
+  identities     ContactChannelIdentity[]
+  notes          ContactNote[]
+  conversations  Conversation[]
+  ContactToTag   ContactToTag[]
+  sales          Sale[]
+  deals          Deal[]
+  campaignLogs   CampaignContactLog[]
+}
+
+enum TrafficSource {
+  GOOGLE_ADS
+  GOOGLE_ORGANIC
+  META_ADS
+  META_ORGANIC
+  WHATSAPP_DIRECT
+  INSTAGRAM_DIRECT
+  TIKTOK_ADS
+  TIKTOK_ORGANIC
+  YOUTUBE
+  EMAIL_MARKETING
+  INDICATION
+  COLD_CALL
+  EVENT
+  OTHER
+}
+
+model ContactChannelIdentity {
+  id         String  @id @default(cuid())
+  contactId  String
+  channel    String
+  identifier String
+  contact    Contact @relation(fields: [contactId], references: [id])
+}
+
+model Conversation {
+  id                String              @id @default(cuid())
+  workspaceId       String
+  contactId         String
+  channelId         String
+  agentId           String?
+
+  sectorId          String?
+  sector            Sector?             @relation(fields: [sectorId], references: [id])
+  status            String
+  kanbanColumn      String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  channel           Channel             @relation(fields: [channelId], references: [id])
+  contact           Contact             @relation(fields: [contactId], references: [id])
+  workspace         Workspace           @relation(fields: [workspaceId], references: [id])
+  messages          Message[]
+  ConversationToTag ConversationToTag[]
+  deals             Deal[]
+  sales             Sale[]
+  scheduledMessages ScheduledMessage[]
+  transfers         ConversationTransfer[]
+  archivedMessages  ArchivedMessage[]
+}
+
+// ── Message: adicionar nota interna
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  fromAgent      Boolean      @default(false)
+  isInternalNote Boolean      @default(false)
+  type           String
+  content        Json
+  status         String
+  externalId     String?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+}
+
+// ── ArchivedMessage: Data Warehouse para mensagens antigas
+model ArchivedMessage {
+  id             String       @id
+  conversationId String
+  fromAgent      Boolean
+  isInternalNote Boolean
+  type           String
+  content        Json
+  status         String
+  externalId     String?
+  createdAt      DateTime
+  archivedAt     DateTime     @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+
+// ── Campaign: expandir com mídia, segmentação e métricas
+model Campaign {
+  id             String          @id @default(cuid())
+  name           String
+  workspaceId    String
+  status         String
+  config         Json
+  type           CampaignType    @default(SIMPLE)
+  content        String?         // Texto da mensagem (Legado/Simples)
+  mediaUrl       String?
+  mediaType      String?
+  mediaCaption   String?
+  mediaFilename  String?
+  variables      Json?
+  filterTagIds   String[]
+  filterSource   TrafficSource?
+  delayBetween   Int             @default(3000) // MÍNIMO 3000ms para Z-API
+  repliesCount   Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id])
+  steps          CampaignStep[]
+  contactLogs    CampaignContactLog[]
+}
+
+model CampaignStep {
+  id             String    @id @default(cuid())
+  campaignId     String
+  order          Int       // 0 = imediato (D0), 1 = segundo tiro, etc.
+  delayHours     Int       @default(0) // Horas de espera a partir da etapa anterior
+  content        String?
+  mediaUrl       String?
+  mediaType      String?
+  mediaCaption   String?
+  mediaFilename  String?
+  variables      Json?
+  condition      String?   // ex: "NO_REPLY", "ALWAYS"
+  
+  campaign       Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  logs           CampaignContactLog[]
+  
+  @@index([campaignId, order])
+}
+
+model CampaignContactLog {
+  id             String       @id @default(cuid())
+  campaignId     String
+  contactId      String
+  currentStepId  String?
+  status         CampaignContactStatus @default(ACTIVE)
+  nextExecutionAt DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  campaign       Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact        Contact      @relation(fields: [contactId], references: [id])
+  currentStep    CampaignStep? @relation(fields: [currentStepId], references: [id])
+
+  @@unique([campaignId, contactId])
+  @@index([nextExecutionAt, status])
+}
+
+enum CampaignContactStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED_REPLY
+  FAILED
+}
+
+enum CampaignType {
+  SIMPLE
+  TEMPLATE
+  MULTI_STEP
+}
+
+model ContactNote {
+  id        String   @id @default(cuid())
+  contactId String
+  content   String
+  agentId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  contact   Contact  @relation(fields: [contactId], references: [id])
+}
+
+model Flow {
+  id          String    @id @default(cuid())
+  name        String
+  workspaceId String
+  nodes       Json
+  edges       Json
+  isActive    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model ContactToTag {
+  A       String
+  B       String
+  Contact Contact @relation(fields: [A], references: [id], onDelete: Cascade)
+  Tag     Tag     @relation(fields: [B], references: [id], onDelete: Cascade)
+
+  @@id([A, B], map: "_ContactToTag_AB_pkey")
+  @@index([B], map: "_ContactToTag_B_index")
+  @@map("_ContactToTag")
+}
+
+model ConversationToTag {
+  A            String
+  B            String
+  Conversation Conversation @relation(fields: [A], references: [id], onDelete: Cascade)
+  Tag          Tag          @relation(fields: [B], references: [id], onDelete: Cascade)
+
+  @@id([A, B], map: "_ConversationToTag_AB_pkey")
+  @@index([B], map: "_ConversationToTag_B_index")
+  @@map("_ConversationToTag")
+}
+
+model BusinessHours {
+  id          String    @id @default(cuid())
+  workspaceId String
+  dayOfWeek   Int
+  isOpen      Boolean   @default(true)
+  openTime    String
+  closeTime   String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model QuickReply {
+  id          String    @id @default(cuid())
+  workspaceId String
+  shortcut    String
+  content     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model KnowledgeBase {
+  id          String    @id @default(cuid())
+  workspaceId String
+  question    String
+  answer      String
+  tags        String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model WorkspaceUser {
+  id          String    @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        String
+  user        User      @relation(fields: [userId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([userId, workspaceId])
+}
+
+model User {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  name              String
+  password          String
+  status            String             @default("ONLINE") // ONLINE, BUSY, OFFLINE
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  workspaces        WorkspaceUser[]
+  sectorMembers     SectorMember[]
+  transfersFrom     ConversationTransfer[] @relation("TransferFromAgent")
+  transfersTo       ConversationTransfer[] @relation("TransferToAgent")
+  deals             Deal[]
+  sales             Sale[]
+  scheduledMessages ScheduledMessage[]
+  uploadedFiles     MediaUpload[]
+  auditLogs         AuditLog[]
+  superAdmin        SuperAdmin?
+}
+
+// ── Tag: adicionar campo type
+model Tag {
+  id                String              @id @default(cuid())
+  name              String
+  color             String?
+  workspaceId       String?
+  type              TagType             @default(GENERAL)
+  ContactToTag      ContactToTag[]
+  ConversationToTag ConversationToTag[]
+  deals             DealTag[]
+}
+
+enum TagType {
+  GENERAL
+  REMARKETING
+  SEGMENT
+  STATUS
+}
+
+// ── KANBAN ────────────────────────────────────────────────
+
+model KanbanBoard {
+  id          String        @id @default(cuid())
+  workspaceId String
+  name        String        @default("Funil de Vendas")
+  createdAt   DateTime      @default(now())
+  columns     KanbanColumn[]
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sectorId    String?       @unique
+  sector      Sector?       @relation(fields: [sectorId], references: [id])
+
+  @@index([workspaceId])
+}
+
+model KanbanColumn {
+  id      String  @id @default(cuid())
+  boardId String
+  name    String
+  order   Int
+  color   String  @default("#6366f1")
+  isWon   Boolean @default(false) // coluna "Ganho"
+  isLost  Boolean @default(false) // coluna "Perdido"
+  board   KanbanBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  deals   Deal[]
+
+  @@index([boardId, order])
+}
+
+model Deal {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  contactId      String
+  columnId       String
+  conversationId String?
+  title          String
+  value          Float?
+  agentId        String?
+  order          Int       @default(0)
+  notes          String?
+  expectedCloseAt DateTime?
+  closedAt       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  workspace      Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact        Contact       @relation(fields: [contactId], references: [id])
+  column         KanbanColumn  @relation(fields: [columnId], references: [id])
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  agent          User?         @relation(fields: [agentId], references: [id])
+  tags           DealTag[]
+
+  @@index([workspaceId, columnId])
+  @@index([workspaceId, contactId])
+  @@index([contactId, createdAt])
+}
+
+model DealTag {
+  dealId String
+  tagId  String
+  deal   Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([dealId, tagId])
+}
+
+// ── VENDAS ────────────────────────────────────────────────
+
+model Sale {
+  id             String     @id @default(cuid())
+  workspaceId    String
+  contactId      String
+  conversationId String?
+  agentId        String
+  title          String
+  description    String?
+  amount         Float
+  status         SaleStatus @default(COMPLETED)
+  saleDate       DateTime   @default(now())
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  workspace      Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact        Contact       @relation(fields: [contactId], references: [id])
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  agent          User          @relation(fields: [agentId], references: [id])
+  items          SaleItem[]
+
+  @@index([workspaceId, contactId])
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, agentId])
+}
+
+enum SaleStatus {
+  COMPLETED
+  PENDING
+  CANCELLED
+  REFUNDED
+}
+
+model SaleItem {
+  id         String @id @default(cuid())
+  saleId     String
+  name       String
+  quantity   Int    @default(1)
+  unitPrice  Float
+  total      Float
+  sale       Sale   @relation(fields: [saleId], references: [id], onDelete: Cascade)
+}
+
+// ── MENSAGENS AGENDADAS ───────────────────────────────────
+
+model ScheduledMessage {
+  id             String          @id @default(cuid())
+  workspaceId    String
+  conversationId String
+  channelId      String
+  agentId        String
+  type           String          @default("TEXT")
+  content        Json
+  scheduledAt    DateTime
+  status         ScheduledStatus @default(PENDING)
+  sentAt         DateTime?
+  errorMessage   String?
+  createdAt      DateTime        @default(now())
+
+  workspace      Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  channel        Channel      @relation(fields: [channelId], references: [id])
+  agent          User         @relation(fields: [agentId], references: [id])
+
+  @@index([status, scheduledAt])
+}
+
+enum ScheduledStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+// ── UPLOADS / MÍDIA ───────────────────────────────────────
+
+model MediaUpload {
+  id          String   @id @default(cuid())
+  workspaceId String
+  uploadedBy  String
+  url         String
+  filename    String
+  mimeType    String
+  size        Int
+  mediaType   String
+  isPtt       Boolean  @default(false)
+  duration    Int?
+  waveform    Json?
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  uploader    User      @relation(fields: [uploadedBy], references: [id])
+
+  @@index([workspaceId, createdAt])
+}
+
+// ── SETOR (Departamento) ──────────────────────────────────────────────────────
+
+model Sector {
+  id            String   @id @default(cuid())
+  workspaceId   String
+  name          String                        // "Comercial", "Financeiro", "Suporte"...
+  description   String?
+  color         String   @default("#6366f1")  // cor para identificação visual
+  icon          String   @default("business") // Material Symbol icon name
+  isDefault     Boolean  @default(false)      // setor padrão para novos atendimentos
+  isActive      Boolean  @default(true)
+  order         Int      @default(0)          // ordem de exibição
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members       SectorMember[]
+  conversations Conversation[]
+  kanbanBoard   KanbanBoard?   // cada setor tem seu próprio Kanban
+  slaConfig     SectorSla?
+  autoRules     SectorAutoRule[]
+  transfersFrom ConversationTransfer[] @relation("TransfersFrom")
+  transfersTo   ConversationTransfer[] @relation("TransfersTo")
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId, isActive])
+}
+
+// ── MEMBROS DO SETOR ─────────────────────────────────────────────────────────
+
+model SectorMember {
+  id        String     @id @default(cuid())
+  sectorId  String
+  userId    String
+  role      SectorRole @default(AGENT)       // SUPERVISOR ou AGENT dentro do setor
+  createdAt DateTime   @default(now())
+
+  sector    Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sectorId, userId])
+  @@index([sectorId])
+  @@index([userId])
+}
+
+enum SectorRole {
+  SUPERVISOR  // supervisiona o setor, vê relatórios, pode transferir para qualquer lugar
+  AGENT       // atende conversas do setor
+}
+
+// ── SLA POR SETOR ────────────────────────────────────────────────────────────
+
+model SectorSla {
+  id                  String @id @default(cuid())
+  sectorId            String @unique
+  firstResponseTime   Int    @default(5)    // minutos para primeira resposta
+  resolutionTime      Int    @default(120)  // minutos para resolução
+  warningThreshold    Int    @default(80)   // % do tempo usado → dispara alerta amarelo
+  criticalThreshold   Int    @default(100)  // % → alerta vermelho
+
+  sector              Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+}
+
+// ── REGRAS DE ROTEAMENTO AUTOMÁTICO ──────────────────────────────────────────
+
+model SectorAutoRule {
+  id          String         @id @default(cuid())
+  sectorId    String                               // setor de DESTINO
+  type        AutoRuleType
+  value       String                               // keyword ou channelId ou tagId
+  priority    Int            @default(0)           // maior priority = verificado primeiro
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+
+  sector      Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+}
+
+enum AutoRuleType {
+  KEYWORD       // palavra-chave na primeira mensagem → direciona ao setor
+  CHANNEL       // canal de origem (ex: todas IG → Comercial)
+  TAG           // contato com tag específica → setor específico
+  BUSINESS_HOUR // fora do horário → setor de plantão
+}
+
+// ── HISTÓRICO DE TRANSFERÊNCIAS ───────────────────────────────────────────────
+
+model ConversationTransfer {
+  id               String   @id @default(cuid())
+  conversationId   String
+  fromSectorId     String?  // null = sem setor anterior
+  toSectorId       String
+  fromAgentId      String?
+  toAgentId        String?  // null = vai para a fila do setor sem agente específico
+  reason           String?  // motivo da transferência
+  note             String?  // nota interna automática
+  transferredAt    DateTime @default(now())
+
+  conversation     Conversation @relation(fields: [conversationId], references: [id])
+  fromSector       Sector?  @relation("TransfersFrom", fields: [fromSectorId], references: [id])
+  toSector         Sector   @relation("TransfersTo", fields: [toSectorId], references: [id])
+  fromAgent        User?    @relation("TransferFromAgent", fields: [fromAgentId], references: [id])
+  toAgent          User?    @relation("TransferToAgent", fields: [toAgentId], references: [id])
+
+  @@index([conversationId])
+  @@index([toSectorId, transferredAt])
+}
+
+// ── PLANOS ────────────────────────────────────────────────────────────────────
+
+model Plan {
+  id                  String   @id @default(cuid())
+  name                String   @unique   // "Starter", "Growth", "Pro", "Enterprise"
+  slug                String   @unique   // "starter", "growth", "pro", "enterprise"
+  description         String?
+  priceMonthly        Float              // R$ por mês
+  priceYearly         Float              // R$ por ano (com desconto)
+  isActive            Boolean  @default(true)
+  isPublic            Boolean  @default(true)  // false = só Super Admin pode atribuir
+  trialDays           Int      @default(14)
+
+  // Limites do plano
+  maxAgents           Int      @default(2)     // máx de agentes
+  maxChannels         Int      @default(1)     // máx de canais conectados
+  maxConversationsPerMonth Int  @default(500)  // conversas/mês
+  maxCampaigns        Int      @default(0)     // campanhas/mês (0 = sem acesso)
+  maxStorage          Int      @default(1024)  // MB de storage de mídia
+  maxSectors          Int      @default(1)     // setores/departamentos
+
+  // Features (boolean por feature)
+  hasKanban           Boolean  @default(false)
+  hasChatbot          Boolean  @default(false)
+  hasAI               Boolean  @default(false)
+  hasReports          Boolean  @default(false)
+  hasAPI              Boolean  @default(false)
+  hasWhiteLabel       Boolean  @default(false)
+  hasMultiSectors     Boolean  @default(false)
+  hasCampaigns        Boolean  @default(false)
+  hasSalesHistory     Boolean  @default(false)
+  hasScheduledMessages Boolean @default(false)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  subscriptions       Subscription[]
+}
+
+// ── ASSINATURA DO WORKSPACE ───────────────────────────────────────────────────
+
+model Subscription {
+  id                  String             @id @default(cuid())
+  workspaceId         String             @unique
+  planId              String
+  status              SubscriptionStatus @default(TRIAL)
+  billingCycle        BillingCycle       @default(MONTHLY)
+
+  // Asaas IDs
+  asaasCustomerId     String?            // ID do cliente no Asaas
+  asaasSubscriptionId String?            // ID da assinatura no Asaas
+
+  // Datas
+  trialEndsAt         DateTime?
+  currentPeriodStart  DateTime?
+  currentPeriodEnd    DateTime?
+  cancelledAt         DateTime?
+  blockedAt           DateTime?          // quando foi bloqueado por inadimplência
+
+  // Cobrança
+  priceOverride       Float?             // preço customizado (Enterprise)
+  discountPercent     Float?             // desconto aplicado
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  workspace           Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  plan                Plan               @relation(fields: [planId], references: [id])
+  invoices            Invoice[]
+}
+
+enum SubscriptionStatus {
+  TRIAL         // período de teste gratuito
+  ACTIVE        // ativo e em dia
+  PAST_DUE      // boleto vencido, mas ainda com acesso (grace period)
+  BLOCKED       // bloqueado por inadimplência (sem acesso ao sistema)
+  CANCELLED     // cancelado pelo cliente ou admin
+  SUSPENDED     // suspenso manualmente pelo Super Admin
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+// ── FATURAS ───────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id               String        @id @default(cuid())
+  subscriptionId   String
+  asaasPaymentId   String?       @unique  // ID do pagamento no Asaas
+  amount           Float
+  status           InvoiceStatus @default(PENDING)
+  dueDate          DateTime
+  paidAt           DateTime?
+  paymentMethod    String?       // BOLETO | PIX | CREDIT_CARD
+  invoiceUrl       String?       // URL do boleto/PIX no Asaas
+  pixQrCode        String?       // QR Code PIX
+  pixCopiaECola    String?       // código copia e cola
+  description      String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  subscription     Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+}
+
+enum InvoiceStatus {
+  PENDING     // aguardando pagamento
+  PAID        // pago
+  OVERDUE     // vencido sem pagamento
+  CANCELLED   // cancelado
+  REFUNDED    // reembolsado
+}
+
+// ── SUPER ADMIN ───────────────────────────────────────────────────────────────
+
+model SuperAdmin {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ── USO DO WORKSPACE (MÉTRICAS) ───────────────────────────────────────────────
+
+model WorkspaceUsage {
+  id                  String   @id @default(cuid())
+  workspaceId         String
+  month               Int      // 1-12
+  year                Int
+  conversationsCount  Int      @default(0)
+  messagesCount       Int      @default(0)
+  campaignsSent       Int      @default(0)
+  storageUsedMb       Float    @default(0)
+  agentsActive        Int      @default(0)
+
+  workspace           Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, month, year])
+  @@index([workspaceId, year, month])
+}
+
+// ── AUDITORIA DE SISTEMA ──────────────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  userId      String?  // Pode ser nulo se a ação for do sistema automático
+  actionType  String   // ex: "DEAL_MOVED", "DEAL_UPDATED", "LEAD_DELETED", "LEAD_MERGED" ou "workspace.blocked"
+  entityType  String?   // ex: "Deal", "Contact", "KanbanColumn"
+  entityId    String?   // ID da entidade alterada
+  target      String?  // ID do recurso afetado (sistema/billing/super-admin)
+  metadata    Json?    // dados extras
+  ip          String?
+  oldValue    Json?    // Estado anterior
+  newValue    Json?    // Novo estado
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User?      @relation(fields: [userId], references: [id])
+
+  @@index([workspaceId, entityType, entityId])
+  @@index([workspaceId, actionType])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+}
