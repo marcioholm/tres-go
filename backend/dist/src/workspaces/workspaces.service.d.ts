@@ -12,6 +12,7 @@ export declare class WorkspacesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        taxId: string | null;
         isBlocked: boolean;
         blockReason: string | null;
     }>;
@@ -21,15 +22,17 @@ export declare class WorkspacesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        taxId: string | null;
         isBlocked: boolean;
         blockReason: string | null;
     }>;
-    createDefaultWorkspace(userId: string): Promise<{
+    createDefaultWorkspace(userId: string, name?: string, taxId?: string): Promise<{
         plan: string;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        taxId: string | null;
         isBlocked: boolean;
         blockReason: string | null;
     }>;

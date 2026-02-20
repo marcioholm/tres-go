@@ -7,8 +7,8 @@ export declare class ChannelsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        workspaceId: string;
         isActive: boolean;
+        workspaceId: string;
         type: string;
         config: import("@prisma/client/runtime/library").JsonValue;
     }>;
@@ -17,8 +17,8 @@ export declare class ChannelsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        workspaceId: string;
         isActive: boolean;
+        workspaceId: string;
         type: string;
         config: import("@prisma/client/runtime/library").JsonValue;
     }[]>;

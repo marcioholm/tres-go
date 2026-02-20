@@ -26,10 +26,11 @@ let WorkspacesService = class WorkspacesService {
     async update(workspaceId, data) {
         return this.prisma.workspace.update({ where: { id: workspaceId }, data });
     }
-    async createDefaultWorkspace(userId) {
+    async createDefaultWorkspace(userId, name, taxId) {
         const workspace = await this.prisma.workspace.create({
             data: {
-                name: 'Meu Workspace',
+                name: name || 'Meu Workspace',
+                taxId: taxId || null,
                 plan: 'FREE',
                 users: {
                     create: {

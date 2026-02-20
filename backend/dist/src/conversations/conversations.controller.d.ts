@@ -9,8 +9,8 @@ export declare class ConversationsController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            phone: string | null;
             workspaceId: string;
+            phone: string | null;
             source: import(".prisma/client").$Enums.TrafficSource | null;
             sourceMedium: string | null;
             sourceCampaign: string | null;
@@ -26,8 +26,8 @@ export declare class ConversationsController {
             createdAt: Date;
             updatedAt: Date;
             description: string | null;
-            workspaceId: string;
             isActive: boolean;
+            workspaceId: string;
             color: string;
             icon: string;
             isDefault: boolean;
@@ -67,8 +67,8 @@ export declare class ConversationsController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            phone: string | null;
             workspaceId: string;
+            phone: string | null;
             source: import(".prisma/client").$Enums.TrafficSource | null;
             sourceMedium: string | null;
             sourceCampaign: string | null;
@@ -112,8 +112,8 @@ export declare class ConversationsController {
             createdAt: Date;
             updatedAt: Date;
             description: string | null;
-            workspaceId: string;
             isActive: boolean;
+            workspaceId: string;
             color: string;
             icon: string;
             isDefault: boolean;

@@ -33,8 +33,8 @@ export declare class SuperAdminController {
                     name: string;
                     createdAt: Date;
                     updatedAt: Date;
-                    description: string | null;
                     slug: string;
+                    description: string | null;
                     priceMonthly: number;
                     priceYearly: number;
                     isActive: boolean;
@@ -62,7 +62,6 @@ export declare class SuperAdminController {
                 status: import(".prisma/client").$Enums.SubscriptionStatus;
                 createdAt: Date;
                 updatedAt: Date;
-                workspaceId: string;
                 billingCycle: import(".prisma/client").$Enums.BillingCycle;
                 asaasCustomerId: string | null;
                 asaasSubscriptionId: string | null;
@@ -73,6 +72,7 @@ export declare class SuperAdminController {
                 blockedAt: Date | null;
                 priceOverride: number | null;
                 discountPercent: number | null;
+                workspaceId: string;
                 planId: string;
             };
         } & {
@@ -81,6 +81,7 @@ export declare class SuperAdminController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            taxId: string | null;
             isBlocked: boolean;
             blockReason: string | null;
         })[];
@@ -95,8 +96,8 @@ export declare class SuperAdminController {
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                description: string | null;
                 slug: string;
+                description: string | null;
                 priceMonthly: number;
                 priceYearly: number;
                 isActive: boolean;
@@ -124,11 +125,11 @@ export declare class SuperAdminController {
                 status: import(".prisma/client").$Enums.InvoiceStatus;
                 createdAt: Date;
                 updatedAt: Date;
-                dueDate: Date;
                 description: string | null;
                 asaasPaymentId: string | null;
                 subscriptionId: string;
                 amount: number;
+                dueDate: Date;
                 paidAt: Date | null;
                 paymentMethod: string | null;
                 invoiceUrl: string | null;
@@ -140,7 +141,6 @@ export declare class SuperAdminController {
             status: import(".prisma/client").$Enums.SubscriptionStatus;
             createdAt: Date;
             updatedAt: Date;
-            workspaceId: string;
             billingCycle: import(".prisma/client").$Enums.BillingCycle;
             asaasCustomerId: string | null;
             asaasSubscriptionId: string | null;
@@ -151,6 +151,7 @@ export declare class SuperAdminController {
             blockedAt: Date | null;
             priceOverride: number | null;
             discountPercent: number | null;
+            workspaceId: string;
             planId: string;
         };
         users: ({
@@ -175,6 +176,7 @@ export declare class SuperAdminController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        taxId: string | null;
         isBlocked: boolean;
         blockReason: string | null;
     }>;
@@ -196,8 +198,8 @@ export declare class SuperAdminController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         slug: string;
+        description: string | null;
         priceMonthly: number;
         priceYearly: number;
         isActive: boolean;
@@ -225,8 +227,8 @@ export declare class SuperAdminController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         slug: string;
+        description: string | null;
         priceMonthly: number;
         priceYearly: number;
         isActive: boolean;
@@ -254,8 +256,8 @@ export declare class SuperAdminController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         slug: string;
+        description: string | null;
         priceMonthly: number;
         priceYearly: number;
         isActive: boolean;
@@ -291,6 +293,7 @@ export declare class SuperAdminController {
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                taxId: string | null;
                 isBlocked: boolean;
                 blockReason: string | null;
             };
@@ -368,11 +371,11 @@ export declare class SuperAdminController {
             status: import(".prisma/client").$Enums.InvoiceStatus;
             createdAt: Date;
             updatedAt: Date;
-            dueDate: Date;
             description: string | null;
             asaasPaymentId: string | null;
             subscriptionId: string;
             amount: number;
+            dueDate: Date;
             paidAt: Date | null;
             paymentMethod: string | null;
             invoiceUrl: string | null;

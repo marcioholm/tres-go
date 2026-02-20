@@ -23,8 +23,8 @@ export declare class SectorsService {
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
-        workspaceId: string;
         isActive: boolean;
+        workspaceId: string;
         color: string;
         icon: string;
         isDefault: boolean;
@@ -69,10 +69,10 @@ export declare class SectorsService {
         autoRules: {
             id: string;
             createdAt: Date;
-            value: string;
             isActive: boolean;
             sectorId: string;
             type: import(".prisma/client").$Enums.AutoRuleType;
+            value: string;
             priority: number;
         }[];
     } & {
@@ -81,8 +81,8 @@ export declare class SectorsService {
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
-        workspaceId: string;
         isActive: boolean;
+        workspaceId: string;
         color: string;
         icon: string;
         isDefault: boolean;
@@ -110,8 +110,8 @@ export declare class SectorsService {
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
-        workspaceId: string;
         isActive: boolean;
+        workspaceId: string;
         color: string;
         icon: string;
         isDefault: boolean;
@@ -123,8 +123,8 @@ export declare class SectorsService {
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
-        workspaceId: string;
         isActive: boolean;
+        workspaceId: string;
         color: string;
         icon: string;
         isDefault: boolean;
@@ -136,8 +136,8 @@ export declare class SectorsService {
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
-        workspaceId: string;
         isActive: boolean;
+        workspaceId: string;
         color: string;
         icon: string;
         isDefault: boolean;

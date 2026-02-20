@@ -11,7 +11,6 @@ export declare class BillingService {
         status: import(".prisma/client").$Enums.SubscriptionStatus;
         createdAt: Date;
         updatedAt: Date;
-        workspaceId: string;
         billingCycle: import(".prisma/client").$Enums.BillingCycle;
         asaasCustomerId: string | null;
         asaasSubscriptionId: string | null;
@@ -22,6 +21,7 @@ export declare class BillingService {
         blockedAt: Date | null;
         priceOverride: number | null;
         discountPercent: number | null;
+        workspaceId: string;
         planId: string;
     }>;
     activateSubscription(workspaceId: string, data: {
@@ -42,7 +42,6 @@ export declare class BillingService {
         status: import(".prisma/client").$Enums.SubscriptionStatus;
         createdAt: Date;
         updatedAt: Date;
-        workspaceId: string;
         billingCycle: import(".prisma/client").$Enums.BillingCycle;
         asaasCustomerId: string | null;
         asaasSubscriptionId: string | null;
@@ -53,6 +52,7 @@ export declare class BillingService {
         blockedAt: Date | null;
         priceOverride: number | null;
         discountPercent: number | null;
+        workspaceId: string;
         planId: string;
     }>;
     changePlan(workspaceId: string, newPlanSlug: string): Promise<{
@@ -60,7 +60,6 @@ export declare class BillingService {
         status: import(".prisma/client").$Enums.SubscriptionStatus;
         createdAt: Date;
         updatedAt: Date;
-        workspaceId: string;
         billingCycle: import(".prisma/client").$Enums.BillingCycle;
         asaasCustomerId: string | null;
         asaasSubscriptionId: string | null;
@@ -71,6 +70,7 @@ export declare class BillingService {
         blockedAt: Date | null;
         priceOverride: number | null;
         discountPercent: number | null;
+        workspaceId: string;
         planId: string;
     }>;
     cancelSubscription(workspaceId: string, reason?: string): Promise<void>;

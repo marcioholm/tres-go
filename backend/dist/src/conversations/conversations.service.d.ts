@@ -15,8 +15,8 @@ export declare class ConversationsService {
             createdAt: Date;
             updatedAt: Date;
             description: string | null;
-            workspaceId: string;
             isActive: boolean;
+            workspaceId: string;
             color: string;
             icon: string;
             isDefault: boolean;
@@ -41,8 +41,8 @@ export declare class ConversationsService {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            phone: string | null;
             workspaceId: string;
+            phone: string | null;
             source: import(".prisma/client").$Enums.TrafficSource | null;
             sourceMedium: string | null;
             sourceCampaign: string | null;
@@ -58,8 +58,8 @@ export declare class ConversationsService {
             createdAt: Date;
             updatedAt: Date;
             description: string | null;
-            workspaceId: string;
             isActive: boolean;
+            workspaceId: string;
             color: string;
             icon: string;
             isDefault: boolean;
@@ -96,8 +96,8 @@ export declare class ConversationsService {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            phone: string | null;
             workspaceId: string;
+            phone: string | null;
             source: import(".prisma/client").$Enums.TrafficSource | null;
             sourceMedium: string | null;
             sourceCampaign: string | null;
@@ -183,8 +183,8 @@ export declare class ConversationsService {
             createdAt: Date;
             updatedAt: Date;
             description: string | null;
-            workspaceId: string;
             isActive: boolean;
+            workspaceId: string;
             color: string;
             icon: string;
             isDefault: boolean;

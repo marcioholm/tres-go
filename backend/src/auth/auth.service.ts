@@ -69,9 +69,10 @@ export class AuthService {
     }
 
     async register(registerDto: any) {
-        const user = await this.usersService.create(registerDto);
-        // Create default workspace for new user immediately
-        await this.workspacesService.createDefaultWorkspace(user.id);
+        const { workspaceName, taxId, ...userData } = registerDto;
+        const user = await this.usersService.create(userData);
+        // Create default workspace for new user immediately with provided name and taxId
+        await this.workspacesService.createDefaultWorkspace(user.id, workspaceName, taxId);
         return user;
     }
 }

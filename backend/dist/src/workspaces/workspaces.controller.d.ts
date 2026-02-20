@@ -8,6 +8,7 @@ export declare class WorkspacesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        taxId: string | null;
         isBlocked: boolean;
         blockReason: string | null;
     }>;
@@ -17,6 +18,7 @@ export declare class WorkspacesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        taxId: string | null;
         isBlocked: boolean;
         blockReason: string | null;
     }>;

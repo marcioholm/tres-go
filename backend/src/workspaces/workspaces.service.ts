@@ -19,11 +19,11 @@ export class WorkspacesService {
         return this.prisma.workspace.update({ where: { id: workspaceId }, data });
     }
 
-    async createDefaultWorkspace(userId: string) {
+    async createDefaultWorkspace(userId: string, name?: string, taxId?: string) {
         const workspace = await this.prisma.workspace.create({
-            // ... (keep existing data)
             data: {
-                name: 'Meu Workspace',
+                name: name || 'Meu Workspace',
+                taxId: taxId || null,
                 plan: 'FREE',
                 users: {
                     create: {
@@ -31,7 +31,6 @@ export class WorkspacesService {
                         role: 'ADMIN'
                     }
                 }
-                // Sector creation will handle its own Kanban
             }
         });
 

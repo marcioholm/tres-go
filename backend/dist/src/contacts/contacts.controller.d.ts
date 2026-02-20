@@ -12,8 +12,8 @@ export declare class ContactsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        phone: string | null;
         workspaceId: string;
+        phone: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -62,8 +62,8 @@ export declare class ContactsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        phone: string | null;
         workspaceId: string;
+        phone: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -79,8 +79,8 @@ export declare class ContactsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        phone: string | null;
         workspaceId: string;
+        phone: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -96,8 +96,8 @@ export declare class ContactsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        phone: string | null;
         workspaceId: string;
+        phone: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -113,8 +113,8 @@ export declare class ContactsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        phone: string | null;
         workspaceId: string;
+        phone: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -130,8 +130,8 @@ export declare class ContactsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        phone: string | null;
         workspaceId: string;
+        phone: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;

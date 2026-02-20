@@ -64,8 +64,9 @@ let AuthService = class AuthService {
         };
     }
     async register(registerDto) {
-        const user = await this.usersService.create(registerDto);
-        await this.workspacesService.createDefaultWorkspace(user.id);
+        const { workspaceName, taxId, ...userData } = registerDto;
+        const user = await this.usersService.create(userData);
+        await this.workspacesService.createDefaultWorkspace(user.id, workspaceName, taxId);
         return user;
     }
 };
