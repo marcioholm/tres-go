@@ -37,37 +37,22 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
             name: "Beatriz Mendonça",
             email: "beatriz.m@example.com",
             phone: "+55 11 99999-9999",
-            workspaceId: workspaceId,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            tags: [{ id: "t1", name: "Cliente VIP", color: "#f59e0b", workspaceId: workspaceId, createdAt: new Date(), updatedAt: new Date() }],
-            conversations: [],
-            notes: []
+            tags: [{ id: "t1", name: "Cliente VIP", color: "#f59e0b" }],
         },
         "2": {
             id: "2",
             name: "Carlos Eduardo",
             email: "carlos.e@example.com",
             phone: "+55 11 88888-8888",
-            workspaceId: workspaceId,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            source: TrafficSource.INSTAGRAM_ADS,
-            tags: [{ id: "t2", name: "Novo Lead", color: "#3b82f6", workspaceId: workspaceId, createdAt: new Date(), updatedAt: new Date() }],
-            conversations: [],
-            notes: []
+            source: TrafficSource.INSTAGRAM_DIRECT,
+            tags: [{ id: "t2", name: "Novo Lead", color: "#3b82f6" }],
         },
         "3": {
             id: "3",
             name: "Marcos Oliveira",
             email: "marcos.o@example.com",
             phone: "+55 11 77777-7777",
-            workspaceId: workspaceId,
-            createdAt: new Date(),
-            updatedAt: new Date(),
             tags: [],
-            conversations: [],
-            notes: []
         }
     }
 
