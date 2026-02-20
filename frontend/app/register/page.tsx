@@ -62,16 +62,17 @@ export default function RegisterPage() {
                             Manifesto NorthWay
                         </div>
                         <h2 className="text-4xl font-bold leading-tight">
-                            "Simplicidade no atendimento, potência na gestão."
+                            "Crescimento com método <br />
+                            <span className="text-red-400">gera liberdade."</span>
                         </h2>
                         <div className="space-y-4 text-lg text-slate-200 leading-relaxed">
-                            <p>✓ Dashboards em tempo real</p>
-                            <p>✓ Integração total com WhatsApp</p>
-                            <p>✓ Automação humanizada</p>
+                            <p>✓ Dashboards Estratégicos</p>
+                            <p>✓ Inteligência de Dados</p>
+                            <p>✓ Fim do Caos Operacional</p>
                         </div>
                         <div className="pt-8 flex items-center gap-4">
                             <div className="h-px flex-1 bg-white/20" />
-                            <span className="text-sm font-medium tracking-widest uppercase opacity-60">Cresça com a NorthWay</span>
+                            <span className="text-sm font-medium tracking-widest uppercase opacity-60">Manifesto NorthWay</span>
                             <div className="h-px flex-1 bg-white/20" />
                         </div>
                     </div>
@@ -82,13 +83,13 @@ export default function RegisterPage() {
             <div className="flex flex-col items-center justify-center p-8 lg:p-12 bg-white order-1">
                 <div className="w-full max-w-md space-y-8">
                     <div className="flex flex-col items-center lg:items-start space-y-4">
-                        <div className="flex items-center gap-3">
+                        <a href="https://www.northwaycompany.com.br/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                             <img src="/logo-northway.png" alt="NorthWay Logo" className="h-12 w-12 object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
                             <span className="text-2xl font-bold text-slate-900 tracking-tight">NORTHWAY<span className="text-red-600">OMNI</span></span>
-                        </div>
+                        </a>
                         <div className="space-y-1 text-center lg:text-left">
                             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Comece agora</h1>
-                            <p className="text-slate-500">Inicie seu teste gratuito de 7 dias hoje mesmo.</p>
+                            <p className="text-slate-500 font-medium">Inicie seu teste gratuito de 7 dias hoje mesmo.</p>
                         </div>
                     </div>
 

@@ -74,13 +74,13 @@ export default function LoginPage() {
             <div className="flex flex-col items-center justify-center p-8 lg:p-12 bg-white">
                 <div className="w-full max-w-md space-y-8">
                     <div className="flex flex-col items-center lg:items-start space-y-4">
-                        <div className="flex items-center gap-3">
+                        <a href="https://www.northwaycompany.com.br/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                             <img src="/logo-northway.png" alt="NorthWay Logo" className="h-12 w-12 object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
                             <span className="text-2xl font-bold text-slate-900 tracking-tight">NORTHWAY<span className="text-red-600">OMNI</span></span>
-                        </div>
+                        </a>
                         <div className="space-y-1 text-center lg:text-left">
-                            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Bem-vindo de volta!</h1>
-                            <p className="text-slate-500">Insira suas credenciais para acessar a plataforma.</p>
+                            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Acesse sua conta</h1>
+                            <p className="text-slate-500 font-medium">Bem-vindo de volta à inteligência no atendimento.</p>
                         </div>
                     </div>
 
@@ -127,16 +127,17 @@ export default function LoginPage() {
                             Manifesto NorthWay
                         </div>
                         <h2 className="text-4xl font-bold leading-tight">
-                            "Conectamos sua empresa a todos os canais em uma única experiência inteligente."
+                            "Nós não fazemos marketing. <br />
+                            <span className="text-red-400">Nós restauramos direção."</span>
                         </h2>
                         <div className="space-y-4 text-lg text-slate-200 leading-relaxed">
-                            <p>✓ Atendimento Omnichannel Unificado</p>
-                            <p>✓ Tecnologia que gera proximidade</p>
-                            <p>✓ Resultados reais em escala</p>
+                            <p>✓ Estruturação de Processos</p>
+                            <p>✓ Estratégia Baseada em Dados</p>
+                            <p>✓ Escala com Previsibilidade</p>
                         </div>
                         <div className="pt-8 flex items-center gap-4">
                             <div className="h-px flex-1 bg-white/20" />
-                            <span className="text-sm font-medium tracking-widest uppercase opacity-60">Impulsionando Negócios</span>
+                            <span className="text-sm font-medium tracking-widest uppercase opacity-60">Manifesto NorthWay</span>
                             <div className="h-px flex-1 bg-white/20" />
                         </div>
                     </div>
