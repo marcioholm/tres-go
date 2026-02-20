@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Search, User as UserIcon, ShieldGroup, ShieldCheck } from "lucide-react"
+import { Search, User as UserIcon, ShieldCheck } from "lucide-react"
 
 export default function UsersGlobalManagement() {
     const [users, setUsers] = useState<any[]>([])
