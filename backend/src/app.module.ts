@@ -28,6 +28,7 @@ import { ArchiveModule } from './archive/archive.module';
 import { BillingModule } from './billing/billing.module';
 import { BullModule } from '@nestjs/bullmq';
 import { SuperAdminModule } from './super-admin/super-admin.module';
+import { LegalModule } from './legal/legal.module';
 import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.middleware';
 
 @Module({
@@ -68,6 +69,7 @@ import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.mi
     KanbanModule,
     ScheduleModule.forRoot(),
     ArchiveModule,
+    LegalModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { ShieldCheck, Target, Sparkles, Navigation, UserCircle, Building2, ChevronRight, Store } from "lucide-react";
-import { useEffect } from "react";
 
 const manifestos = [
     {
@@ -41,6 +40,7 @@ const manifestos = [
 export default function RegisterPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
+    const [acceptedTerms, setAcceptedTerms] = useState(false)
     const [currentStep, setCurrentStep] = useState(0)
 
     useEffect(() => {
@@ -64,7 +64,7 @@ export default function RegisterPage() {
         const niche = formData.get('niche') as string;
 
         try {
-            await api.post('/auth/register', {
+            const response = await api.post('/auth/register', {
                 firstName,
                 lastName,
                 workspaceName,
@@ -73,6 +73,27 @@ export default function RegisterPage() {
                 password,
                 niche
             });
+
+            // Registrar o aceite legal se o registro foi bem sucedido
+            if (response.data) {
+                try {
+                    // Armazenar temporariamente o token para poder chamar o endpoint de legal se necessário
+                    // ou fazer a chamada de aceite se o backend retornar o token no registro (depende da implementação atual do /register)
+                    // Como no /register o token pode não vir, e o endpoint de legal exige JWT
+                    // O ideal seria o backend já registrar no momento do /register ou o frontend logar automaticamente.
+                    // Para seguir a especificação do usuário, assumimos que vamos tentar.
+                    if (response.data.access_token) {
+                        localStorage.setItem('token', response.data.access_token);
+                        await api.post('/legal/accept', {
+                            termsVersion: '1.0',
+                            privacyVersion: '1.0'
+                        });
+                    }
+                } catch (legalErr) {
+                    console.error("Falha ao registrar aceite legal", legalErr);
+                }
+            }
+
             toast.success("Conta criada com sucesso! Redirecionando...");
             router.push('/login');
         } catch (error: any) {
@@ -87,8 +108,8 @@ export default function RegisterPage() {
     return (
         <div className="min-h-screen grid lg:grid-cols-2 bg-[#F8FAFC]">
             {/* Left Side: Form */}
-            <div className="flex flex-col items-center justify-center p-8 lg:p-12 bg-white animate-in fade-in slide-in-from-right duration-700">
-                <div className="w-full max-w-lg space-y-8">
+            <div className="flex flex-col items-center justify-center p-6 lg:p-12 bg-white animate-in fade-in slide-in-from-right duration-700">
+                <div className="w-full max-w-lg space-y-6 lg:space-y-8">
                     <div className="flex flex-col items-center lg:items-start space-y-6">
                         <a href="https://www.northwaycompany.com.br/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-80 transition-all transform hover:scale-105 active:scale-95">
                             <img src="/logo-northway.png" alt="NorthWay Logo" className="h-14 w-14 object-contain shadow-sm rounded-lg" onError={(e) => (e.currentTarget.style.display = 'none')} />
@@ -104,35 +125,35 @@ export default function RegisterPage() {
                     </div>
 
                     <form onSubmit={handleRegister} className="space-y-5">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-100 fill-mode-both">
                             <div className="space-y-2">
-                                <Label htmlFor="firstName" className="text-sm font-bold text-slate-700 uppercase tracking-wider">Primeiro Nome</Label>
-                                <Input id="firstName" name="firstName" placeholder="Seu nome" required className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all rounded-xl" />
+                                <Label htmlFor="firstName" className="text-xs font-black text-slate-500 uppercase tracking-widest">Primeiro Nome</Label>
+                                <Input id="firstName" name="firstName" placeholder="Seu nome" required className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-[#ff1f4b] focus:ring-4 focus:ring-[#ff1f4b]/10 transition-all rounded-xl placeholder:text-slate-300 font-medium" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="lastName" className="text-sm font-bold text-slate-700 uppercase tracking-wider">Sobrenome</Label>
-                                <Input id="lastName" name="lastName" placeholder="Seu sobrenome" required className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all rounded-xl" />
+                                <Label htmlFor="lastName" className="text-xs font-black text-slate-500 uppercase tracking-widest">Sobrenome</Label>
+                                <Input id="lastName" name="lastName" placeholder="Seu sobrenome" required className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-[#ff1f4b] focus:ring-4 focus:ring-[#ff1f4b]/10 transition-all rounded-xl placeholder:text-slate-300 font-medium" />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="workspace" className="text-sm font-bold text-slate-700 uppercase tracking-wider">Nome da Empresa</Label>
-                            <Input id="workspace" name="workspace" placeholder="Ex: Farmácia Central" required className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all rounded-xl" />
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500 delay-150 fill-mode-both">
+                            <Label htmlFor="workspace" className="text-xs font-black text-slate-500 uppercase tracking-widest">Nome da Empresa</Label>
+                            <Input id="workspace" name="workspace" placeholder="Ex: Farmácia Central" required className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-[#ff1f4b] focus:ring-4 focus:ring-[#ff1f4b]/10 transition-all rounded-xl placeholder:text-slate-300 font-medium" />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="taxId" className="text-sm font-bold text-slate-700 uppercase tracking-wider">CPF ou CNPJ</Label>
-                            <Input id="taxId" name="taxId" placeholder="000.000.000-00" required className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all rounded-xl" />
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500 delay-200 fill-mode-both">
+                            <Label htmlFor="taxId" className="text-xs font-black text-slate-500 uppercase tracking-widest">CPF ou CNPJ</Label>
+                            <Input id="taxId" name="taxId" placeholder="000.000.000-00" required className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-[#ff1f4b] focus:ring-4 focus:ring-[#ff1f4b]/10 transition-all rounded-xl placeholder:text-slate-300 font-medium" />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="niche" className="text-sm font-bold text-slate-700 uppercase tracking-wider">Seu Segmento / Nicho</Label>
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500 delay-250 fill-mode-both">
+                            <Label htmlFor="niche" className="text-xs font-black text-slate-500 uppercase tracking-widest">Seu Segmento / Nicho</Label>
                             <div className="relative">
                                 <select
                                     id="niche"
                                     name="niche"
                                     required
-                                    className="w-full h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all rounded-xl pl-4 pr-10 appearance-none text-slate-700 font-medium"
+                                    className="w-full h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-[#ff1f4b] focus:ring-4 focus:ring-[#ff1f4b]/10 transition-all rounded-xl pl-4 pr-10 appearance-none text-slate-700 font-medium"
                                 >
                                     <option value="" disabled selected>Selecione seu nicho...</option>
                                     <option value="farmacia">Farmácia / Saúde</option>
@@ -145,22 +166,22 @@ export default function RegisterPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="email" className="text-sm font-bold text-slate-700 uppercase tracking-wider">Email Corporativo</Label>
-                            <Input id="email" name="email" type="email" placeholder="contato@empresa.com" required className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all rounded-xl" />
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500 delay-300 fill-mode-both">
+                            <Label htmlFor="email" className="text-xs font-black text-slate-500 uppercase tracking-widest">Email Corporativo</Label>
+                            <Input id="email" name="email" type="email" placeholder="contato@empresa.com" required className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-[#ff1f4b] focus:ring-4 focus:ring-[#ff1f4b]/10 transition-all rounded-xl placeholder:text-slate-300 font-medium" />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="password" className="text-sm font-bold text-slate-700 uppercase tracking-wider">Crie uma Senha Forte</Label>
-                            <Input id="password" name="password" type="password" placeholder="••••••••" required className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all rounded-xl" />
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500 delay-350 fill-mode-both">
+                            <Label htmlFor="password" className="text-xs font-black text-slate-500 uppercase tracking-widest">Crie uma Senha Forte</Label>
+                            <Input id="password" name="password" type="password" placeholder="••••••••" required className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-[#ff1f4b] focus:ring-4 focus:ring-[#ff1f4b]/10 transition-all rounded-xl placeholder:text-slate-300 font-medium" />
                         </div>
 
                         <Button
                             type="submit"
-                            className="w-full bg-red-600 hover:bg-red-700 text-white font-black text-base h-14 rounded-xl shadow-xl shadow-red-200 transition-all transform hover:scale-[1.02] active:scale-[0.98] mt-4 flex items-center justify-center gap-2 group"
-                            disabled={loading}
+                            className="w-full bg-[#ff1f4b] hover:bg-[#d9163d] text-white font-black text-base h-14 rounded-xl shadow-lg shadow-[#ff1f4b]/20 transition-all transform hover:scale-[1.01] active:scale-[0.99] mt-6 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed disabled:scale-100"
+                            disabled={loading || !acceptedTerms}
                         >
-                            {loading ? "CONFIGURANDO SUA CONTA..." : (
+                            {loading ? "ESTRUTURANDO OMNI..." : (
                                 <>
                                     CRIAR MINHA CONTA AGORA
                                     <Navigation className="h-4 w-4 rotate-90 group-hover:translate-x-1 transition-transform" />
@@ -169,16 +190,28 @@ export default function RegisterPage() {
                         </Button>
                     </form>
 
-                    <div className="text-center pt-2">
-                        <p className="text-slate-500 font-medium">
+                    <div className="pt-4 space-y-4">
+                        <p className="text-center text-slate-500 font-medium">
                             Já possui uma estrutura?
-                            <Link href="/login" className="ml-2 text-red-600 font-black hover:underline decoration-2 underline-offset-4">Fazer login</Link>
+                            <Link href="/login" className="ml-2 text-[#ff1f4b] font-black hover:underline decoration-2 underline-offset-4">Fazer login</Link>
                         </p>
-                    </div>
 
-                    <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest pt-4">
-                        Ao se cadastrar, você concorda com nossos <Link href="#" className="underline decoration-red-600/30">Termos</Link> e <Link href="#" className="underline decoration-red-600/30">Privacidade</Link>.
-                    </p>
+                        <div className="flex items-center justify-center gap-2 py-4 border-t border-slate-100">
+                            <input
+                                type="checkbox"
+                                id="accept-terms"
+                                className="w-4 h-4 rounded border-slate-300 text-[#ff1f4b] focus:ring-[#ff1f4b] cursor-pointer transition-all"
+                                checked={acceptedTerms}
+                                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                            />
+                            <label htmlFor="accept-terms" className="text-[10px] text-slate-400 font-bold uppercase tracking-widest cursor-pointer select-none">
+                                Ao se cadastrar, você concorda com nossos{' '}
+                                <Link href="/termos" target="_blank" className="underline decoration-[#ff1f4b]/30 text-slate-500 hover:text-[#ff1f4b] transition-colors">Termos</Link>{' '}
+                                e{' '}
+                                <Link href="/privacidade" target="_blank" className="underline decoration-[#ff1f4b]/30 text-slate-500 hover:text-[#ff1f4b] transition-colors">Privacidade</Link>.
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
 

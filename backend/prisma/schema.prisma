@@ -345,6 +345,19 @@ model User {
   uploadedFiles     MediaUpload[]
   auditLogs         AuditLog[]
   superAdmin        SuperAdmin?
+  legalAcceptance   LegalAcceptance?
+}
+
+// ── Legal Acceptance: auditoria LGPD
+model LegalAcceptance {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  termsVersion   String   @default("1.0")
+  privacyVersion String   @default("1.0")
+  acceptedAt     DateTime @default(now())
+  ip             String?
+  userAgent      String?
 }
 
 // ── Tag: adicionar campo type
