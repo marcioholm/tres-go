@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: backend-tres-go
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://postgres:j5LHjVtkOJcZTUOH@db.lsscbhiojipxvybzpciy.supabase.co:5432/postgres
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: redis-tres-go
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: redis-tres-go
+          property: port
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+
+  - type: redis
+    name: redis-tres-go
+    plan: free
+    ipAllowList: []
