@@ -19,12 +19,12 @@ export declare class SectorsService {
         };
     } & {
         id: string;
-        name: string;
-        description: string | null;
-        isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
+        name: string;
+        description: string | null;
+        isActive: boolean;
         color: string;
         icon: string;
         isDefault: boolean;
@@ -34,25 +34,18 @@ export declare class SectorsService {
         _count: {
             conversations: number;
         };
-        kanbanBoard: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            workspaceId: string;
-            sectorId: string | null;
-        };
         members: ({
             user: {
                 id: string;
-                name: string | null;
+                status: string;
                 createdAt: Date;
                 updatedAt: Date;
+                name: string | null;
                 email: string;
                 firstName: string | null;
                 lastName: string | null;
                 niche: string | null;
                 password: string;
-                status: string;
             };
         } & {
             id: string;
@@ -61,6 +54,13 @@ export declare class SectorsService {
             role: import(".prisma/client").$Enums.SectorRole;
             sectorId: string;
         })[];
+        kanbanBoard: {
+            id: string;
+            createdAt: Date;
+            workspaceId: string;
+            name: string;
+            sectorId: string | null;
+        };
         slaConfig: {
             id: string;
             sectorId: string;
@@ -71,21 +71,21 @@ export declare class SectorsService {
         };
         autoRules: {
             id: string;
-            isActive: boolean;
             createdAt: Date;
-            sectorId: string;
+            isActive: boolean;
             type: import(".prisma/client").$Enums.AutoRuleType;
+            sectorId: string;
             value: string;
             priority: number;
         }[];
     } & {
         id: string;
-        name: string;
-        description: string | null;
-        isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
+        name: string;
+        description: string | null;
+        isActive: boolean;
         color: string;
         icon: string;
         isDefault: boolean;
@@ -94,9 +94,9 @@ export declare class SectorsService {
     create(workspaceId: string, data: any): Promise<{
         kanbanBoard: {
             id: string;
-            name: string;
             createdAt: Date;
             workspaceId: string;
+            name: string;
             sectorId: string | null;
         };
         slaConfig: {
@@ -109,12 +109,12 @@ export declare class SectorsService {
         };
     } & {
         id: string;
-        name: string;
-        description: string | null;
-        isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
+        name: string;
+        description: string | null;
+        isActive: boolean;
         color: string;
         icon: string;
         isDefault: boolean;
@@ -122,12 +122,12 @@ export declare class SectorsService {
     }>;
     update(workspaceId: string, sectorId: string, data: any): Promise<{
         id: string;
-        name: string;
-        description: string | null;
-        isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
+        name: string;
+        description: string | null;
+        isActive: boolean;
         color: string;
         icon: string;
         isDefault: boolean;
@@ -135,12 +135,12 @@ export declare class SectorsService {
     }>;
     delete(workspaceId: string, sectorId: string): Promise<{
         id: string;
-        name: string;
-        description: string | null;
-        isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
+        name: string;
+        description: string | null;
+        isActive: boolean;
         color: string;
         icon: string;
         isDefault: boolean;
@@ -149,15 +149,15 @@ export declare class SectorsService {
     addMember(workspaceId: string, sectorId: string, userId: string, role: 'AGENT' | 'SUPERVISOR'): Promise<{
         user: {
             id: string;
-            name: string | null;
+            status: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string | null;
             email: string;
             firstName: string | null;
             lastName: string | null;
             niche: string | null;
             password: string;
-            status: string;
         };
     } & {
         id: string;

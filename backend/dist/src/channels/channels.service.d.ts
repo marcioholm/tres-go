@@ -7,9 +7,12 @@ export declare class ChannelsService {
     constructor(prisma: PrismaService, billing: BillingService);
     create(workspaceId: string, data: any): Promise<{
         id: string;
-        type: import(".prisma/client").$Enums.ChannelType;
-        name: string;
         status: import(".prisma/client").$Enums.ChannelStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        workspaceId: string;
+        name: string;
+        type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
         pageAvatar: string | null;
@@ -20,15 +23,15 @@ export declare class ChannelsService {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        workspaceId: string;
     }>;
     findAll(workspaceId: string): Promise<{
         id: string;
-        type: import(".prisma/client").$Enums.ChannelType;
-        name: string;
         status: import(".prisma/client").$Enums.ChannelStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        workspaceId: string;
+        name: string;
+        type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
         pageAvatar: string | null;
@@ -39,15 +42,15 @@ export declare class ChannelsService {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        workspaceId: string;
     }[]>;
     remove(id: string, workspaceId: string): Promise<{
         id: string;
-        type: import(".prisma/client").$Enums.ChannelType;
-        name: string;
         status: import(".prisma/client").$Enums.ChannelStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        workspaceId: string;
+        name: string;
+        type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
         pageAvatar: string | null;
@@ -58,18 +61,18 @@ export declare class ChannelsService {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        workspaceId: string;
     }>;
     update(id: string, body: {
         name?: string;
         displayName?: string;
     }, workspaceId: string): Promise<{
         id: string;
-        type: import(".prisma/client").$Enums.ChannelType;
-        name: string;
         status: import(".prisma/client").$Enums.ChannelStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        workspaceId: string;
+        name: string;
+        type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
         pageAvatar: string | null;
@@ -80,9 +83,6 @@ export declare class ChannelsService {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        workspaceId: string;
     }>;
     requestWhatsAppCode(body: {
         phoneNumber: string;

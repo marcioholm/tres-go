@@ -70,10 +70,19 @@ export class AuthService {
 
     async register(registerDto: any) {
         const { workspaceName, taxId, ...userData } = registerDto;
-        // userData now contains firstName, lastName, niche, email, password
+
+        // 1. Criar o usuário
         const user = await this.usersService.create(userData);
-        // Create default workspace for new user immediately with provided name and taxId
-        await this.workspacesService.createDefaultWorkspace(user.id, workspaceName, taxId);
-        return user;
+
+        // 2. Criar o workspace padrão (ignorar falhas não críticas para não bloquear o registro)
+        try {
+            await this.workspacesService.createDefaultWorkspace(user.id, workspaceName, taxId);
+        } catch (err) {
+            console.error("Falha ao criar workspace no registro:", err);
+            // Mesmo se falhar o workspace, o self-healing no login/perfil deve lidar com isso depois
+        }
+
+        // 3. Retornar o usuário com token para login automático no frontend
+        return this.login(user);
     }
 }

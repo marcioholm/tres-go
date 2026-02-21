@@ -13,8 +13,29 @@ export class BillingService {
 
     // ── Ativar trial ────────────────────────────────────────────────────────────
 
-    async startTrial(workspaceId: string, planSlug = 'growth') {
-        const plan = await this.prisma.plan.findUnique({ where: { slug: planSlug } });
+    async startTrial(workspaceId: string, planSlug = 'starter') {
+        let plan = await this.prisma.plan.findUnique({ where: { slug: planSlug } });
+
+        if (!plan && planSlug === 'starter') {
+            plan = await this.prisma.plan.create({
+                data: {
+                    name: 'Starter',
+                    slug: 'starter',
+                    priceMonthly: 97,
+                    priceYearly: 890,
+                    trialDays: 7,
+                    maxAgents: 3,
+                    maxChannels: 2,
+                    maxConversationsPerMonth: 1000,
+                    maxSectors: 3,
+                    maxCampaigns: 5,
+                    hasKanban: true,
+                    hasReports: true,
+                    hasChatbot: true
+                }
+            });
+        }
+
         if (!plan) throw new Error(`Plano '${planSlug}' não encontrado.`);
 
         const trialEndsAt = new Date();

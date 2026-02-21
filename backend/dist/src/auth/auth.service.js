@@ -66,8 +66,13 @@ let AuthService = class AuthService {
     async register(registerDto) {
         const { workspaceName, taxId, ...userData } = registerDto;
         const user = await this.usersService.create(userData);
-        await this.workspacesService.createDefaultWorkspace(user.id, workspaceName, taxId);
-        return user;
+        try {
+            await this.workspacesService.createDefaultWorkspace(user.id, workspaceName, taxId);
+        }
+        catch (err) {
+            console.error("Falha ao criar workspace no registro:", err);
+        }
+        return this.login(user);
     }
 };
 exports.AuthService = AuthService;

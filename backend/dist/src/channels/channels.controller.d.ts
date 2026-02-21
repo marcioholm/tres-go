@@ -7,9 +7,12 @@ export declare class ChannelsController {
     constructor(channelsService: ChannelsService, metaOAuth: MetaOAuthService);
     create(workspaceId: string, data: any): Promise<{
         id: string;
-        type: import(".prisma/client").$Enums.ChannelType;
-        name: string;
         status: import(".prisma/client").$Enums.ChannelStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        workspaceId: string;
+        name: string;
+        type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
         pageAvatar: string | null;
@@ -20,15 +23,15 @@ export declare class ChannelsController {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        workspaceId: string;
     }>;
     findAll(workspaceId: string): Promise<{
         id: string;
-        type: import(".prisma/client").$Enums.ChannelType;
-        name: string;
         status: import(".prisma/client").$Enums.ChannelStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        workspaceId: string;
+        name: string;
+        type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
         pageAvatar: string | null;
@@ -39,15 +42,15 @@ export declare class ChannelsController {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        workspaceId: string;
     }[]>;
     update(workspaceId: string, id: string, data: any): Promise<{
         id: string;
-        type: import(".prisma/client").$Enums.ChannelType;
-        name: string;
         status: import(".prisma/client").$Enums.ChannelStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        workspaceId: string;
+        name: string;
+        type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
         pageAvatar: string | null;
@@ -58,15 +61,15 @@ export declare class ChannelsController {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        workspaceId: string;
     }>;
     remove(workspaceId: string, id: string): Promise<{
         id: string;
-        type: import(".prisma/client").$Enums.ChannelType;
-        name: string;
         status: import(".prisma/client").$Enums.ChannelStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        workspaceId: string;
+        name: string;
+        type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
         pageAvatar: string | null;
@@ -77,9 +80,6 @@ export declare class ChannelsController {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        workspaceId: string;
     }>;
     getMetaOAuthUrl(workspaceId: string, type: 'INSTAGRAM' | 'MESSENGER', name: string): {
         url: string;
@@ -98,9 +98,12 @@ export declare class ChannelsController {
         code: string;
     }): Promise<{
         id: string;
-        type: import(".prisma/client").$Enums.ChannelType;
-        name: string;
         status: import(".prisma/client").$Enums.ChannelStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        workspaceId: string;
+        name: string;
+        type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
         pageAvatar: string | null;
@@ -111,8 +114,5 @@ export declare class ChannelsController {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        workspaceId: string;
     }>;
 }

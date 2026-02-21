@@ -30,6 +30,8 @@ export declare class SuperAdminController {
             subscription: {
                 plan: {
                     id: string;
+                    createdAt: Date;
+                    updatedAt: Date;
                     name: string;
                     slug: string;
                     description: string | null;
@@ -54,15 +56,10 @@ export declare class SuperAdminController {
                     hasCampaigns: boolean;
                     hasSalesHistory: boolean;
                     hasScheduledMessages: boolean;
-                    createdAt: Date;
-                    updatedAt: Date;
                 };
             } & {
                 id: string;
-                createdAt: Date;
-                updatedAt: Date;
                 status: import(".prisma/client").$Enums.SubscriptionStatus;
-                workspaceId: string;
                 billingCycle: import(".prisma/client").$Enums.BillingCycle;
                 asaasCustomerId: string | null;
                 asaasSubscriptionId: string | null;
@@ -73,14 +70,17 @@ export declare class SuperAdminController {
                 blockedAt: Date | null;
                 priceOverride: number | null;
                 discountPercent: number | null;
+                createdAt: Date;
+                updatedAt: Date;
+                workspaceId: string;
                 planId: string;
             };
         } & {
-            plan: string;
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            plan: string;
+            name: string;
             taxId: string | null;
             isBlocked: boolean;
             blockReason: string | null;
@@ -93,6 +93,8 @@ export declare class SuperAdminController {
         subscription: {
             plan: {
                 id: string;
+                createdAt: Date;
+                updatedAt: Date;
                 name: string;
                 slug: string;
                 description: string | null;
@@ -117,17 +119,15 @@ export declare class SuperAdminController {
                 hasCampaigns: boolean;
                 hasSalesHistory: boolean;
                 hasScheduledMessages: boolean;
-                createdAt: Date;
-                updatedAt: Date;
             };
             invoices: {
                 id: string;
-                description: string | null;
+                status: import(".prisma/client").$Enums.InvoiceStatus;
                 createdAt: Date;
                 updatedAt: Date;
-                status: import(".prisma/client").$Enums.InvoiceStatus;
-                asaasPaymentId: string | null;
+                description: string | null;
                 subscriptionId: string;
+                asaasPaymentId: string | null;
                 amount: number;
                 dueDate: Date;
                 paidAt: Date | null;
@@ -138,10 +138,7 @@ export declare class SuperAdminController {
             }[];
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             status: import(".prisma/client").$Enums.SubscriptionStatus;
-            workspaceId: string;
             billingCycle: import(".prisma/client").$Enums.BillingCycle;
             asaasCustomerId: string | null;
             asaasSubscriptionId: string | null;
@@ -152,33 +149,36 @@ export declare class SuperAdminController {
             blockedAt: Date | null;
             priceOverride: number | null;
             discountPercent: number | null;
+            createdAt: Date;
+            updatedAt: Date;
+            workspaceId: string;
             planId: string;
         };
         users: ({
             user: {
                 id: string;
-                name: string | null;
+                status: string;
                 createdAt: Date;
                 updatedAt: Date;
+                name: string | null;
                 email: string;
                 firstName: string | null;
                 lastName: string | null;
                 niche: string | null;
                 password: string;
-                status: string;
             };
         } & {
             id: string;
-            userId: string;
             workspaceId: string;
+            userId: string;
             role: string;
         })[];
     } & {
-        plan: string;
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        plan: string;
+        name: string;
         taxId: string | null;
         isBlocked: boolean;
         blockReason: string | null;
@@ -198,6 +198,8 @@ export declare class SuperAdminController {
     }>;
     getPlans(): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         name: string;
         slug: string;
         description: string | null;
@@ -222,11 +224,11 @@ export declare class SuperAdminController {
         hasCampaigns: boolean;
         hasSalesHistory: boolean;
         hasScheduledMessages: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }[]>;
     createPlan(data: any): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         name: string;
         slug: string;
         description: string | null;
@@ -251,11 +253,11 @@ export declare class SuperAdminController {
         hasCampaigns: boolean;
         hasSalesHistory: boolean;
         hasScheduledMessages: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     updatePlan(id: string, data: any): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         name: string;
         slug: string;
         description: string | null;
@@ -280,25 +282,23 @@ export declare class SuperAdminController {
         hasCampaigns: boolean;
         hasSalesHistory: boolean;
         hasScheduledMessages: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     getAllUsers(search: string): Promise<({
         workspaces: ({
             workspace: {
-                plan: string;
                 id: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                plan: string;
+                name: string;
                 taxId: string | null;
                 isBlocked: boolean;
                 blockReason: string | null;
             };
         } & {
             id: string;
-            userId: string;
             workspaceId: string;
+            userId: string;
             role: string;
         })[];
         superAdmin: {
@@ -308,15 +308,15 @@ export declare class SuperAdminController {
         };
     } & {
         id: string;
-        name: string | null;
+        status: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string | null;
         email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
-        status: string;
     })[]>;
     getHealth(): Promise<{
         status: string;
@@ -347,15 +347,15 @@ export declare class SuperAdminController {
     getAdmins(): Promise<({
         user: {
             id: string;
-            name: string | null;
+            status: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string | null;
             email: string;
             firstName: string | null;
             lastName: string | null;
             niche: string | null;
             password: string;
-            status: string;
         };
     } & {
         id: string;
@@ -377,12 +377,12 @@ export declare class SuperAdminController {
         count: number;
         invoices: {
             id: string;
-            description: string | null;
+            status: import(".prisma/client").$Enums.InvoiceStatus;
             createdAt: Date;
             updatedAt: Date;
-            status: import(".prisma/client").$Enums.InvoiceStatus;
-            asaasPaymentId: string | null;
+            description: string | null;
             subscriptionId: string;
+            asaasPaymentId: string | null;
             amount: number;
             dueDate: Date;
             paidAt: Date | null;
@@ -395,21 +395,21 @@ export declare class SuperAdminController {
     getAuditLogs(query: any): Promise<({
         user: {
             id: string;
-            name: string | null;
+            status: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string | null;
             email: string;
             firstName: string | null;
             lastName: string | null;
             niche: string | null;
             password: string;
-            status: string;
         };
     } & {
         id: string;
         createdAt: Date;
-        userId: string | null;
         workspaceId: string | null;
+        userId: string | null;
         actionType: string;
         entityType: string | null;
         entityId: string | null;
