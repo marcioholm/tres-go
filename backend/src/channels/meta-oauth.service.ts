@@ -18,7 +18,7 @@ export class MetaOAuthService {
         // Scope depende do tipo de canal
         const scope =
             type === 'INSTAGRAM'
-                ? 'instagram_business_basic,instagram_business_manage_messages,instagram_manage_comments,pages_show_list,pages_messaging'
+                ? 'instagram_basic,instagram_manage_messages,instagram_manage_comments,pages_show_list,pages_messaging'
                 : 'pages_show_list,pages_messaging,pages_read_engagement';
 
         // State para prevenir CSRF e passar contexto

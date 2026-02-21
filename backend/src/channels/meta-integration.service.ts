@@ -8,7 +8,7 @@ export class MetaIntegrationService {
     private readonly APP_SECRET = process.env.META_APP_SECRET;
     private readonly REDIRECT_URI = process.env.META_REDIRECT_URI;
     private readonly STATE_SECRET = process.env.META_OAUTH_STATE_SECRET || 'fallback-secret-for-dev';
-    private readonly SCOPES = process.env.META_SCOPES || 'pages_show_list,pages_read_engagement,pages_manage_metadata,instagram_business_basic,instagram_business_manage_messages';
+    private readonly SCOPES = process.env.META_SCOPES || 'pages_show_list,pages_read_engagement,pages_manage_metadata,instagram_basic,instagram_manage_messages';
 
     constructor(private readonly prisma: PrismaService) { }
 
