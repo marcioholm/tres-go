@@ -58,7 +58,7 @@ export class WebhooksService {
         if (!conversation) {
             // Find a valid channel
             const channel = await this.prisma.channel.findFirst({
-                where: { workspaceId, type: 'whatsapp' }
+                where: { workspaceId, type: 'WHATSAPP' }
             });
 
             if (!channel) {
