@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { useLanguage } from "@/lib/language-context"
+import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, MessageCircle, Smartphone, Check, AlertTriangle, Facebook, Loader2, Link2 } from "lucide-react"
@@ -36,12 +37,8 @@ export default function IntegrationsPage() {
         const fetchChannels = async () => {
             setLoading(true)
             try {
-                const token = localStorage.getItem('token')
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/workspaces/${workspaceId}/channels`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-                const data = await res.json()
-                setChannels(Array.isArray(data) ? data : [])
+                const res = await api.get(`/workspaces/${workspaceId}/channels`)
+                setChannels(Array.isArray(res.data) ? res.data : [])
             } catch (err) {
                 console.error('Failed to fetch channels:', err)
             } finally {
