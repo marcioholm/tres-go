@@ -56,7 +56,6 @@ export default function MetaCallbackPage() {
         setConnecting(page.id);
         try {
             const token = localStorage.getItem('token');
-            // Identificar se é IG ou Messenger baseado no contexto original ou tentar buscar IG
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/workspaces/${workspaceId}/channels`, {
                 method: 'POST',
                 headers: {
@@ -64,7 +63,7 @@ export default function MetaCallbackPage() {
                     Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    type: 'MESSENGER', // Fallback, no futuro detectar IG
+                    type: 'MESSENGER',
                     name: page.name,
                     pageId: page.id,
                     pageName: page.name,
@@ -76,7 +75,7 @@ export default function MetaCallbackPage() {
 
             if (!res.ok) throw new Error();
 
-            router.push(`/workspaces/${workspaceId}/settings/channels`);
+            router.push(`/workspaces/${workspaceId}/settings/channels?success=true`);
         } catch (err) {
             setError('Erro ao conectar página.');
             setConnecting(null);

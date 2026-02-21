@@ -11,9 +11,12 @@ import {
     AlertCircle,
     CheckCircle2,
     MoreVertical,
-    ExternalLink
+    ExternalLink,
+    XCircle
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'next/navigation';
 
 interface Channel {
     id: string;
@@ -29,12 +32,29 @@ interface Channel {
 export default function ChannelsPage() {
     const { workspaceId } = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [channels, setChannels] = useState<Channel[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchChannels();
-    }, [workspaceId]);
+
+        const success = searchParams.get('success');
+        const error = searchParams.get('error');
+
+        if (success) {
+            toast.success('Canal conectado com sucesso! 🎉');
+        }
+
+        if (error) {
+            const messages: Record<string, string> = {
+                cancelled: 'Conexão cancelada. Tente novamente quando quiser.',
+                no_pages: 'Nenhuma Página do Facebook encontrada. Certifique-se de ser administrador de uma Página.',
+                unknown: 'Erro inesperado. Entre em contato com o suporte se o problema persistir.',
+            };
+            toast.error(messages[error] || 'Erro na conexão');
+        }
+    }, [workspaceId, searchParams]);
 
     const fetchChannels = async () => {
         try {
