@@ -29,21 +29,34 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
     const [currentTime, setCurrentTime] = useState<string>("")
     const [agentTab, setAgentTab] = useState<'atendimento' | 'vendas'>('atendimento')
     const [sectors, setSectors] = useState<any[]>([])
-    const [isLoadingSectors, setIsLoadingSectors] = useState(true)
+    const [dashboardMetrics, setDashboardMetrics] = useState<any>(null)
+    const [agentPerformance, setAgentPerformance] = useState<any[]>([])
+    const [volumeChartData, setVolumeChartData] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
 
     // Fetch Sector Metrics
+    // Fetch All Metrics
     useEffect(() => {
-        const fetchSectors = async () => {
+        const fetchAllMetrics = async () => {
+            setIsLoading(true)
             try {
-                const response = await api.get(`/workspaces/${params.workspaceId}/reports/sectors`)
-                setSectors(response.data)
+                const [sectorsRes, dashRes, agentsRes, volumeRes] = await Promise.all([
+                    api.get(`/workspaces/${params.workspaceId}/reports/sectors`),
+                    api.get(`/workspaces/${params.workspaceId}/reports/dashboard`),
+                    api.get(`/workspaces/${params.workspaceId}/reports/agents`),
+                    api.get(`/workspaces/${params.workspaceId}/reports/volume`)
+                ])
+                setSectors(sectorsRes.data)
+                setDashboardMetrics(dashRes.data)
+                setAgentPerformance(agentsRes.data)
+                setVolumeChartData(volumeRes.data)
             } catch (error) {
-                console.error("Failed to fetch sector metrics", error)
+                console.error("Failed to fetch dashboard metrics", error)
             } finally {
-                setIsLoadingSectors(false)
+                setIsLoading(false)
             }
         }
-        fetchSectors()
+        if (params.workspaceId) fetchAllMetrics()
     }, [params.workspaceId])
 
     // Live Clock
@@ -145,7 +158,7 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                         <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Performance por Setor</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {isLoadingSectors ? (
+                        {isLoading ? (
                             [1, 2, 3, 4].map(i => (
                                 <Card key={i} className="p-4 h-32 animate-pulse bg-slate-100" />
                             ))
@@ -176,7 +189,7 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                                 </div>
                             </Card>
                         ))}
-                        {sectors.length === 0 && !isLoadingSectors && (
+                        {sectors.length === 0 && !isLoading && (
                             <Card className="p-5 lg:col-span-4 flex items-center justify-center border-dashed border-2 text-slate-400 text-xs">
                                 Nenhum setor configurado. Vá em Configurações para adicionar.
                             </Card>
@@ -194,16 +207,9 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
                                 <MessageSquare className="text-blue-500 w-5 h-5" />
                             </div>
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+12% ↑</span>
                         </div>
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Conversas</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim">247</p>
-                        <div className="mt-3 flex items-center gap-2">
-                            <div className="flex-1 h-1 bg-slate-100 rounded-full">
-                                <div className="h-1 bg-blue-400 rounded-full bar-fill" style={{ width: '73%' }}></div>
-                            </div>
-                            <span className="text-[10px] text-slate-500 font-semibold">73% meta</span>
-                        </div>
+                        <p className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.totalConversations?.value || 0}</p>
                     </Card>
 
                     {/* KPI 2: Resolvidas */}
@@ -213,44 +219,34 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                             <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
                                 <CheckCircle className="text-emerald-500 w-5 h-5" />
                             </div>
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+8% ↑</span>
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{dashboardMetrics?.resolved?.rate || 0}% taxa ↓</span>
                         </div>
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Resolvidas</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim">189</p>
-                        <div className="mt-3 flex items-center gap-2">
-                            <div className="flex-1 h-1 bg-slate-100 rounded-full">
-                                <div className="h-1 bg-emerald-400 rounded-full bar-fill" style={{ width: '76%' }}></div>
-                            </div>
-                            <span className="text-[10px] text-slate-500 font-semibold">76% taxa</span>
-                        </div>
+                        <p className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.resolved?.value || 0}</p>
                     </Card>
 
-                    {/* KPI 3: TMR */}
+                    {/* KPI 3: Novos Contatos */}
                     <Card className="p-5 relative overflow-hidden kpi-shimmer border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-full -translate-y-8 translate-x-8"></div>
                         <div className="flex items-start justify-between mb-4">
                             <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                                <Reply className="text-amber-500 w-5 h-5" />
+                                <Search className="text-amber-500 w-5 h-5" />
                             </div>
-                            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">-3min ↓</span>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Tempo Médio Resposta</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim">4<span className="text-lg font-bold text-slate-500">min</span></p>
-                        <p className="text-[10px] text-slate-500 mt-1">Desde a última mensagem do cliente</p>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Novos Contatos</p>
+                        <p className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.newContacts?.value || 0}</p>
                     </Card>
 
                     {/* KPI 4: TMA */}
-                    <Card className="p-5 relative overflow-hidden kpi-shimmer border-l-4 border-l-primary border-t-0 border-r-0 border-b-0 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                    <Card className="p-5 relative overflow-hidden border-l-4 border-l-primary border-t-0 border-r-0 border-b-0 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-8 translate-x-8"></div>
                         <div className="flex items-start justify-between mb-4">
                             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                                 <Timer className="text-primary w-5 h-5" />
                             </div>
-                            <span className="text-[10px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">NOVO</span>
                         </div>
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Tempo Médio Atendimento</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim">18<span className="text-lg font-bold text-slate-500">min</span></p>
-                        <p className="text-[10px] text-slate-500 mt-1">Da aceitação à resolução</p>
+                        <p className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.tma?.value || "0m"}</p>
                     </Card>
 
                 </div>
@@ -333,15 +329,12 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                         </div>
                         <div className="h-[250px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <ComposedChart data={volumeData}>
+                                <ComposedChart data={volumeChartData}>
                                     <CartesianGrid vertical={false} stroke="#f1f5f9" />
-                                    <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                                    <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6366f1' }} />
                                     <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', borderRadius: '8px', border: 'none', color: '#fff' }} itemStyle={{ color: '#fff' }} />
-                                    <Bar dataKey="recebidas" fill="rgba(242,13,13,0.12)" radius={[4, 4, 0, 0]} stroke="#f20d0d" strokeWidth={2} />
-                                    <Bar dataKey="resolvidas" fill="rgba(52,211,153,0.15)" radius={[4, 4, 0, 0]} stroke="#10b981" strokeWidth={2} />
-                                    <Line type="monotone" dataKey="tma" stroke="#6366f1" strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} yAxisId="right" />
+                                    <Bar dataKey="total" fill="rgba(69, 10, 10, 0.12)" radius={[4, 4, 0, 0]} stroke="#f20d0d" strokeWidth={2} />
                                 </ComposedChart>
                             </ResponsiveContainer>
                         </div>
@@ -525,26 +518,21 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {[
-                                        { rank: '🥇', name: 'Marcos Oliveira', role: 'Admin', color: 'bg-emerald-500', atendidos: 54, resolvidos: 49, tmr: '2min', tma: '11min', csat: '4.9', receita: 'R$ 18.400' },
-                                        { rank: '🥈', name: 'Carlos Eduardo', role: 'Agente', color: 'bg-blue-500', atendidos: 47, resolvidos: 41, tmr: '3min', tma: '14min', csat: '4.8', receita: 'R$ 15.200' },
-                                        { rank: '🥉', name: 'Agente Silva', role: 'Agente', color: 'bg-primary', atendidos: 38, resolvidos: 29, tmr: '5min', tma: '22min', csat: '4.6', receita: 'R$ 9.800' },
-                                        { rank: '4', name: 'Bruno Mendes', role: 'Agente', color: 'bg-violet-500', atendidos: 28, resolvidos: 18, tmr: '8min', tma: '34min', csat: '4.1', receita: 'R$ 4.890' },
-                                    ].map((a, i) => (
+                                    {agentPerformance.map((a, i) => (
                                         <tr key={i} className="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
-                                            <td className="px-5 py-3.5 text-xs font-black text-slate-400">{a.rank}</td>
+                                            <td className="px-5 py-3.5 text-xs font-black text-slate-400">{i + 1}</td>
                                             <td className="px-3 py-3.5">
                                                 <div className="flex items-center gap-2.5">
-                                                    <div className={`w-8 h-8 rounded-full ${a.color} text-white text-xs font-bold flex items-center justify-center`}>{a.name.split(' ').map(n => n[0]).join('').substring(0, 2)}</div>
-                                                    <div><p className="text-xs font-bold text-slate-700">{a.name}</p><p className="text-[10px] text-slate-500">{a.role}</p></div>
+                                                    <div className={`w-8 h-8 rounded-full bg-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center`}>{a.name.substring(0, 2).toUpperCase()}</div>
+                                                    <div><p className="text-xs font-bold text-slate-700">{a.name}</p><p className="text-[10px] text-slate-500">Agente</p></div>
                                                 </div>
                                             </td>
-                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-slate-700">{a.atendidos}</td>
-                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-emerald-600">{a.resolvidos}</td>
-                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-slate-700">{a.tmr}</td>
+                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-slate-700">{a.conversations}</td>
+                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-emerald-600">{a.resolved}</td>
+                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-slate-700">{a.tmr || "0m"}</td>
                                             <td className="px-3 py-3.5 text-right text-xs font-bold text-slate-700">{a.tma}</td>
-                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-slate-700">⭐ {a.csat}</td>
-                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-emerald-600">{a.receita}</td>
+                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-slate-700">⭐ 5.0</td>
+                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-emerald-600">R$ 0</td>
                                         </tr>
                                     ))}
                                 </tbody>

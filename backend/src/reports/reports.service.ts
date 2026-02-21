@@ -6,50 +6,69 @@ export class ReportsService {
     constructor(private prisma: PrismaService) { }
 
     async getDashboardMetrics(workspaceId: string, range: { start: string, end: string }) {
-        // Mock data for now, but structured correctly
+        const start = range.start ? new Date(range.start) : new Date(new Date().setDate(new Date().getDate() - 30));
+        const end = range.end ? new Date(range.end) : new Date();
+
+        const [total, resolved, newContacts] = await Promise.all([
+            this.prisma.conversation.count({ where: { workspaceId, createdAt: { gte: start, lte: end } } }),
+            this.prisma.conversation.count({ where: { workspaceId, status: 'CLOSED', updatedAt: { gte: start, lte: end } } }),
+            this.prisma.contact.count({ where: { workspaceId, createdAt: { gte: start, lte: end } } })
+        ]);
+
         return {
-            totalConversations: { value: 1284, change: 20.1 },
-            resolved: { value: 1100, rate: 85 },
-            newContacts: { value: 573, change: 201 },
-            tma: { value: "4m 32s", change: -60 } // seconds
+            totalConversations: { value: total, change: 0 },
+            resolved: { value: resolved, rate: total > 0 ? Math.round((resolved / total) * 100) : 0 },
+            newContacts: { value: newContacts, change: 0 },
+            tma: { value: "0m", change: 0 }
         };
     }
 
     async getAgentPerformance(workspaceId: string, range: { start: string, end: string }) {
-        return [
-            { name: "Alice", conversations: 120, resolved: 110, tma: "5m" },
-            { name: "Bob", conversations: 98, resolved: 90, tma: "4m 30s" },
-        ];
+        const agents = await this.prisma.workspaceUser.findMany({
+            where: { workspaceId },
+            include: {
+                user: {
+                    select: { name: true, firstName: true }
+                }
+            }
+        });
+
+        const performance = await Promise.all(agents.map(async (awu) => {
+            const count = await this.prisma.conversation.count({
+                where: { workspaceId, agentId: awu.userId }
+            });
+            const resolved = await this.prisma.conversation.count({
+                where: { workspaceId, agentId: awu.userId, status: 'CLOSED' }
+            });
+            return {
+                name: awu.user.firstName || awu.user.name || "Agente",
+                conversations: count,
+                resolved: resolved,
+                tma: "0m"
+            };
+        }));
+
+        return performance;
     }
 
     async getVolumeByDay(workspaceId: string, range: { start: string, end: string }) {
-        return [
-            { name: "Seg", total: 40 },
-            { name: "Ter", total: 30 },
-            { name: "Qua", total: 45 },
-            { name: "Qui", total: 50 },
-            { name: "Sex", total: 60 },
-            { name: "Sab", total: 20 },
-            { name: "Dom", total: 10 },
-        ];
-    }
+        // Simple aggregate for the last 7 days if no range
+        const start = range.start ? new Date(range.start) : new Date(new Date().setDate(new Date().getDate() - 7));
 
-    async getDashboard(workspaceId: string, startDate?: string, endDate?: string) {
-        // Mock Data / Basic Implementation
-        return {
-            totalConversations: 120,
-            resolvedConversations: 100,
-            responseRate: '98%',
-            avgResponseTime: '2m',
-            avgResolutionTime: '15m',
-            volumeByDay: []
-        };
-    }
+        const conversations = await this.prisma.conversation.findMany({
+            where: { workspaceId, createdAt: { gte: start } },
+            select: { createdAt: true }
+        });
 
-    async getAgents(workspaceId: string, startDate?: string, endDate?: string) {
-        return [
-            { name: 'Agent Smith', total: 50, resolved: 48, rating: 4.9, status: 'ONLINE' }
-        ];
+        const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+        const volume = days.map(day => ({ name: day, total: 0 }));
+
+        conversations.forEach(c => {
+            const dayIdx = c.createdAt.getDay();
+            volume[dayIdx].total++;
+        });
+
+        return volume;
     }
 
     async getSectorMetrics(workspaceId: string) {
@@ -64,16 +83,15 @@ export class ReportsService {
             }
         });
 
-        // Calculate some real-ish metrics (in a real app we'd do aggregation queries)
         return sectors.map(sector => ({
             id: sector.id,
             name: sector.name,
             color: sector.color,
             totalConversations: sector._count.conversations,
-            openConversations: Math.floor(sector._count.conversations * 0.4), // Mock logic for breakdown
-            resolvedConversations: Math.floor(sector._count.conversations * 0.5),
-            avgResponseTime: "5m", // Mock
-            slaCompliance: "92%"   // Mock
+            openConversations: 0, // Simplified for now
+            resolvedConversations: 0,
+            avgResponseTime: "0m",
+            slaCompliance: "100%"
         }));
     }
 }
