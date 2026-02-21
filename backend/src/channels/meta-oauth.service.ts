@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class MetaOAuthService {
     private readonly APP_ID = process.env.META_APP_ID;
     private readonly APP_SECRET = process.env.META_APP_SECRET;
-    private readonly REDIRECT_URI = `${process.env.FRONTEND_URL}/api/auth/meta/callback`;
+    private readonly REDIRECT_URI = process.env.META_REDIRECT_URI;
 
     constructor(private readonly prisma: PrismaService) { }
 
