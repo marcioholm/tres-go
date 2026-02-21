@@ -23,11 +23,13 @@ export class MetaWebhookController {
     // Receber mensagens (POST) — Meta envia cada mensagem aqui
     @Post()
     @HttpCode(200) // SEMPRE retornar 200 para a Meta
-    async receiveMessage(@Body() body: any, @Req() req: Request) {
-        // Validar assinatura HMAC
+    async receiveMessage(@Body() body: any, @Req() req: any) {
+        // Validar assinatura HMAC usando o rawBody preservado pelo NestJS
         const signature = req.headers['x-hub-signature-256'] as string;
-        if (!this.webhookService.validateSignature(body, signature)) {
-            console.warn('Invalid webhook signature');
+        const rawBody = req.rawBody;
+
+        if (!rawBody || !this.webhookService.validateSignature(rawBody, signature)) {
+            console.warn('[Meta Webhook] Invalid webhook signature or missing rawBody');
             return { ok: true };
         }
 

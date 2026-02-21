@@ -15,13 +15,26 @@ export class MetaWebhookService {
         private readonly messagesService: MessagesService,
     ) { }
 
-    validateSignature(body: any, signature: string): boolean {
+    validateSignature(rawBody: Buffer, signature: string): boolean {
         if (!signature) return false;
+
         const expected = crypto
             .createHmac('sha256', process.env.META_APP_SECRET || '')
-            .update(JSON.stringify(body))
+            .update(rawBody)
             .digest('hex');
-        return signature === `sha256=${expected}`;
+
+        const actual = signature.startsWith('sha256=') ? signature.split('=')[1] : signature;
+
+        const isValid = crypto.timingSafeEqual(
+            Buffer.from(expected, 'hex'),
+            Buffer.from(actual, 'hex')
+        );
+
+        if (!isValid) {
+            console.error('[Meta Webhook] Signature mismatch!', { expected, actual });
+        }
+
+        return isValid;
     }
 
     async processWebhook(body: any) {
