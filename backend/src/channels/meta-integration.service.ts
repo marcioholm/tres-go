@@ -8,7 +8,7 @@ export class MetaIntegrationService {
     private readonly APP_SECRET = process.env.META_APP_SECRET;
     private readonly REDIRECT_URI = process.env.META_REDIRECT_URI;
     private readonly STATE_SECRET = process.env.META_OAUTH_STATE_SECRET || 'fallback-secret-for-dev';
-    private readonly SCOPES = process.env.META_SCOPES || 'pages_show_list,pages_read_engagement,pages_manage_metadata,instagram_basic,instagram_manage_messages';
+    private readonly SCOPES = process.env.META_SCOPES || 'public_profile,pages_show_list,pages_read_engagement,pages_manage_metadata,pages_messaging,instagram_basic,instagram_manage_messages';
 
     constructor(private readonly prisma: PrismaService) { }
 
@@ -91,6 +91,13 @@ export class MetaIntegrationService {
         }
 
         const longLivedToken = dataLong.access_token;
+
+        // --- Verify actual permissions (DEBUG) ---
+        const debugUrl = `https://graph.facebook.com/debug_token?input_token=${longLivedToken}&access_token=${this.APP_ID}|${this.APP_SECRET}`;
+        const resDebug = await fetch(debugUrl);
+        const debugData = await resDebug.json();
+        console.log('Token Debug Information:', JSON.stringify(debugData));
+        // -----------------------------------------
 
         // 3. Get Pages
         const pagesUrl = `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,picture,access_token&access_token=${longLivedToken}`;
