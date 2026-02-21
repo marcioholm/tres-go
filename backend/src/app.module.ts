@@ -37,13 +37,17 @@ import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.mi
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: Number(process.env.REDIS_PORT) || 6379,
-        password: process.env.REDIS_PASSWORD,
-        tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
-      },
+    BullModule.forRootAsync({
+      useFactory: () => ({
+        connection: {
+          host: process.env.REDIS_HOST,
+          port: parseInt(process.env.REDIS_PORT || '6380'),
+          password: process.env.REDIS_PASSWORD,
+          tls: process.env.REDIS_TLS === 'true' ? {
+            rejectUnauthorized: false
+          } : undefined,
+        }
+      })
     }),
     PrismaModule,
     AuthModule,
