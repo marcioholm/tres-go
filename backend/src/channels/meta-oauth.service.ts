@@ -61,9 +61,10 @@ export class MetaOAuthService {
             `https://graph.facebook.com/v19.0/me/accounts?` +
             `fields=id,name,picture,access_token&access_token=${userToken}`
         );
-        const { data: pages } = await pagesRes.json();
+        const pagesData = await pagesRes.json();
+        const pages = pagesData.data || [];
 
-        // 3. Converter para Long-Lived Page Tokens
+        // 3. Converter para Long-Lived Page Tokens (Páginas administradas retornam tokens de acesso)
         const longLivedPages = await Promise.all(
             pages.map(async (page: any) => {
                 const llRes = await fetch(
@@ -71,7 +72,8 @@ export class MetaOAuthService {
                     `grant_type=fb_exchange_token&client_id=${this.APP_ID}` +
                     `&client_secret=${this.APP_SECRET}&fb_exchange_token=${page.access_token}`
                 );
-                const { access_token } = await llRes.json();
+                const llData = await llRes.json();
+                const access_token = llData.access_token || page.access_token;
                 return { ...page, access_token };
             })
         );
@@ -106,7 +108,7 @@ export class MetaOAuthService {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    subscribed_fields: ['messages', 'messaging_postbacks', 'message_deliveries'],
+                    subscribed_fields: ['messages', 'messaging_postbacks', 'message_deliveries', 'message_reads'],
                     access_token: pageToken,
                 }),
             }

@@ -71,22 +71,30 @@ export class MetaWebhookService {
         const attachments = event.message?.attachments || [];
         const mid = event.message?.mid;
 
-        // TODO: Integrate with ConversationsService and MessagesService
-        console.log(`Incoming message from ${senderId} on channel ${channel.id}: ${text}`);
+        // Buscar ou criar contato (precisamos de um nome, usamos o ID como fallback se não houver perfil)
+        const contact = await this.contactsService.findOrCreate(channel.workspaceId, senderId);
 
+        // Buscar ou criar conversa
         const conversation = await this.conversationsService.findOrCreate(
             channel.workspaceId,
             channel.id,
-            await this.contactsService.findOrCreate(channel.workspaceId, senderId).then(c => c.id)
+            contact.id,
         );
 
+        // Salvar mensagem
         await this.prisma.message.create({
             data: {
                 conversationId: conversation.id,
                 externalId: mid,
                 fromAgent: false,
                 type: attachments.length > 0 ? 'ATTACHMENT' : 'TEXT',
-                content: { text: text },
+                content: {
+                    text: text,
+                    attachments: attachments.map((a: any) => ({
+                        type: a.type,
+                        url: a.payload?.url,
+                    })),
+                },
                 status: 'SENT',
                 createdAt: new Date(event.timestamp)
             }
@@ -102,8 +110,6 @@ export class MetaWebhookService {
             const waContact = contacts.find((c: any) => c.wa_id === phone);
             const senderName = waContact?.profile?.name || phone;
 
-            console.log(`Incoming WhatsApp message from ${phone} (${senderName}) on channel ${channel.id}: ${msg.text?.body || ''}`);
-
             const contact = await this.contactsService.findOrCreate(channel.workspaceId, phone, senderName);
             const conversation = await this.conversationsService.findOrCreate(
                 channel.workspaceId,
@@ -117,7 +123,12 @@ export class MetaWebhookService {
                     externalId: msg.id,
                     fromAgent: false,
                     type: (msg.type || 'TEXT').toUpperCase(),
-                    content: { text: msg.text?.body || msg.caption || '' },
+                    content: {
+                        text: msg.text?.body || msg.caption || '',
+                        attachments: msg.image || msg.video || msg.document
+                            ? [{ type: msg.type, id: msg.image?.id || msg.video?.id || msg.document?.id }]
+                            : [],
+                    },
                     status: 'SENT',
                     createdAt: new Date(parseInt(msg.timestamp) * 1000),
                 }
@@ -126,28 +137,22 @@ export class MetaWebhookService {
     }
 
     private async handleMessageRead(channel: any, event: any) {
-        console.log(`Message read on channel ${channel.id}`);
-        /*
         await this.prisma.message.updateMany({
-          where: {
-            conversation: { channelId: channel.id },
-            externalId: { in: event.read?.watermark ? [] : [event.read?.mid] },
-          },
-          data: { status: 'READ' },
+            where: {
+                conversation: { channelId: channel.id },
+                externalId: { in: event.read?.watermark ? [] : [event.read?.mid] },
+            },
+            data: { status: 'READ' },
         });
-        */
     }
 
     private async handleMessageDelivery(channel: any, event: any) {
-        console.log(`Message delivered on channel ${channel.id}`);
-        /*
         await this.prisma.message.updateMany({
-          where: {
-            conversation: { channelId: channel.id },
-            externalId: { in: event.delivery?.mids || [] },
-          },
-          data: { status: 'DELIVERED' },
+            where: {
+                conversation: { channelId: channel.id },
+                externalId: { in: event.delivery?.mids || [] },
+            },
+            data: { status: 'DELIVERED' },
         });
-        */
     }
 }
