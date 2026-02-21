@@ -52,6 +52,7 @@ model Channel {
   pageAvatar    String?     // URL da foto da Página
   accessToken   String?     // Page Access Token (criptografado)
   igAccountId   String?     // Instagram Account ID (só para Instagram)
+  igUsername    String?     // Handle do Instagram (@usuario)
 
   // WhatsApp Business API
   phoneNumber   String?     // Número verificado

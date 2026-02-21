@@ -267,8 +267,16 @@ export default function IntegrationsPage() {
                                     </div>
                                     <div>
                                         <CardTitle className="text-base font-bold text-slate-800">{channel.name}</CardTitle>
-                                        <CardDescription className="text-xs mt-1">
-                                            {channel.phoneNumber || channel.pageName || 'Canal Conectado'}
+                                        <CardDescription className="text-xs mt-1 flex flex-col gap-0.5">
+                                            {channel.type === 'INSTAGRAM' && (
+                                                <span className="text-pink-600 font-semibold">{channel.igUsername ? `@${channel.igUsername}` : '@perfil_instagram'}</span>
+                                            )}
+                                            {channel.type === 'WHATSAPP' && (
+                                                <span className="text-green-600 font-semibold">{channel.phoneNumber || 'Sem número'}</span>
+                                            )}
+                                            {channel.pageName && (
+                                                <span className="text-slate-500 text-[10px] uppercase tracking-wider">Página: {channel.pageName}</span>
+                                            )}
                                         </CardDescription>
                                     </div>
                                 </div>

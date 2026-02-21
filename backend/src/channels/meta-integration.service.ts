@@ -52,6 +52,9 @@ export class MetaIntegrationService implements OnModuleInit {
                     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='webhookSecret') THEN
                         ALTER TABLE "Channel" ADD COLUMN "webhookSecret" TEXT;
                     END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='igUsername') THEN
+                        ALTER TABLE "Channel" ADD COLUMN "igUsername" TEXT;
+                    END IF;
                 END $$;
             `);
             console.log('[Meta] Database repair executed successfully');
@@ -150,10 +153,11 @@ export class MetaIntegrationService implements OnModuleInit {
         const pageAvatar = page.picture?.data?.url || null;
 
         // 4. Get IG Business Account
-        const igUrl = `https://graph.facebook.com/v19.0/${pageId}?fields=instagram_business_account&access_token=${pageAccessToken}`;
+        const igUrl = `https://graph.facebook.com/v19.0/${pageId}?fields=instagram_business_account{id,username,name}&access_token=${pageAccessToken}`;
         const resIg = await fetch(igUrl);
         const igData = await resIg.json();
         const igAccountId = igData.instagram_business_account?.id || null;
+        const igUsername = igData.instagram_business_account?.username || null;
 
         // 5. Subscribe App to Page Webhooks
         await this.subscribePageToApp(pageId, pageAccessToken);
@@ -219,7 +223,7 @@ export class MetaIntegrationService implements OnModuleInit {
                 // @ts-ignore
                 await this.prisma.channel.update({
                     where: { id: existingIg.id },
-                    data: { accessToken: pageAccessToken, status: 'ACTIVE', pageName, pageAvatar }
+                    data: { accessToken: pageAccessToken, status: 'ACTIVE', pageName, pageAvatar, igUsername }
                 });
             } else {
                 // @ts-ignore
@@ -229,6 +233,7 @@ export class MetaIntegrationService implements OnModuleInit {
                         type: 'INSTAGRAM',
                         name: `Instagram: ${pageName}`,
                         igAccountId,
+                        igUsername,
                         pageId,
                         pageName,
                         pageAvatar,
