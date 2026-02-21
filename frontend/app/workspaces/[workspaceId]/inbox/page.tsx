@@ -161,6 +161,7 @@ export default function InboxPage() {
 
 
     const handleScheduleMessage = async (date: Date, text: string, mediaUrl?: string, mediaType?: 'image' | 'video' | 'audio' | 'document', mediaMeta?: any) => {
+        if (!activeChatId) return
         // Optimistic Update
         setConversations(conversations.map(c => {
             if (c.id === activeChatId) {
@@ -200,6 +201,7 @@ export default function InboxPage() {
     }
 
     const handleTransfer = async (data: { agentId?: string, sectorId?: string, note?: string }) => {
+        if (!activeChatId) return
         // In a real app, call API to transfer
         console.log(`Transferring chat ${activeChatId} targets:`, data)
 
@@ -495,10 +497,12 @@ export default function InboxPage() {
             </div>
 
             {/* Right Pane: Contact Details */}
-            <ContactProfilePanel
-                workspaceId={workspaceId}
-                contactId={activeChat.id}
-            />
+            {activeChat && (
+                <ContactProfilePanel
+                    workspaceId={workspaceId}
+                    contactId={activeChat.id}
+                />
+            )}
 
             <TransferAgentDialog
                 open={isTransferOpen}
