@@ -29,14 +29,22 @@ export class MetaWebhookService {
             const entries = body.entry || [];
 
             for (const entry of entries) {
-                const pageId = entry.id;
+                const entryId = entry.id;
 
-                // Buscar o canal pelo pageId
+                // Buscar o canal pelo pageId ou igAccountId (Instagram)
                 const channel = await this.prisma.channel.findFirst({
-                    where: { pageId, status: 'ACTIVE' },
+                    where: {
+                        OR: [
+                            { pageId: entryId, status: 'ACTIVE' },
+                            { igAccountId: entryId, status: 'ACTIVE' },
+                        ],
+                    },
                 });
 
-                if (!channel) continue;
+                if (!channel) {
+                    console.log(`[Meta Webhook] No active channel found for entry ID: ${entryId}`);
+                    continue;
+                }
 
                 // Processar mensagens (Instagram DM + Messenger compartilham esse formato)
                 const messaging = entry.messaging || entry.changes?.[0]?.value?.messages || [];
