@@ -86,16 +86,21 @@ export class AuthService {
             throw err;
         }
 
-        // 2. Criar o workspace padrão (Não bloqueante)
+        // 2. Criar o workspace padrão (Processo crítico, mesmo sendo em bloco try)
         try {
             console.log(`[Register] Tentando criar workspace padrão para o usuário ${user.id}...`);
             await this.workspacesService.createDefaultWorkspace(user.id, workspaceName, taxId);
             console.log(`[Register] Workspace criado com sucesso para o usuário ${user.id}`);
         } catch (err) {
-            console.error(`[Register] Falha ao criar workspace (não bloqueante):`, err.message || err);
+            console.error(`[Register] Erro ao criar workspace inicial para ${user.id}:`, err.message || err);
+            // Se falhar aqui, o login() vai tentar criar novamente como fallback, o que é inseguro mas mantém a continuidade.
+            // O ideal agora é re-buscar o usuário com as relações devidamente carregadas.
         }
 
-        // 3. Retornar o usuário com token para login automático no frontend
-        return this.login(user);
+        // 3. Buscar usuário atualizado com as relações (workspaces) para evitar criação duplicada no login()
+        const updatedUser = await this.usersService.findOneById(user.id);
+
+        // 4. Retornar o usuário com token para login automático no frontend
+        return this.login(updatedUser || user);
     }
 }
