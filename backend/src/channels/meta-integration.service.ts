@@ -30,16 +30,26 @@ export class MetaIntegrationService {
             const decoded = Buffer.from(state, 'base64').toString('utf8');
             const [nonce, timestamp, signature] = decoded.split(':');
 
-            // Check expiry (10 min)
-            if (Date.now() - parseInt(timestamp) > 10 * 60 * 1000) return false;
+            // Check expiry (30 min)
+            const age = Date.now() - parseInt(timestamp);
+            if (age > 30 * 60 * 1000) {
+                console.error(`Meta OAuth State Expired: ${age}ms`);
+                return false;
+            }
 
             const expectedSignature = crypto
                 .createHmac('sha256', this.STATE_SECRET)
                 .update(`${nonce}:${timestamp}`)
                 .digest('hex');
 
-            return signature === expectedSignature;
+            if (signature !== expectedSignature) {
+                console.error('Meta OAuth State Signature Mismatch');
+                return false;
+            }
+
+            return true;
         } catch (e) {
+            console.error('Meta OAuth State Decode Error:', e.message);
             return false;
         }
     }
