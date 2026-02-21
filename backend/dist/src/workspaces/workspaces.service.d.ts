@@ -7,31 +7,31 @@ export declare class WorkspacesService {
     private billingService;
     constructor(prisma: PrismaService, sectorsService: SectorsService, billingService: BillingService);
     findOne(workspaceId: string): Promise<{
+        plan: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        plan: string;
-        name: string;
         taxId: string | null;
         isBlocked: boolean;
         blockReason: string | null;
     }>;
     update(workspaceId: string, data: any): Promise<{
+        plan: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        plan: string;
-        name: string;
         taxId: string | null;
         isBlocked: boolean;
         blockReason: string | null;
     }>;
     createDefaultWorkspace(userId: string, name?: string, taxId?: string): Promise<{
+        plan: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        plan: string;
-        name: string;
         taxId: string | null;
         isBlocked: boolean;
         blockReason: string | null;
@@ -39,26 +39,26 @@ export declare class WorkspacesService {
     getMembers(workspaceId: string): Promise<({
         user: {
             id: string;
-            status: string;
+            name: string | null;
             createdAt: Date;
             updatedAt: Date;
-            name: string | null;
             email: string;
             firstName: string | null;
             lastName: string | null;
             niche: string | null;
             password: string;
+            status: string;
         };
     } & {
         id: string;
-        workspaceId: string;
         userId: string;
+        workspaceId: string;
         role: string;
     })[]>;
     inviteMember(workspaceId: string, email: string, role: string): Promise<{
         id: string;
-        workspaceId: string;
         userId: string;
+        workspaceId: string;
         role: string;
     }>;
     updateMember(workspaceId: string, userId: string, role?: string): Promise<{
@@ -81,23 +81,23 @@ export declare class WorkspacesService {
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        content: string;
         shortcut: string;
+        content: string;
     }[]>;
     createQuickReply(workspaceId: string, shortcut: string, content: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        content: string;
         shortcut: string;
+        content: string;
     }>;
     deleteQuickReply(workspaceId: string, id: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        content: string;
         shortcut: string;
+        content: string;
     }>;
 }

@@ -44,16 +44,18 @@ let SectorsService = class SectorsService {
             }
         });
     }
-    async create(workspaceId, data) {
+    async create(workspaceId, data, options = {}) {
         if (data.isDefault) {
             await this.prisma.sector.updateMany({
                 where: { workspaceId, isDefault: true },
                 data: { isDefault: false }
             });
         }
-        const limitInfo = await this.billing.checkLimit(workspaceId, 'sectors');
-        if (!limitInfo.allowed) {
-            throw new Error(`Limite de setores (${limitInfo.limit}) atingido para o seu plano.`);
+        if (!options.skipLimitCheck) {
+            const limitInfo = await this.billing.checkLimit(workspaceId, 'sectors');
+            if (!limitInfo.allowed) {
+                throw new Error(`Limite de setores (${limitInfo.limit}) atingido para o seu plano.`);
+            }
         }
         return this.prisma.sector.create({
             data: {
@@ -184,7 +186,7 @@ let SectorsService = class SectorsService {
                 isDefault: true,
                 isActive: true,
                 order: 0
-            });
+            }, { skipLimitCheck: true });
         }
     }
 };

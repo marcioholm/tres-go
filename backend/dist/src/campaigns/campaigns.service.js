@@ -11,22 +11,25 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var CampaignsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CampaignsService = void 0;
 const common_1 = require("@nestjs/common");
+const schedule_1 = require("@nestjs/schedule");
 const prisma_service_1 = require("../prisma/prisma.service");
 const channels_service_1 = require("../channels/channels.service");
 const scheduled_messages_service_1 = require("../scheduled-messages/scheduled-messages.service");
 const bullmq_1 = require("@nestjs/bullmq");
 const bullmq_2 = require("bullmq");
 const billing_service_1 = require("../billing/billing.service");
-let CampaignsService = class CampaignsService {
+let CampaignsService = CampaignsService_1 = class CampaignsService {
     constructor(prisma, channelsService, scheduledMessagesService, campaignQueue, billing) {
         this.prisma = prisma;
         this.channelsService = channelsService;
         this.scheduledMessagesService = scheduledMessagesService;
         this.campaignQueue = campaignQueue;
         this.billing = billing;
+        this.logger = new common_1.Logger(CampaignsService_1.name);
     }
     async findAll(workspaceId) {
         return this.prisma.campaign.findMany({
@@ -144,9 +147,52 @@ let CampaignsService = class CampaignsService {
     async delete(workspaceId, id) {
         return this.prisma.campaign.delete({ where: { id } });
     }
+    async processCampaigns() {
+        const pendingLogs = await this.prisma.campaignContactLog.findMany({
+            where: {
+                status: 'ACTIVE',
+                nextExecutionAt: { lte: new Date() }
+            },
+            include: {
+                campaign: true
+            }
+        });
+        if (pendingLogs.length === 0)
+            return;
+        this.logger.log(`[Campaign Cron] Found ${pendingLogs.length} pending campaign steps to execute.`);
+        for (const log of pendingLogs) {
+            try {
+                const steps = await this.prisma.campaignStep.findMany({
+                    where: { campaignId: log.campaignId },
+                    orderBy: { order: 'asc' }
+                });
+                const stepIndex = steps.findIndex(s => s.id === log.currentStepId);
+                if (stepIndex !== -1) {
+                    await this.campaignQueue.add('step', {
+                        campaignId: log.campaignId,
+                        contactId: log.contactId,
+                        stepIndex
+                    });
+                    await this.prisma.campaignContactLog.update({
+                        where: { id: log.id },
+                        data: { nextExecutionAt: new Date(Date.now() + 3600000) }
+                    });
+                }
+            }
+            catch (err) {
+                this.logger.error(`Failed to seed queue for log ${log.id}`, err);
+            }
+        }
+    }
 };
 exports.CampaignsService = CampaignsService;
-exports.CampaignsService = CampaignsService = __decorate([
+__decorate([
+    (0, schedule_1.Cron)(schedule_1.CronExpression.EVERY_MINUTE),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CampaignsService.prototype, "processCampaigns", null);
+exports.CampaignsService = CampaignsService = CampaignsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(3, (0, bullmq_1.InjectQueue)('campaign-steps')),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,

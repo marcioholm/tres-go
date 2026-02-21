@@ -9,22 +9,22 @@ export declare class AuthService {
     validateUser(email: string, pass: string): Promise<any>;
     updateStatus(userId: string, status: string): Promise<{
         id: string;
-        status: string;
+        name: string | null;
         createdAt: Date;
         updatedAt: Date;
-        name: string | null;
         email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
+        status: string;
     }>;
     getUserProfile(userId: string): Promise<{
         isSuperAdmin: boolean;
         workspaces: {
             id: string;
-            workspaceId: string;
             userId: string;
+            workspaceId: string;
             role: string;
         }[];
         superAdmin: {
@@ -33,15 +33,15 @@ export declare class AuthService {
             userId: string;
         };
         id: string;
-        status: string;
+        name: string | null;
         createdAt: Date;
         updatedAt: Date;
-        name: string | null;
         email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
+        status: string;
     }>;
     login(user: any): Promise<{
         access_token: string;

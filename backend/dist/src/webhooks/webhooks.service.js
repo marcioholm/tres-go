@@ -55,7 +55,7 @@ let WebhooksService = class WebhooksService {
         });
         if (!conversation) {
             const channel = await this.prisma.channel.findFirst({
-                where: { workspaceId, type: 'whatsapp' }
+                where: { workspaceId, type: 'WHATSAPP' }
             });
             if (!channel) {
                 console.error(`No WhatsApp channel found for workspace ${workspaceId}`);

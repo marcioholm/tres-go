@@ -226,7 +226,7 @@ export class BillingService {
                 limit = sub.plan.maxAgents;
                 break;
             case 'channels':
-                current = await this.prisma.channel.count({ where: { workspaceId, isActive: true } });
+                current = await this.prisma.channel.count({ where: { workspaceId, status: 'ACTIVE' } });
                 limit = sub.plan.maxChannels;
                 break;
             case 'conversations':

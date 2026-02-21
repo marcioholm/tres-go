@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChannelsService } from '../channels/channels.service';
 import { ScheduledMessagesService } from '../scheduled-messages/scheduled-messages.service';
@@ -8,6 +9,8 @@ import { BillingService } from '../billing/billing.service';
 
 @Injectable()
 export class CampaignsService {
+    private readonly logger = new Logger(CampaignsService.name);
+
     constructor(
         private prisma: PrismaService,
         private channelsService: ChannelsService,
@@ -156,5 +159,53 @@ export class CampaignsService {
 
     async delete(workspaceId: string, id: string) {
         return this.prisma.campaign.delete({ where: { id } });
+    }
+
+    // --- Motor de Re-escalonamento de Campanhas ---
+    @Cron(CronExpression.EVERY_MINUTE)
+    async processCampaigns() {
+        // Encontrar logs ativos que precisam de execução agora
+        const pendingLogs = await this.prisma.campaignContactLog.findMany({
+            where: {
+                status: 'ACTIVE',
+                nextExecutionAt: { lte: new Date() }
+            },
+            include: {
+                campaign: true
+            }
+        });
+
+        if (pendingLogs.length === 0) return;
+
+        this.logger.log(`[Campaign Cron] Found ${pendingLogs.length} pending campaign steps to execute.`);
+
+        for (const log of pendingLogs) {
+            try {
+                // Descobrir o index do step atual
+                const steps = await this.prisma.campaignStep.findMany({
+                    where: { campaignId: log.campaignId },
+                    orderBy: { order: 'asc' }
+                });
+
+                const stepIndex = steps.findIndex(s => s.id === log.currentStepId);
+
+                if (stepIndex !== -1) {
+                    await this.campaignQueue.add('step', {
+                        campaignId: log.campaignId,
+                        contactId: log.contactId,
+                        stepIndex
+                    });
+
+                    // Temporariamente pausar a execução agendada para este log 
+                    // para evitar execuções duplicadas antes do processador terminar
+                    await this.prisma.campaignContactLog.update({
+                        where: { id: log.id },
+                        data: { nextExecutionAt: new Date(Date.now() + 3600000) } // +1 hora (será sobrescrito pelo processador)
+                    });
+                }
+            } catch (err) {
+                this.logger.error(`Failed to seed queue for log ${log.id}`, err);
+            }
+        }
     }
 }

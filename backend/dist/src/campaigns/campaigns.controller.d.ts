@@ -4,14 +4,14 @@ export declare class CampaignsController {
     constructor(campaignsService: CampaignsService);
     findAll(workspaceId: string): Promise<{
         id: string;
-        status: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
-        name: string;
-        config: import("@prisma/client/runtime/library").JsonValue;
         type: import(".prisma/client").$Enums.CampaignType;
         content: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -24,14 +24,14 @@ export declare class CampaignsController {
     }[]>;
     findOne(workspaceId: string, id: string): Promise<{
         id: string;
-        status: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
-        name: string;
-        config: import("@prisma/client/runtime/library").JsonValue;
         type: import(".prisma/client").$Enums.CampaignType;
         content: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -44,14 +44,14 @@ export declare class CampaignsController {
     }>;
     create(workspaceId: string, data: any): Promise<{
         id: string;
-        status: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
-        name: string;
-        config: import("@prisma/client/runtime/library").JsonValue;
         type: import(".prisma/client").$Enums.CampaignType;
         content: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -68,14 +68,14 @@ export declare class CampaignsController {
     }>;
     pause(workspaceId: string, id: string): Promise<{
         id: string;
-        status: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
-        name: string;
-        config: import("@prisma/client/runtime/library").JsonValue;
         type: import(".prisma/client").$Enums.CampaignType;
         content: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -88,14 +88,14 @@ export declare class CampaignsController {
     }>;
     remove(workspaceId: string, id: string): Promise<{
         id: string;
-        status: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
-        name: string;
-        config: import("@prisma/client/runtime/library").JsonValue;
         type: import(".prisma/client").$Enums.CampaignType;
         content: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;

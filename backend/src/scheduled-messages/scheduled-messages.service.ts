@@ -59,10 +59,11 @@ export class ScheduledMessagesService {
                 {
                     scheduledMessageId: scheduledMessage.id,
                     messageParams: {
-                        conversationId, // conversationId is required for relation
+                        workspaceId, // CRITICAL: Added missing workspaceId
+                        conversationId,
                         type: type || 'TEXT',
                         fromAgent: true,
-                        status: 'PENDING', // Will likely change to SENT after processing, but initial creation status
+                        status: 'PENDING',
                         content: typeof content === 'object' ? content : { text: content, mediaUrl, mediaType },
                     },
                 },

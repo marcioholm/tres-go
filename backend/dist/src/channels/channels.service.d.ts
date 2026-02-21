@@ -7,11 +7,11 @@ export declare class ChannelsService {
     constructor(prisma: PrismaService, billing: BillingService);
     create(workspaceId: string, data: any): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.ChannelStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import(".prisma/client").$Enums.ChannelStatus;
         workspaceId: string;
-        name: string;
         type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
@@ -26,11 +26,11 @@ export declare class ChannelsService {
     }>;
     findAll(workspaceId: string): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.ChannelStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import(".prisma/client").$Enums.ChannelStatus;
         workspaceId: string;
-        name: string;
         type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
@@ -45,11 +45,11 @@ export declare class ChannelsService {
     }[]>;
     remove(id: string, workspaceId: string): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.ChannelStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import(".prisma/client").$Enums.ChannelStatus;
         workspaceId: string;
-        name: string;
         type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
@@ -67,11 +67,11 @@ export declare class ChannelsService {
         displayName?: string;
     }, workspaceId: string): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.ChannelStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import(".prisma/client").$Enums.ChannelStatus;
         workspaceId: string;
-        name: string;
         type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;

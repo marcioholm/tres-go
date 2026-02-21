@@ -46,7 +46,7 @@ let ChannelsController = class ChannelsController {
     async getMetaPages(key) {
         const pages = await this.channelsService.getPageSession(key);
         if (!pages)
-            throw new NotFoundException('Sessão expirada ou inválida');
+            throw new common_1.NotFoundException('Sessão expirada ou inválida');
         return pages;
     }
     requestWhatsAppCode(workspaceId, body) {

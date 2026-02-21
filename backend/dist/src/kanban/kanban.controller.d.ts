@@ -53,10 +53,10 @@ export declare class KanbanController {
                 createdAt: Date;
                 updatedAt: Date;
                 workspaceId: string;
+                value: number | null;
                 order: number;
                 agentId: string | null;
                 contactId: string;
-                value: number | null;
                 conversationId: string | null;
                 notes: string | null;
                 title: string;
@@ -85,10 +85,10 @@ export declare class KanbanController {
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
+        value: number | null;
         order: number;
         agentId: string | null;
         contactId: string;
-        value: number | null;
         conversationId: string | null;
         notes: string | null;
         title: string;
@@ -101,10 +101,10 @@ export declare class KanbanController {
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
+        value: number | null;
         order: number;
         agentId: string | null;
         contactId: string;
-        value: number | null;
         conversationId: string | null;
         notes: string | null;
         title: string;
@@ -117,10 +117,10 @@ export declare class KanbanController {
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
+        value: number | null;
         order: number;
         agentId: string | null;
         contactId: string;
-        value: number | null;
         conversationId: string | null;
         notes: string | null;
         title: string;

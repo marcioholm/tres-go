@@ -89,11 +89,8 @@ let MessagesService = MessagesService_1 = class MessagesService {
         if (conversation && conversation.channel) {
             try {
                 const channelProvider = conversation.channel.type || 'META_CLOUD';
-                if (channelProvider === 'META_CLOUD') {
-                    await this.sendViaWhatsappOfficial(conversation.channel.config, conversation.contact.phone || '', data, dbContent);
-                }
-                else if (channelProvider === 'ZAPI') {
-                    await this.sendViaZapi(conversation.channel.config, conversation.contact.phone || '', data, dbContent);
+                if (channelProvider === 'WHATSAPP') {
+                    await this.sendViaWhatsappOfficial(conversation.channel, conversation.contact.phone || '', data, dbContent);
                 }
                 await this.prisma.message.update({
                     where: { id: message.id },

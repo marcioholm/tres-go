@@ -9,17 +9,18 @@ export declare class CampaignsService {
     private scheduledMessagesService;
     private campaignQueue;
     private billing;
+    private readonly logger;
     constructor(prisma: PrismaService, channelsService: ChannelsService, scheduledMessagesService: ScheduledMessagesService, campaignQueue: Queue, billing: BillingService);
     findAll(workspaceId: string): Promise<{
         id: string;
-        status: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
-        name: string;
-        config: import("@prisma/client/runtime/library").JsonValue;
         type: import(".prisma/client").$Enums.CampaignType;
         content: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -32,14 +33,14 @@ export declare class CampaignsService {
     }[]>;
     findOne(workspaceId: string, id: string): Promise<{
         id: string;
-        status: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
-        name: string;
-        config: import("@prisma/client/runtime/library").JsonValue;
         type: import(".prisma/client").$Enums.CampaignType;
         content: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -52,14 +53,14 @@ export declare class CampaignsService {
     }>;
     create(workspaceId: string, data: any): Promise<{
         id: string;
-        status: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
-        name: string;
-        config: import("@prisma/client/runtime/library").JsonValue;
         type: import(".prisma/client").$Enums.CampaignType;
         content: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -76,14 +77,14 @@ export declare class CampaignsService {
     }>;
     pause(workspaceId: string, id: string): Promise<{
         id: string;
-        status: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
-        name: string;
-        config: import("@prisma/client/runtime/library").JsonValue;
         type: import(".prisma/client").$Enums.CampaignType;
         content: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -96,14 +97,14 @@ export declare class CampaignsService {
     }>;
     delete(workspaceId: string, id: string): Promise<{
         id: string;
-        status: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
-        name: string;
-        config: import("@prisma/client/runtime/library").JsonValue;
         type: import(".prisma/client").$Enums.CampaignType;
         content: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -114,4 +115,5 @@ export declare class CampaignsService {
         delayBetween: number;
         repliesCount: number;
     }>;
+    processCampaigns(): Promise<void>;
 }

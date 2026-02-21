@@ -64,13 +64,26 @@ let AuthService = class AuthService {
         };
     }
     async register(registerDto) {
-        const { workspaceName, taxId, ...userData } = registerDto;
-        const user = await this.usersService.create(userData);
+        const { workspaceName, taxId, email, password, firstName, lastName, niche } = registerDto;
+        let user;
+        try {
+            user = await this.usersService.create({
+                email,
+                password,
+                firstName,
+                lastName,
+                niche
+            });
+        }
+        catch (err) {
+            console.error("Erro fatal ao criar usuário no registro:", err);
+            throw err;
+        }
         try {
             await this.workspacesService.createDefaultWorkspace(user.id, workspaceName, taxId);
         }
         catch (err) {
-            console.error("Falha ao criar workspace no registro:", err);
+            console.error("Falha ao criar workspace no registro (tentará novamente no login):", err);
         }
         return this.login(user);
     }

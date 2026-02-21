@@ -61,6 +61,7 @@ let ScheduledMessagesService = class ScheduledMessagesService {
             await this.scheduledMessagesQueue.add('send-message', {
                 scheduledMessageId: scheduledMessage.id,
                 messageParams: {
+                    workspaceId,
                     conversationId,
                     type: type || 'TEXT',
                     fromAgent: true,

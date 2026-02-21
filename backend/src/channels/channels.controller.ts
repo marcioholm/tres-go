@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Request, Param, Delete, Patch, Query, Res } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, Param, Delete, Patch, Query, Res, NotFoundException } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
 import { AuthGuard } from '@nestjs/passport';
 import { MetaOAuthService } from './meta-oauth.service';

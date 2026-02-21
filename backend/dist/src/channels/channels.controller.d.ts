@@ -7,11 +7,11 @@ export declare class ChannelsController {
     constructor(channelsService: ChannelsService, metaOAuth: MetaOAuthService);
     create(workspaceId: string, data: any): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.ChannelStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import(".prisma/client").$Enums.ChannelStatus;
         workspaceId: string;
-        name: string;
         type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
@@ -26,11 +26,11 @@ export declare class ChannelsController {
     }>;
     findAll(workspaceId: string): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.ChannelStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import(".prisma/client").$Enums.ChannelStatus;
         workspaceId: string;
-        name: string;
         type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
@@ -45,11 +45,11 @@ export declare class ChannelsController {
     }[]>;
     update(workspaceId: string, id: string, data: any): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.ChannelStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import(".prisma/client").$Enums.ChannelStatus;
         workspaceId: string;
-        name: string;
         type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
@@ -64,11 +64,11 @@ export declare class ChannelsController {
     }>;
     remove(workspaceId: string, id: string): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.ChannelStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import(".prisma/client").$Enums.ChannelStatus;
         workspaceId: string;
-        name: string;
         type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;
@@ -98,11 +98,11 @@ export declare class ChannelsController {
         code: string;
     }): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.ChannelStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import(".prisma/client").$Enums.ChannelStatus;
         workspaceId: string;
-        name: string;
         type: import(".prisma/client").$Enums.ChannelType;
         pageId: string | null;
         pageName: string | null;

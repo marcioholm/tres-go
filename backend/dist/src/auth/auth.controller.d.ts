@@ -14,8 +14,8 @@ export declare class AuthController {
         isSuperAdmin: boolean;
         workspaces: {
             id: string;
-            workspaceId: string;
             userId: string;
+            workspaceId: string;
             role: string;
         }[];
         superAdmin: {
@@ -24,26 +24,26 @@ export declare class AuthController {
             userId: string;
         };
         id: string;
-        status: string;
+        name: string | null;
         createdAt: Date;
         updatedAt: Date;
-        name: string | null;
         email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
+        status: string;
     }>;
     updateStatus(req: any, status: string): Promise<{
         id: string;
-        status: string;
+        name: string | null;
         createdAt: Date;
         updatedAt: Date;
-        name: string | null;
         email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
+        status: string;
     }>;
 }

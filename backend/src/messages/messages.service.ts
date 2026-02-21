@@ -98,10 +98,9 @@ export class MessagesService {
                 // If Channel config is 'ZAPI' vs 'META_CLOUD'
                 const channelProvider = conversation.channel.type || 'META_CLOUD';
 
-                if (channelProvider === 'META_CLOUD') {
-                    await this.sendViaWhatsappOfficial(conversation.channel.config, conversation.contact.phone || '', data, dbContent);
-                } else if (channelProvider === 'ZAPI') {
-                    await this.sendViaZapi(conversation.channel.config, conversation.contact.phone || '', data, dbContent);
+                if (channelProvider === 'WHATSAPP') {
+                    // Try to send via Meta first, or Z-api if config says so (assuming we use WhatsApp for both)
+                    await this.sendViaWhatsappOfficial(conversation.channel, conversation.contact.phone || '', data, dbContent);
                 }
 
                 // Update message immediately if fast execution OK
