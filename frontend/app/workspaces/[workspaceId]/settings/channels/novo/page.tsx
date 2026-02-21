@@ -10,7 +10,9 @@ import {
     ShieldCheck,
     Smartphone,
     Globe,
-    Loader2
+    Loader2,
+    AlertCircle,
+    Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
