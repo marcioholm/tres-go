@@ -26,4 +26,19 @@ export class ReportsController {
     getSectorMetrics(@Param('workspaceId') workspaceId: string) {
         return this.reportsService.getSectorMetrics(workspaceId);
     }
+
+    @Get('funnel')
+    getFunnelMetrics(@Param('workspaceId') workspaceId: string) {
+        return this.reportsService.getFunnelMetrics(workspaceId);
+    }
+
+    @Get('traffic')
+    getTrafficSourceMetrics(@Param('workspaceId') workspaceId: string) {
+        return this.reportsService.getTrafficSourceMetrics(workspaceId);
+    }
+
+    @Get('pending')
+    getPendingConversations(@Param('workspaceId') workspaceId: string) {
+        return this.reportsService.getPendingConversations(workspaceId);
+    }
 }

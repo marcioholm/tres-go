@@ -32,6 +32,9 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
     const [dashboardMetrics, setDashboardMetrics] = useState<any>(null)
     const [agentPerformance, setAgentPerformance] = useState<any[]>([])
     const [volumeChartData, setVolumeChartData] = useState<any[]>([])
+    const [funnelData, setFunnelData] = useState<any[]>([])
+    const [trafficData, setTrafficData] = useState<any[]>([])
+    const [pendingConversations, setPendingConversations] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
     // Fetch Sector Metrics
@@ -40,16 +43,22 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
         const fetchAllMetrics = async () => {
             setIsLoading(true)
             try {
-                const [sectorsRes, dashRes, agentsRes, volumeRes] = await Promise.all([
+                const [sectorsRes, dashRes, agentsRes, volumeRes, funnelRes, trafficRes, pendingRes] = await Promise.all([
                     api.get(`/workspaces/${params.workspaceId}/reports/sectors`),
                     api.get(`/workspaces/${params.workspaceId}/reports/dashboard`),
                     api.get(`/workspaces/${params.workspaceId}/reports/agents`),
-                    api.get(`/workspaces/${params.workspaceId}/reports/volume`)
+                    api.get(`/workspaces/${params.workspaceId}/reports/volume`),
+                    api.get(`/workspaces/${params.workspaceId}/reports/funnel`),
+                    api.get(`/workspaces/${params.workspaceId}/reports/traffic`),
+                    api.get(`/workspaces/${params.workspaceId}/reports/pending`)
                 ])
                 setSectors(sectorsRes.data)
                 setDashboardMetrics(dashRes.data)
                 setAgentPerformance(agentsRes.data)
                 setVolumeChartData(volumeRes.data)
+                setFunnelData(funnelRes.data)
+                setTrafficData(trafficRes.data)
+                setPendingConversations(pendingRes.data)
             } catch (error) {
                 console.error("Failed to fetch dashboard metrics", error)
             } finally {
@@ -192,11 +201,11 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                 </div>
 
                 {/* ── KPI GRID ──────────────────────────────────────────────────────── */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
 
                     {/* KPI 1: Total conversas */}
-                    <Card className="p-5 relative overflow-hidden kpi-shimmer border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-8 translate-x-8"></div>
+                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm group hover:shadow-md transition-all h-full">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50/50 rounded-full -translate-y-8 translate-x-8"></div>
                         <div className="flex items-start justify-between mb-4">
                             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
                                 <MessageSquare className="text-blue-500 w-5 h-5" />
@@ -207,24 +216,24 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                     </Card>
 
                     {/* KPI 2: Resolvidas */}
-                    <Card className="p-5 relative overflow-hidden kpi-shimmer border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full -translate-y-8 translate-x-8"></div>
+                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm group hover:shadow-md transition-all h-full">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-50/50 rounded-full -translate-y-8 translate-x-8"></div>
                         <div className="flex items-start justify-between mb-4">
                             <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
                                 <CheckCircle className="text-emerald-500 w-5 h-5" />
                             </div>
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{dashboardMetrics?.resolved?.rate || 0}% taxa ↓</span>
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{dashboardMetrics?.resolved?.rate || 0}%</span>
                         </div>
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Resolvidas</p>
                         <p className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.resolved?.value || 0}</p>
                     </Card>
 
                     {/* KPI 3: Novos Contatos */}
-                    <Card className="p-5 relative overflow-hidden kpi-shimmer border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-full -translate-y-8 translate-x-8"></div>
+                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm group hover:shadow-md transition-all h-full">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-amber-50/50 rounded-full -translate-y-8 translate-x-8"></div>
                         <div className="flex items-start justify-between mb-4">
                             <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                                <Search className="text-amber-500 w-5 h-5" />
+                                <Reply className="text-amber-500 w-5 h-5" />
                             </div>
                         </div>
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Novos Contatos</p>
@@ -232,84 +241,30 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                     </Card>
 
                     {/* KPI 4: TMA */}
-                    <Card className="p-5 relative overflow-hidden border-l-4 border-l-primary border-t-0 border-r-0 border-b-0 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-8 translate-x-8"></div>
+                    <Card className="p-5 relative overflow-hidden border-none shadow-sm group hover:shadow-md transition-all h-full bg-white">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-8 translate-x-8"></div>
                         <div className="flex items-start justify-between mb-4">
                             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                                 <Timer className="text-primary w-5 h-5" />
                             </div>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Tempo Médio Atendimento</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.tma?.value || "0m"}</p>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">TMA Médio</p>
+                        <p className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.tma?.value || "12m"}</p>
                     </Card>
 
-                </div>
-
-                {/* Segunda linha de KPIs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* KPI 5: Receita */}
-                    <Card className="p-5 relative overflow-hidden border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                    <Card className="p-5 relative overflow-hidden border-none shadow-sm group hover:shadow-md transition-all h-full bg-white">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-50/50 rounded-full -translate-y-8 translate-x-8"></div>
                         <div className="flex items-start justify-between mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
                                 <DollarSign className="text-emerald-600 w-5 h-5" />
                             </div>
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+24% ↑</span>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Receita do Período</p>
-                        <p className="text-2xl font-black text-emerald-600">R$ 48.290</p>
-                        <p className="text-[10px] text-slate-500 mt-1">Ticket médio: <strong>R$ 890</strong></p>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Receita</p>
+                        <p className="text-3xl font-black text-emerald-600 count-anim">R$ {dashboardMetrics?.revenue?.value?.toLocaleString('pt-BR') || 0}</p>
+                        <p className="text-[10px] text-slate-500 mt-1 font-bold">Ticket: R$ {dashboardMetrics?.revenue?.ticketMedia?.toLocaleString('pt-BR') || 0}</p>
                     </Card>
 
-                    {/* KPI 6: Taxa Resolução */}
-                    <Card className="p-6 border-none premium-shadow bg-white hover:translate-y-[-2px] transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center text-red-600">
-                                <MessageSquare className="h-6 w-6" />
-                            </div>
-                            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">+{dashboardMetrics?.totalConversations?.change || 0}%</span>
-                        </div>
-                        <h4 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Conversas</h4>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.totalConversations?.value || 0}</span>
-                        </div>
-                    </Card>
-
-                    <Card className="p-6 border-none premium-shadow bg-white hover:translate-y-[-2px] transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                                <CheckCircle className="h-6 w-6" />
-                            </div>
-                            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">{dashboardMetrics?.resolved?.rate || 0}% taxa</span>
-                        </div>
-                        <h4 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Resolvidas</h4>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.resolved?.value || 0}</span>
-                        </div>
-                    </Card>
-
-                    <Card className="p-6 border-none premium-shadow bg-white hover:translate-y-[-2px] transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
-                                <Timer className="h-6 w-6" />
-                            </div>
-                        </div>
-                        <h4 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">TMA Médio</h4>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.tma?.value || "0m"}</span>
-                        </div>
-                    </Card>
-
-                    <Card className="p-6 border-none premium-shadow bg-white hover:translate-y-[-2px] transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-                                <Reply className="h-6 w-6" />
-                            </div>
-                        </div>
-                        <h4 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Novos Contatos</h4>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.newContacts?.value || 0}</span>
-                        </div>
-                    </Card>
                 </div>
 
                 {/* ── CHARTS ROW ─────────────────────────────────────────────────────── */}
@@ -390,72 +345,72 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
                     {/* Origem dos Clientes */}
-                    <Card className="p-5 border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                    <Card className="p-5 border-none shadow-sm bg-white hover:shadow-md transition-all">
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="font-bold text-sm text-slate-800">Origem dos Clientes</h3>
-                                <p className="text-[11px] text-slate-500">Fonte de tráfego</p>
+                                <p className="text-[11px] text-slate-500">Fonte de tráfego (UTM Source)</p>
                             </div>
                         </div>
                         <div className="space-y-3">
-                            {[
-                                { name: 'Google Ads', prev: '🔵', color: 'bg-blue-500', bg: 'bg-[#e8f0fe]', val: 89, pct: 36 },
-                                { name: 'Meta Ads', prev: '🔴', color: 'bg-red-400', bg: 'bg-[#fce8e8]', val: 72, pct: 29 },
-                                { name: 'Indicação', prev: '🤝', color: 'bg-emerald-400', bg: 'bg-[#ecfdf5]', val: 41, pct: 17 },
-                                { name: 'Instagram', prev: '📱', color: 'bg-pink-400', bg: 'bg-[#fdf4ff]', val: 28, pct: 11 },
-                                { name: 'Outros', prev: '📞', color: 'bg-amber-400', bg: 'bg-[#fffbeb]', val: 17, pct: 7 },
-
-                            ].map((s, i) => (
+                            {trafficData.length > 0 ? trafficData.map((s, i) => (
                                 <div key={i} className="flex items-center gap-3">
-                                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0" style={{ backgroundColor: s.bg.replace('bg-', '') }}>{s.prev}</div>
+                                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 bg-slate-50 font-bold text-slate-600">
+                                        {s.name.substring(0, 1)}
+                                    </div>
                                     <div className="flex-1">
                                         <div className="flex justify-between text-xs mb-1">
                                             <span className="font-semibold text-slate-700">{s.name}</span>
-                                            <span className="font-bold text-slate-800">{s.val} <span className="text-slate-500 font-normal">{s.pct}%</span></span>
+                                            <span className="font-bold text-slate-800">{s.value} <span className="text-slate-500 font-normal">{s.pct}%</span></span>
                                         </div>
                                         <div className="h-1.5 bg-slate-100 rounded-full">
-                                            <div className={`h-1.5 rounded-full bar-fill ${s.color}`} style={{ width: `${s.pct}%` }}></div>
+                                            <div className="h-1.5 rounded-full bg-primary" style={{ width: `${s.pct}%` }}></div>
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                            )) : (
+                                <div className="h-full flex items-center justify-center text-slate-400 text-xs py-10">
+                                    Sem dados de origem cadastrados.
+                                </div>
+                            )}
                         </div>
                     </Card>
 
                     {/* Funnel */}
-                    <Card className="p-5 border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                    <Card className="p-5 border-none shadow-sm bg-white hover:shadow-md transition-all">
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="font-bold text-sm text-slate-800">Funil de Conversão</h3>
-                                <p className="text-[11px] text-slate-500">Kanban → Receita</p>
+                                <p className="text-[11px] text-slate-500">Oportunidades no CRM</p>
                             </div>
                         </div>
                         <div className="space-y-2">
-                            {[
-                                { name: 'Novo Lead', color: 'bg-blue-400', val: 89, pct: 100 },
-                                { name: 'Contato Realizado', color: 'bg-amber-400', val: 71, pct: 80 },
-                                { name: 'Proposta Enviada', color: 'bg-orange-400', val: 48, pct: 54 },
-                                { name: 'Negociação', color: 'bg-red-400', val: 31, pct: 35 },
-                                { name: 'Ganho ✨', color: 'bg-emerald-500', val: 19, pct: 21 },
-                            ].map((step, i) => (
+                            {funnelData.length > 0 ? funnelData.map((step, i) => (
                                 <div key={i}>
                                     <div className="flex justify-between text-xs mb-1">
-                                        <span className="flex items-center gap-1.5"><span className={`w-2 h-2 rounded-full ${step.color} inline-block`}></span>{step.name}</span>
-                                        <span className="font-bold text-slate-800">{step.val}</span>
+                                        <span className="flex items-center gap-1.5">
+                                            <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: step.color }}></span>
+                                            {step.name}
+                                        </span>
+                                        <span className="font-bold text-slate-800">{step.value}</span>
                                     </div>
-                                    <div className="h-6 bg-slate-50 rounded-md overflow-hidden relative">
-                                        <div className={`h-6 ${step.color} rounded-md bar-fill flex items-center justify-end pr-2 absolute top-0 left-0 bg-opacity-20`} style={{ width: '100%' }}></div>
-                                        <div className={`h-6 ${step.color} rounded-md bar-fill flex items-center justify-end pr-2 absolute top-0 left-0`} style={{ width: `${step.pct}%` }}>
-                                            <span className="text-[9px] text-white font-bold">{step.pct}%</span>
+                                    <div className="h-6 bg-slate-50 rounded-md overflow-hidden relative border border-slate-100/50">
+                                        <div className="h-6 opacity-10 rounded-md bar-fill flex items-center justify-end pr-2 absolute top-0 left-0" style={{ width: '100%', backgroundColor: step.color }}></div>
+                                        <div className="h-6 rounded-md bar-fill flex items-center justify-end pr-2 absolute top-0 left-0" style={{ width: `${Math.max(10, (step.value / (funnelData[0]?.value || 1)) * 100)}%`, backgroundColor: step.color }}>
+                                            <span className="text-[9px] text-white font-bold">{Math.round((step.value / (funnelData[0]?.value || 1)) * 100)}%</span>
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                            )) : (
+                                <div className="h-full flex items-center justify-center text-slate-400 text-xs py-10">
+                                    Configure seu Kanban para ver o funil.
+                                </div>
+                            )}
                         </div>
                     </Card>
 
                     {/* TMA per Agent */}
-                    <Card className="p-5 border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                    <Card className="p-5 border-none shadow-sm bg-white hover:shadow-md transition-all">
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="font-bold text-sm text-slate-800">TMA por Agente</h3>
@@ -463,23 +418,18 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                             </div>
                         </div>
                         <div className="space-y-3">
-                            {[
-                                { name: 'Marcos Oliveira', initials: 'MO', color: 'bg-emerald-500', time: '11min', sla: 'ok', pct: 55 },
-                                { name: 'Carlos Eduardo', initials: 'CE', color: 'bg-blue-500', time: '14min', sla: 'ok', pct: 70 },
-                                { name: 'Agente Silva', initials: 'AS', color: 'bg-primary', time: '22min', sla: 'warn', pct: 100 },
-                                { name: 'Bruno Mendes', initials: 'BM', color: 'bg-violet-500', time: '34min', sla: 'crit', pct: 100 },
-                            ].map((a, i) => (
+                            {agentPerformance.slice(0, 4).map((a, i) => (
                                 <div key={i} className="flex items-center gap-3 hover:bg-slate-50 p-1.5 rounded-lg -mx-1.5 transition-colors">
-                                    <div className={`w-8 h-8 rounded-full ${a.color} text-white text-xs font-bold flex items-center justify-center flex-shrink-0`}>{a.initials}</div>
+                                    <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                                        {a.name.substring(0, 2).toUpperCase()}
+                                    </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between text-xs mb-1">
                                             <span className="font-semibold text-slate-700 truncate">{a.name}</span>
-                                            <span className={`font-bold ml-2 flex-shrink-0 ${a.sla === 'ok' ? 'text-emerald-600' : a.sla === 'warn' ? 'text-amber-600' : 'text-red-600'}`}>
-                                                {a.time}
-                                            </span>
+                                            <span className="font-bold ml-2 text-emerald-600">{a.tma}</span>
                                         </div>
                                         <div className="h-1.5 bg-slate-100 rounded-full">
-                                            <div className={`h-1.5 rounded-full bar-fill ${a.sla === 'ok' ? 'bg-emerald-400' : a.sla === 'warn' ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${a.pct}%` }}></div>
+                                            <div className="h-1.5 rounded-full bg-emerald-400 bar-fill" style={{ width: '60%' }}></div>
                                         </div>
                                     </div>
                                 </div>
@@ -544,55 +494,46 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                     {/* Right Column: Alerts & Campaigns */}
                     <div className="flex flex-col gap-4">
                         {/* SLA Critical List */}
-                        <Card className="p-5 flex-1 border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                        <Card className="p-5 flex-1 border-none shadow-sm bg-white">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-bold text-sm text-slate-800">⚠️ Aguardando Resposta</h3>
+                                <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                                    <AlertTriangle className="w-4 h-4 text-primary" /> Aguardando Resposta
+                                </h3>
                                 <span className="text-[10px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10 cursor-pointer hover:bg-primary/10 transition-colors">Ver no inbox</span>
                             </div>
                             <div className="space-y-2.5">
-                                {[
-                                    { name: 'João Pereira', time: '47 min', risk: 'high', bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-600', bar: 'bg-red-400' },
-                                    { name: 'Ana Carvalho', time: '38 min', risk: 'high', bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-600', bar: 'bg-red-400' },
-                                    { name: 'Rafael Moura', time: '31 min', risk: 'warn', bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-600', bar: 'bg-amber-400' },
-                                ].map((c, i) => (
-                                    <div key={i} className={`flex items-center gap-3 p-2.5 rounded-xl border ${c.bg} ${c.border}`}>
-                                        <div className={`w-8 h-8 rounded-full bg-white/50 ${c.text} text-xs font-bold flex items-center justify-center flex-shrink-0`}>{c.name.split(' ').map(n => n[0]).join('').substring(0, 2)}</div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-bold text-slate-800 truncate">{c.name}</p>
-                                            <p className={`text-[10px] ${c.text} font-bold`}>⏱ {c.time} sem resposta</p>
+                                {pendingConversations.length > 0 ? pendingConversations.map((c, i) => (
+                                    <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl border border-red-100 bg-red-50/50">
+                                        <div className="w-8 h-8 rounded-full bg-white border border-red-100 text-red-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                                            {(c.contact.firstName || c.contact.name || "?").substring(0, 2).toUpperCase()}
                                         </div>
-                                        <div className={`w-1.5 h-8 rounded-full ${c.bar} flex-shrink-0`}></div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-slate-800 truncate">{c.contact.firstName || c.contact.name}</p>
+                                            <p className="text-[10px] text-red-600 font-bold">⏱ {Math.round((new Date().getTime() - new Date(c.createdAt).getTime()) / 60000)} min sem resposta</p>
+                                        </div>
+                                        <div className="w-1 h-8 rounded-full bg-red-400 flex-shrink-0"></div>
                                     </div>
-                                ))}
+                                )) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs py-10 text-center gap-2">
+                                        <CheckCircle className="w-8 h-8 text-emerald-400 opacity-20" />
+                                        Nenhuma conversa aguardando resposta.
+                                    </div>
+                                )}
                             </div>
                         </Card>
 
                         {/* Recent Campaigns */}
-                        <Card className="p-5 border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                        <Card className="p-5 border-none shadow-sm bg-white">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="font-bold text-sm text-slate-800">Campanhas Ativas</h3>
                                 <button className="text-[10px] font-bold text-primary hover:underline">Ver todas</button>
                             </div>
-                            <div className="space-y-3">
-                                <div>
-                                    <div className="flex justify-between text-xs mb-1.5">
-                                        <span className="font-semibold text-slate-700">Promoção Fevereiro</span>
-                                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 rounded-full">76%</span>
+                            <div className="space-y-4">
+                                <div className="p-10 border-2 border-dashed border-slate-100 rounded-xl flex flex-col items-center justify-center gap-2">
+                                    <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center">
+                                        <MessageSquare className="w-5 h-5 text-slate-300" />
                                     </div>
-                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-2 bg-emerald-400 rounded-full bar-fill" style={{ width: '76%' }}></div>
-                                    </div>
-                                    <p className="text-[10px] text-slate-500 mt-0.5">912 / 1.200 enviados</p>
-                                </div>
-                                <div>
-                                    <div className="flex justify-between text-xs mb-1.5">
-                                        <span className="font-semibold text-slate-700">Reativação VIP</span>
-                                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 rounded-full">Agendada</span>
-                                    </div>
-                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-2 bg-blue-300 rounded-full bar-fill" style={{ width: '0%' }}></div>
-                                    </div>
-                                    <p className="text-[10px] text-slate-500 mt-0.5">Inicia em 25/02 às 09:00</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Sem Campanhas Ativas</p>
                                 </div>
                             </div>
                         </Card>
