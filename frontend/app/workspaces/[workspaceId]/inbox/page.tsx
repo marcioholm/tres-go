@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Search, MoreVertical, Phone, Video, CheckCheck, Paperclip, Mic, Send, ArrowRightLeft, Clock } from "lucide-react"
+import { Search, MoreVertical, Phone, Video, CheckCheck, Paperclip, Mic, Send, ArrowRightLeft, Clock, MessageSquare } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 
@@ -78,44 +78,25 @@ export default function InboxPage() {
     }, [workspaceId])
 
     // Mock Data State
-    const [conversations, setConversations] = useState<Conversation[]>([
-        {
-            id: 1,
-            name: "Beatriz Mendonça",
-            status: "pending", // pending | active | resolved
-            avatar: "/avatars/01.png",
-            unread: 2,
-            sla: 'danger',
-            sectorId: '1',
-            sector: { id: '1', name: 'Comercial', color: '#ef4444' },
-            messages: [
-                { id: 1, text: "Olá! Gostaria de saber o status do meu pedido #88291. Comprei ontem e ainda consta como 'processando'.", time: "10:30", fromMe: false },
-            ]
-        },
-        {
-            id: 2,
-            name: "Carlos Eduardo",
-            status: "active",
-            avatar: "/avatars/02.png",
-            unread: 0,
-            sla: 'ok',
-            messages: [
-                { id: 1, text: "Obrigado pela ajuda!", time: "09:15", fromMe: false },
-                { id: 2, text: "Por nada, Carlos! Qualquer coisa estamos à disposição.", time: "09:16", fromMe: true },
-            ]
-        },
-        {
-            id: 3,
-            name: "Marcos Oliveira",
-            status: "resolved",
-            avatar: "/avatars/03.png",
-            unread: 0,
-            sla: 'warning',
-            messages: [
-                { id: 1, text: "Consegue emitir o boleto?", time: "Ontem", fromMe: false },
-            ]
-        },
-    ])
+    // Real Conversations State
+    const [conversations, setConversations] = useState<Conversation[]>([])
+    const [loadingConversations, setLoadingConversations] = useState(true)
+
+    // Fetch Conversations
+    useEffect(() => {
+        const fetchConversations = async () => {
+            setLoadingConversations(true)
+            try {
+                const { data } = await api.get(`/workspaces/${workspaceId}/conversations`)
+                setConversations(data)
+            } catch (error) {
+                console.error("Failed to fetch conversations", error)
+            } finally {
+                setLoadingConversations(false)
+            }
+        }
+        if (workspaceId) fetchConversations()
+    }, [workspaceId])
 
     const [filter, setFilter] = useState<'all' | 'pending' | 'active'>('all')
 
@@ -125,11 +106,12 @@ export default function InboxPage() {
         return c.status === filter
     })
 
-    const [activeChatId, setActiveChatId] = useState(1)
+    const [activeChatId, setActiveChatId] = useState<number | null>(null)
 
-    const activeChat = conversations.find(c => c.id === activeChatId) || conversations[0]
+    const activeChat = conversations.find(c => c.id === activeChatId) || null
 
     const handleAcceptChat = () => {
+        if (!activeChatId) return
         setConversations(conversations.map(c => {
             if (c.id === activeChatId) {
                 return {
@@ -149,47 +131,30 @@ export default function InboxPage() {
     }
 
     const handleSendMessage = async (text: string, mediaUrl?: string, mediaType?: 'image' | 'video' | 'audio' | 'document', isInternal?: boolean, mediaMeta?: any) => {
-        setConversations(conversations.map(c => {
-            if (c.id === activeChatId) {
-                return {
-                    ...c,
-                    messages: [...c.messages, {
-                        id: Date.now(),
-                        text: text,
-                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        fromMe: true,
-                        mediaUrl,
-                        mediaType,
-                        isInternal
-                    }]
-                }
-            }
-            return c
-        }))
-
-        // API Call
-        try {
-            await api.post(`/workspaces/${workspaceId}/messages`, {
-                conversationId: activeChatId.toString(),
-                type: mediaType || 'text',
-                fromMe: true,
-                isInternal: isInternal,
-                mediaUrl: mediaUrl,
-                mediaType: mediaType,
-                isPtt: mediaMeta?.isPtt,
-                duration: mediaMeta?.duration,
-                waveform: mediaMeta?.waveform,
-                content: {
-                    body: text,
+        if (activeChatId) {
+            try {
+                await api.post(`/workspaces/${workspaceId}/messages`, {
+                    conversationId: activeChatId.toString(),
+                    type: mediaType || 'text',
+                    fromMe: true,
+                    isInternal: isInternal,
                     mediaUrl: mediaUrl,
                     mediaType: mediaType,
-                    ...(mediaMeta || {})
-                },
-                isInternalNote: isInternal,
-                status: 'PENDING'
-            })
-        } catch (error) {
-            console.error("Failed to send message:", error)
+                    isPtt: mediaMeta?.isPtt,
+                    duration: mediaMeta?.duration,
+                    waveform: mediaMeta?.waveform,
+                    content: {
+                        body: text,
+                        mediaUrl: mediaUrl,
+                        mediaType: mediaType,
+                        ...(mediaMeta || {})
+                    },
+                    isInternalNote: isInternal,
+                    status: 'PENDING'
+                })
+            } catch (error) {
+                console.error("Failed to send message:", error)
+            }
         }
     }
 
@@ -378,143 +343,154 @@ export default function InboxPage() {
             {/* Middle Pane: Chat Window */}
             <div className="flex-1 flex flex-col bg-[#F3F4F6]"> {/* WhatsApp-like background color */}
                 {/* Chat Header */}
-                <div className="h-16 border-b bg-white flex items-center justify-between px-6 shadow-sm z-10">
-                    <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                            <AvatarImage src={activeChat.avatar} />
-                            <AvatarFallback className="bg-red-100 text-red-600">{activeChat.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <h2 className="font-bold text-sm text-slate-900">{activeChat.name}</h2>
-                            <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                                <span className="block h-2 w-2 rounded-full bg-emerald-500" />
-                                Online via WhatsApp
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-500">
-                        <Button variant="ghost" size="icon"><Phone className="h-5 w-5" /></Button>
-                        <Button variant="ghost" size="icon"><Video className="h-5 w-5" /></Button>
-
-                        <div className="h-6 w-px bg-slate-200 mx-2" />
-
-                        <Button
-                            variant="ghost"
-                            className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                            onClick={() => setIsTransferOpen(true)}
-                        >
-                            <ArrowRightLeft className="mr-2 h-4 w-4" /> Transferir
-                        </Button>
-                        <Button variant="outline" className="ml-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                            <CheckCheck className="mr-2 h-4 w-4" /> Resolver
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {/* Timestamp */}
-                    <div className="flex justify-center">
-                        <span className="bg-white/60 px-3 py-1 rounded-full text-xs text-slate-500 font-medium shadow-sm">Hoje</span>
-                    </div>
-
-                    {activeChat.messages.map((msg) => {
-                        if (msg.isSystem) {
-                            return (
-                                <div key={msg.id} className="flex justify-center my-4">
-                                    <span className="bg-slate-200/80 px-3 py-1 rounded text-xs text-slate-500 font-medium">
-                                        {msg.text === "system:agent_joined" ? `Você assumiu este atendimento - ${msg.time}` :
-                                            msg.text === "system:transferred" ? `Atendimento transferido - ${msg.time}` : msg.text}
-                                    </span>
-                                </div>
-                            )
-                        }
-
-                        return (
-                            <div key={msg.id} className={`flex flex-col gap-1 ${msg.fromMe ? 'items-end' : 'items-start'}`}>
-                                <div className={`p-3 rounded-2xl shadow-sm max-w-[75%] text-sm relative group overflow-hidden ${msg.isInternal
-                                    ? 'bg-yellow-100 text-yellow-900 border border-yellow-200'
-                                    : msg.fromMe
-                                        ? 'bg-red-600 text-white rounded-br-sm'
-                                        : 'bg-white text-slate-800 rounded-bl-sm'
-                                    } ${msg.isScheduled ? 'border-2 border-dashed border-slate-300 opacity-80 bg-slate-50 text-slate-600' : ''}`}>
-
-                                    {/* Internal Note Label */}
-                                    {msg.isInternal && (
-                                        <div className="flex items-center gap-1 mb-1 opacity-70 border-b border-yellow-200 pb-1">
-                                            <span className="text-[10px] font-bold uppercase tracking-wider">Nota Interna</span>
-                                        </div>
-                                    )}
-
-                                    {/* Scheduled Label */}
-                                    {msg.isScheduled && (
-                                        <div className="flex items-center gap-1 mb-1 opacity-70 border-b border-slate-200 pb-1 text-slate-500">
-                                            <span className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                                                Agendado para {msg.scheduledTo?.toLocaleDateString()} às {msg.scheduledTo?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {/* Media Rendering */}
-                                    {msg.mediaUrl && (
-                                        <div className="mb-2 rounded-lg overflow-hidden">
-                                            {msg.mediaType === 'image' && (
-                                                <img src={msg.mediaUrl} alt="Attachment" className="max-w-full h-auto object-cover max-h-[300px]" />
-                                            )}
-                                            {msg.mediaType === 'video' && (
-                                                <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px]" />
-                                            )}
-                                            {msg.mediaType === 'audio' && (
-                                                msg.isPtt ? (
-                                                    <AudioPttBubble
-                                                        message={{
-                                                            id: msg.id,
-                                                            content: { mediaUrl: msg.mediaUrl, waveform: msg.waveform, duration: msg.duration }
-                                                        }}
-                                                        fromAgent={msg.fromMe}
-                                                    />
-                                                ) : (
-                                                    <audio src={msg.mediaUrl} controls className="max-w-full" />
-                                                )
-                                            )}
-                                            {msg.mediaType === 'document' && (
-                                                <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
-                                                    <Paperclip className="h-5 w-5" />
-                                                    <span className="underline">Ver Documento</span>
-                                                </a>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    <p className="whitespace-pre-wrap">{msg.text}</p>
-
-                                    <div className={`flex items-center gap-1 mt-1 ${msg.fromMe ? 'justify-end' : 'justify-end'}`}>
-                                        <span className={`text-[10px] ${msg.fromMe ? 'text-white/80' : 'text-slate-400'} ${msg.isInternal ? 'text-yellow-700' : ''} ${msg.isScheduled ? 'text-slate-400' : ''}`}>{msg.time}</span>
-                                        {msg.fromMe && !msg.isInternal && !msg.isScheduled && <CheckCheck className="h-3 w-3 text-white/90" />}
-                                        {msg.isScheduled && <span className="text-[10px] text-slate-400">Agendado</span>}
-                                    </div>
+                {activeChat ? (
+                    <>
+                        <div className="h-16 border-b bg-white flex items-center justify-between px-6 shadow-sm z-10">
+                            <div className="flex items-center gap-3">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={activeChat.avatar} />
+                                    <AvatarFallback className="bg-red-100 text-red-600">{activeChat.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <h2 className="font-bold text-sm text-slate-900">{activeChat.name}</h2>
+                                    <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                                        <span className="block h-2 w-2 rounded-full bg-emerald-500" />
+                                        Online
+                                    </p>
                                 </div>
                             </div>
-                        )
-                    })}
-                </div>
+                            <div className="flex items-center gap-2 text-slate-500">
+                                <Button variant="ghost" size="icon"><Phone className="h-5 w-5" /></Button>
+                                <Button variant="ghost" size="icon"><Video className="h-5 w-5" /></Button>
 
-                {/* Input Area */}
-                {activeChat.status === 'pending' ? (
-                    <div className="p-4 bg-white border-t min-h-[80px] flex items-center justify-center bg-slate-50/50">
-                        <div className="text-center w-full max-w-md space-y-3">
-                            <p className="text-sm text-slate-500">Esta conversa está pendente. Aceite para iniciar o atendimento.</p>
-                            <Button
-                                onClick={handleAcceptChat}
-                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-100 h-12 text-base animate-pulse"
-                            >
-                                <CheckCheck className="mr-2 h-5 w-5" />
-                                INICIAR ATENDIMENTO
-                            </Button>
+                                <div className="h-6 w-px bg-slate-200 mx-2" />
+
+                                <Button
+                                    variant="ghost"
+                                    className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                                    onClick={() => setIsTransferOpen(true)}
+                                >
+                                    <ArrowRightLeft className="mr-2 h-4 w-4" /> Transferir
+                                </Button>
+                                <Button variant="outline" className="ml-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                                    <CheckCheck className="mr-2 h-4 w-4" /> Resolver
+                                </Button>
+                            </div>
                         </div>
-                    </div>
+
+                        {/* Messages Area */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            {/* Timestamp */}
+                            <div className="flex justify-center">
+                                <span className="bg-white/60 px-3 py-1 rounded-full text-xs text-slate-500 font-medium shadow-sm">Hoje</span>
+                            </div>
+
+                            {activeChat.messages.map((msg) => {
+                                if (msg.isSystem) {
+                                    return (
+                                        <div key={msg.id} className="flex justify-center my-4">
+                                            <span className="bg-slate-200/80 px-3 py-1 rounded text-xs text-slate-500 font-medium">
+                                                {msg.text === "system:agent_joined" ? `Você assumiu este atendimento - ${msg.time}` :
+                                                    msg.text === "system:transferred" ? `Atendimento transferido - ${msg.time}` : msg.text}
+                                            </span>
+                                        </div>
+                                    )
+                                }
+
+                                return (
+                                    <div key={msg.id} className={`flex flex-col gap-1 ${msg.fromMe ? 'items-end' : 'items-start'}`}>
+                                        <div className={`p-3 rounded-2xl shadow-sm max-w-[75%] text-sm relative group overflow-hidden ${msg.isInternal
+                                            ? 'bg-yellow-100 text-yellow-900 border border-yellow-200'
+                                            : msg.fromMe
+                                                ? 'bg-red-600 text-white rounded-br-sm'
+                                                : 'bg-white text-slate-800 rounded-bl-sm'
+                                            } ${msg.isScheduled ? 'border-2 border-dashed border-slate-300 opacity-80 bg-slate-50 text-slate-600' : ''}`}>
+
+                                            {/* Internal Note Label */}
+                                            {msg.isInternal && (
+                                                <div className="flex items-center gap-1 mb-1 opacity-70 border-b border-yellow-200 pb-1">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider">Nota Interna</span>
+                                                </div>
+                                            )}
+
+                                            {/* Scheduled Label */}
+                                            {msg.isScheduled && (
+                                                <div className="flex items-center gap-1 mb-1 opacity-70 border-b border-slate-200 pb-1 text-slate-500">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                                                        Agendado para {msg.scheduledTo?.toLocaleDateString()} às {msg.scheduledTo?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* Media Rendering */}
+                                            {msg.mediaUrl && (
+                                                <div className="mb-2 rounded-lg overflow-hidden">
+                                                    {msg.mediaType === 'image' && (
+                                                        <img src={msg.mediaUrl} alt="Attachment" className="max-w-full h-auto object-cover max-h-[300px]" />
+                                                    )}
+                                                    {msg.mediaType === 'video' && (
+                                                        <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px]" />
+                                                    )}
+                                                    {msg.mediaType === 'audio' && (
+                                                        msg.isPtt ? (
+                                                            <AudioPttBubble
+                                                                message={{
+                                                                    id: msg.id,
+                                                                    content: { mediaUrl: msg.mediaUrl, waveform: msg.waveform, duration: msg.duration }
+                                                                }}
+                                                                fromAgent={msg.fromMe}
+                                                            />
+                                                        ) : (
+                                                            <audio src={msg.mediaUrl} controls className="max-w-full" />
+                                                        )
+                                                    )}
+                                                    {msg.mediaType === 'document' && (
+                                                        <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
+                                                            <Paperclip className="h-5 w-5" />
+                                                            <span className="underline">Ver Documento</span>
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <p className="whitespace-pre-wrap">{msg.text}</p>
+
+                                            <div className={`flex items-center gap-1 mt-1 ${msg.fromMe ? 'justify-end' : 'justify-end'}`}>
+                                                <span className={`text-[10px] ${msg.fromMe ? 'text-white/80' : 'text-slate-400'} ${msg.isInternal ? 'text-yellow-700' : ''} ${msg.isScheduled ? 'text-slate-400' : ''}`}>{msg.time}</span>
+                                                {msg.fromMe && !msg.isInternal && !msg.isScheduled && <CheckCheck className="h-3 w-3 text-white/90" />}
+                                                {msg.isScheduled && <span className="text-[10px] text-slate-400">Agendado</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+
+                        {/* Input Area */}
+                        {activeChat.status === 'pending' ? (
+                            <div className="p-4 bg-white border-t min-h-[80px] flex items-center justify-center bg-slate-50/50">
+                                <div className="text-center w-full max-maxWidth-md space-y-3">
+                                    <p className="text-sm text-slate-500">Esta conversa está pendente. Aceite para iniciar o atendimento.</p>
+                                    <Button
+                                        onClick={handleAcceptChat}
+                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-100 h-12 text-base animate-pulse"
+                                    >
+                                        <CheckCheck className="mr-2 h-5 w-5" />
+                                        INICIAR ATENDIMENTO
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <Composer onSendMessage={handleSendMessage} onScheduleMessage={handleScheduleMessage} />
+                        )}
+                    </>
                 ) : (
-                    <Composer onSendMessage={handleSendMessage} onScheduleMessage={handleScheduleMessage} />
+                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400 space-y-4">
+                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
+                            <MessageSquare className="h-8 w-8 text-slate-300" />
+                        </div>
+                        <p className="text-sm font-medium">Selecione uma conversa para começar</p>
+                    </div>
                 )}
             </div>
 

@@ -70,28 +70,22 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
         return () => clearInterval(interval)
     }, [])
 
-    // Mock Data for Charts
-    const volumeData = [
-        { hour: '08h', recebidas: 8, resolvidas: 6, tma: 12 },
-        { hour: '09h', recebidas: 14, resolvidas: 11, tma: 15 },
-        { hour: '10h', recebidas: 22, resolvidas: 18, tma: 20 },
-        { hour: '11h', recebidas: 19, resolvidas: 15, tma: 22 },
-        { hour: '12h', recebidas: 12, resolvidas: 10, tma: 18 },
-        { hour: '13h', recebidas: 7, resolvidas: 5, tma: 14 },
-        { hour: '14h', recebidas: 24, resolvidas: 20, tma: 19 },
-        { hour: '15h', recebidas: 21, resolvidas: 18, tma: 17 },
-        { hour: '16h', recebidas: 18, resolvidas: 15, tma: 21 },
-        { hour: '17h', recebidas: 16, resolvidas: 13, tma: 16 },
-        { hour: '18h', recebidas: 11, resolvidas: 9, tma: 13 },
-        { hour: '19h', recebidas: 6, resolvidas: 4, tma: 11 },
+    // Dynamic Data from API
+    const volumeData = volumeChartData.length > 0 ? volumeChartData : [
+        { name: 'Dom', total: 0 },
+        { name: 'Seg', total: 0 },
+        { name: 'Ter', total: 0 },
+        { name: 'Qua', total: 0 },
+        { name: 'Qui', total: 0 },
+        { name: 'Sex', total: 0 },
+        { name: 'Sab', total: 0 },
     ]
 
-    const channelData = [
-        { name: 'WhatsApp Oficial', value: 143, color: '#4ade80' },
-        { name: 'Instagram', value: 68, color: '#f472b6' },
-        { name: 'Messenger', value: 23, color: '#60a5fa' },
-        { name: 'Z-API', value: 13, color: '#cbd5e1' },
-    ]
+    const channelData = sectors.map(s => ({
+        name: s.name,
+        value: s.totalConversations || 0,
+        color: s.color || '#cbd5e1'
+    }))
 
     return (
         <div className="min-h-screen bg-[#f4f5f7] pb-10">
@@ -267,47 +261,54 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                     </Card>
 
                     {/* KPI 6: Taxa Resolução */}
-                    <Card className="p-5 relative overflow-hidden border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
-                                <Award className="text-violet-500 w-5 h-5" />
+                    <Card className="p-6 border-none premium-shadow bg-white hover:translate-y-[-2px] transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center text-red-600">
+                                <MessageSquare className="h-6 w-6" />
                             </div>
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+5% ↑</span>
+                            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">+{dashboardMetrics?.totalConversations?.change || 0}%</span>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Resolução 1º Contato</p>
-                        <p className="text-2xl font-black text-slate-800">68<span className="text-base font-bold text-slate-500">%</span></p>
-                        <p className="text-[10px] text-slate-500 mt-1">128 de 189 resolvidas</p>
-                    </Card>
-
-                    {/* KPI 7: CSAT */}
-                    <Card className="p-5 relative overflow-hidden border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center">
-                                <Smile className="text-pink-500 w-5 h-5" />
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">142 respostas</span>
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Satisfação (CSAT)</p>
-                        <p className="text-2xl font-black text-slate-800">4.7<span className="text-base font-bold text-slate-500">/5</span></p>
-                        <div className="flex gap-0.5 mt-1">
-                            {[1, 2, 3, 4].map(i => (
-                                <span key={i} className="text-amber-400 text-sm">★</span>
-                            ))}
-                            <span className="text-slate-200 text-sm">★</span>
+                        <h4 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Conversas</h4>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.totalConversations?.value || 0}</span>
                         </div>
                     </Card>
 
-                    {/* KPI 8: SLA Crítico */}
-                    <Card className="p-5 relative overflow-hidden border-l-4 border-l-amber-400 border-t-0 border-r-0 border-b-0 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                                <AlertTriangle className="text-amber-500 w-5 h-5" />
+                    <Card className="p-6 border-none premium-shadow bg-white hover:translate-y-[-2px] transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                <CheckCircle className="h-6 w-6" />
                             </div>
-                            <button className="text-[10px] font-bold text-primary hover:underline">Ver todas</button>
+                            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">{dashboardMetrics?.resolved?.rate || 0}% taxa</span>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">SLA Crítico</p>
-                        <p className="text-2xl font-black text-amber-500">7</p>
-                        <p className="text-[10px] text-slate-500 mt-1">Aguardando &gt; 30 min sem resposta</p>
+                        <h4 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Resolvidas</h4>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.resolved?.value || 0}</span>
+                        </div>
+                    </Card>
+
+                    <Card className="p-6 border-none premium-shadow bg-white hover:translate-y-[-2px] transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
+                                <Timer className="h-6 w-6" />
+                            </div>
+                        </div>
+                        <h4 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">TMA Médio</h4>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.tma?.value || "0m"}</span>
+                        </div>
+                    </Card>
+
+                    <Card className="p-6 border-none premium-shadow bg-white hover:translate-y-[-2px] transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                <Reply className="h-6 w-6" />
+                            </div>
+                        </div>
+                        <h4 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Novos Contatos</h4>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.newContacts?.value || 0}</span>
+                        </div>
                     </Card>
                 </div>
 
@@ -366,7 +367,7 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                                <p className="text-2xl font-bold text-slate-800">247</p>
+                                <p className="text-2xl font-bold text-slate-800">{dashboardMetrics?.totalConversations?.value || 0}</p>
                                 <p className="text-[10px] text-slate-400">Total</p>
                             </div>
                         </div>

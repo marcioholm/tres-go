@@ -12,67 +12,26 @@ import { Badge } from "@/components/ui/badge"
 import { Phone, Mail, MapPin, Calendar, DollarSign, Tag, TrendingUp, User } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-// import { toast } from "sonner" 
-
 
 interface ContactProfilePanelProps {
     workspaceId: string
-    contactId: string | number // Allow number for mock compatibility for now
+    contactId: string | number
     onClose?: () => void
 }
 
 export function ContactProfilePanel({ workspaceId, contactId, onClose }: ContactProfilePanelProps) {
     const [contact, setContact] = useState<Contact | null>(null)
     const [sales, setSales] = useState<Sale[]>([])
-    const [items, setItems] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [updatingSource, setUpdatingSource] = useState(false)
     const [availableTags, setAvailableTags] = useState<TagType[]>([])
     const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false)
-
-    // Mock Contacts Data for Demo/Dev
-    const MOCK_CONTACTS: Record<string, Contact> = {
-        "1": {
-            id: "1",
-            name: "Beatriz Mendonça",
-            email: "beatriz.m@example.com",
-            phone: "+55 11 99999-9999",
-            tags: [{ id: "t1", name: "Cliente VIP", color: "#f59e0b" }],
-        },
-        "2": {
-            id: "2",
-            name: "Carlos Eduardo",
-            email: "carlos.e@example.com",
-            phone: "+55 11 88888-8888",
-            source: TrafficSource.INSTAGRAM_DIRECT,
-            tags: [{ id: "t2", name: "Novo Lead", color: "#3b82f6" }],
-        },
-        "3": {
-            id: "3",
-            name: "Marcos Oliveira",
-            email: "marcos.o@example.com",
-            phone: "+55 11 77777-7777",
-            tags: [],
-        }
-    }
 
     useEffect(() => {
         if (!contactId) return
 
         const fetchData = async () => {
             setLoading(true)
-
-            // Check for mock ID first
-            const idStr = contactId.toString()
-            if (MOCK_CONTACTS[idStr]) {
-                // Simulate network delay for realism
-                await new Promise(resolve => setTimeout(resolve, 300))
-                setContact(MOCK_CONTACTS[idStr])
-                setSales([]) // No mock sales for now
-                setLoading(false)
-                return
-            }
-
             try {
                 // Fetch contact details
                 const contactRes = await api.get(`/workspaces/${workspaceId}/contacts/${contactId}`)
@@ -87,7 +46,6 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                 setAvailableTags(tagsRes.data)
             } catch (error) {
                 console.error("Failed to fetch contact profile:", error)
-                // If API fails fallback to null to show error state, or handle 404 specifically
                 setContact(null)
             } finally {
                 setLoading(false)
@@ -116,7 +74,6 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
         if (!contact) return
         try {
             await api.post(`/workspaces/${workspaceId}/contacts/${contact.id}/tags/${tag.id}`)
-            // Update local state
             const newTags = [...(contact.tags || []), tag]
             setContact({ ...contact, tags: newTags })
             setIsTagPopoverOpen(false)
@@ -129,7 +86,6 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
         if (!contact) return
         try {
             await api.delete(`/workspaces/${workspaceId}/contacts/${contact.id}/tags/${tagId}`)
-            // Update local state
             const newTags = (contact.tags || []).filter(t => t.id !== tagId)
             setContact({ ...contact, tags: newTags })
         } catch (error) {
@@ -157,7 +113,7 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
     if (!contact) {
         return (
             <div className="w-80 border-l bg-white h-full p-6 flex items-center justify-center text-slate-500">
-                <p>Contact not found or error loading.</p>
+                <p>Contato não encontrado ou erro ao carregar.</p>
             </div>
         )
     }
@@ -173,7 +129,7 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                 <div className="p-6 flex flex-col items-center border-b">
                     <Avatar className="h-24 w-24 mb-4">
                         <AvatarFallback className="text-2xl bg-slate-100 text-slate-600 font-medium">
-                            {contact.name.substring(0, 2).toUpperCase()}
+                            {contact.name?.substring(0, 2).toUpperCase() || "??"}
                         </AvatarFallback>
                     </Avatar>
                     <h2 className="text-xl font-bold text-slate-800 text-center">{contact.name}</h2>
@@ -188,7 +144,6 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                 </div>
 
                 <div className="p-6 space-y-6">
-                    {/* Information */}
                     <div className="space-y-4">
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Telefone</label>
@@ -199,7 +154,7 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Origem (Traffic Source)</label>
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Origem</label>
                             <Select
                                 value={contact.source || ""}
                                 onValueChange={(val) => handleSourceChange(val as TrafficSource)}
@@ -219,7 +174,6 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                         </div>
                     </div>
 
-                    {/* Tags Section */}
                     <div className="space-y-3">
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                             <Tag className="h-3 w-3" /> Etiquetas
@@ -271,7 +225,6 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                         </div>
                     </div>
 
-                    {/* Sales History */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
