@@ -9,9 +9,9 @@ export class MetaIntegrationController {
     // ─── HTML PAGES ──────────────────────────────────────────────────────────
 
     @Get('integrations/meta')
-    getLanding(@Res() res: Response) {
+    getLanding(@Query('workspaceId') workspaceId: string, @Res() res: Response) {
         this.setSecurityHeaders(res);
-        return res.send(this.metaService.renderLandingPage());
+        return res.send(this.metaService.renderLandingPage(workspaceId));
     }
 
     @Get('integrations/meta/success')
@@ -19,13 +19,15 @@ export class MetaIntegrationController {
         @Query('pageName') pageName: string,
         @Query('pageId') pageId: string,
         @Query('igId') igId: string,
+        @Query('workspaceId') workspaceId: string,
         @Res() res: Response
     ) {
         this.setSecurityHeaders(res);
         return res.send(this.metaService.renderSuccessPage({
             pageName,
             pageId,
-            igAccountId: igId || null
+            igAccountId: igId || null,
+            workspaceId
         }));
     }
 
@@ -43,11 +45,11 @@ export class MetaIntegrationController {
 
     @Get('auth/meta/login')
     @Redirect()
-    login() {
+    login(@Query('workspaceId') workspaceId: string) {
         if (!process.env.META_APP_ID || !process.env.META_REDIRECT_URI) {
             return { url: '/integrations/meta/error?reason=missing_env' };
         }
-        return { url: this.metaService.getLoginUrl() };
+        return { url: this.metaService.getLoginUrl(workspaceId) };
     }
 
     @Get('auth/meta/callback')
@@ -63,14 +65,15 @@ export class MetaIntegrationController {
             return res.redirect(`/integrations/meta/error?reason=denied&details=${fbError}`);
         }
 
-        if (!code || !state || !this.metaService.validateState(state)) {
+        const workspaceId = this.metaService.validateState(state);
+        if (!code || !state || !workspaceId) {
             return res.redirect('/integrations/meta/error?reason=invalid_state');
         }
 
         try {
-            const integration = await this.metaService.handleCallback(code);
+            const integration = await this.metaService.handleCallback(code, workspaceId);
             return res.redirect(
-                `/integrations/meta/success?pageName=${encodeURIComponent(integration.pageName)}&pageId=${integration.pageId}&igId=${integration.igBusinessAccountId || ''}`
+                `/integrations/meta/success?pageName=${encodeURIComponent(integration.pageName)}&pageId=${integration.pageId}&igId=${integration.igBusinessAccountId || ''}&workspaceId=${workspaceId}`
             );
         } catch (error) {
             console.error('Meta Callback Error:', error);

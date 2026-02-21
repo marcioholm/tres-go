@@ -15,10 +15,10 @@ export class MetaIntegrationService {
 
     // ─── AUTH LOGIC ──────────────────────────────────────────────────────────
 
-    generateState(): string {
+    generateState(workspaceId: string): string {
         const nonce = crypto.randomBytes(16).toString('hex');
         const timestamp = Date.now();
-        const payload = `${nonce}:${timestamp}`;
+        const payload = `${workspaceId}:${nonce}:${timestamp}`;
         const signature = crypto
             .createHmac('sha256', this.STATE_SECRET)
             .update(payload)
@@ -26,49 +26,49 @@ export class MetaIntegrationService {
         return Buffer.from(`${payload}:${signature}`).toString('base64');
     }
 
-    validateState(state: string): boolean {
+    validateState(state: string): string | null {
         try {
             const decoded = Buffer.from(state, 'base64').toString('utf8');
-            const [nonce, timestamp, signature] = decoded.split(':');
+            const [workspaceId, nonce, timestamp, signature] = decoded.split(':');
 
             // Check expiry (30 min)
             const age = Date.now() - parseInt(timestamp);
             if (age > 30 * 60 * 1000) {
                 console.error(`Meta OAuth State Expired: ${age}ms`);
-                return false;
+                return null;
             }
 
             const expectedSignature = crypto
                 .createHmac('sha256', this.STATE_SECRET)
-                .update(`${nonce}:${timestamp}`)
+                .update(`${workspaceId}:${nonce}:${timestamp}`)
                 .digest('hex');
 
             if (signature !== expectedSignature) {
                 console.error('Meta OAuth State Signature Mismatch');
-                return false;
+                return null;
             }
 
-            return true;
+            return workspaceId;
         } catch (e) {
             console.error('Meta OAuth State Decode Error:', e.message);
-            return false;
+            return null;
         }
     }
 
-    getLoginUrl(): string {
-        const state = this.generateState();
+    getLoginUrl(workspaceId: string): string {
+        const state = this.generateState(workspaceId);
         const params = new URLSearchParams({
             client_id: this.APP_ID,
             redirect_uri: this.REDIRECT_URI,
             response_type: 'code',
             scope: this.SCOPES,
             state: state,
-            auth_type: 'reauthenticate', // Forces Meta to show the permission dialog again
+            auth_type: 'reauthenticate',
         });
         return `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
     }
 
-    async handleCallback(code: string) {
+    async handleCallback(code: string, workspaceId: string) {
         // 1. Exchange short-lived token
         const exchangeUrl = `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${this.APP_ID}&redirect_uri=${encodeURIComponent(this.REDIRECT_URI)}&client_secret=${this.APP_SECRET}&code=${code}`;
         const resShort = await fetch(exchangeUrl);
@@ -100,6 +100,7 @@ export class MetaIntegrationService {
         const pageId = page.id;
         const pageName = page.name;
         const pageAccessToken = page.access_token;
+        const pageAvatar = page.picture?.data?.url || null;
 
         // 4. Get IG Business Account
         const igUrl = `https://graph.facebook.com/v19.0/${pageId}?fields=instagram_business_account&access_token=${pageAccessToken}`;
@@ -107,7 +108,7 @@ export class MetaIntegrationService {
         const igData = await resIg.json();
         const igAccountId = igData.instagram_business_account?.id || null;
 
-        // 5. Persist
+        // 5. Persist MetaIntegration (Global Credential Store)
         // @ts-ignore - The model exists in DB but Prisma Client might need sync on build
         const integration = await this.prisma.metaIntegration.upsert({
             where: { pageId },
@@ -128,12 +129,66 @@ export class MetaIntegrationService {
             },
         });
 
-        return integration;
+        // 6. Create/Update CHANNEL for Workspace (Visible in Omni)
+        // Always create/update a Messenger channel
+        const existingFb = await this.prisma.channel.findFirst({
+            where: { workspaceId, pageId, type: 'MESSENGER' }
+        });
+
+        if (existingFb) {
+            await this.prisma.channel.update({
+                where: { id: existingFb.id },
+                data: { accessToken: pageAccessToken, status: 'ACTIVE', pageName, pageAvatar }
+            });
+        } else {
+            await this.prisma.channel.create({
+                data: {
+                    workspaceId,
+                    type: 'MESSENGER',
+                    name: `Messenger: ${pageName}`,
+                    pageId,
+                    pageName,
+                    pageAvatar,
+                    accessToken: pageAccessToken,
+                    status: 'ACTIVE'
+                }
+            });
+        }
+
+        // If IG linked, create/update IG channel
+        if (igAccountId) {
+            const existingIg = await this.prisma.channel.findFirst({
+                where: { workspaceId, igAccountId, type: 'INSTAGRAM' }
+            });
+
+            if (existingIg) {
+                await this.prisma.channel.update({
+                    where: { id: existingIg.id },
+                    data: { accessToken: pageAccessToken, status: 'ACTIVE', pageName, pageAvatar }
+                });
+            } else {
+                await this.prisma.channel.create({
+                    data: {
+                        workspaceId,
+                        type: 'INSTAGRAM',
+                        name: `Instagram: ${pageName}`,
+                        igAccountId,
+                        pageId,
+                        pageName,
+                        pageAvatar,
+                        accessToken: pageAccessToken,
+                        status: 'ACTIVE'
+                    }
+                });
+            }
+        }
+
+        return { ...integration, workspaceId };
     }
 
     // ─── UI TEMPLATES (NorthWay Identity) ────────────────────────────────────
 
-    private getLayout(title: string, content: string): string {
+    private getLayout(title: string, content: string, extraHead: string = ''): string {
         return `
             <!DOCTYPE html>
             <html lang="pt-br">
@@ -142,6 +197,7 @@ export class MetaIntegrationService {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>${title} | NorthWay</title>
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+                ${extraHead}
                 <style>
                     :root {
                         --bg: #0a0a0c;
@@ -211,7 +267,7 @@ export class MetaIntegrationService {
         `;
     }
 
-    renderLandingPage(): string {
+    renderLandingPage(workspaceId?: string): string {
         const content = `
             <h1>Conectar Facebook & Instagram</h1>
             <p>Integre seus canais ao NorthWay CRM para centralizar gestão, histórico e automações.</p>
@@ -220,13 +276,15 @@ export class MetaIntegrationService {
                 <div class="list-item">Sem senha salva no navegador</div>
                 <div class="list-item">Você pode desconectar quando quiser</div>
             </div>
-            <a href="/auth/meta/login" class="btn">Autorizar com Meta</a>
+            <a href="/auth/meta/login${workspaceId ? `?workspaceId=${workspaceId}` : ''}" class="btn">Autorizar com Meta</a>
             <p style="margin-top: 20px; font-size: 12px;">Você será redirecionado para autorizar e voltará automaticamente.</p>
         `;
         return this.getLayout('Conectar Meta', content);
     }
 
-    renderSuccessPage(data: { pageName: string; pageId: string; igAccountId: string | null }): string {
+    renderSuccessPage(data: { pageName: string; pageId: string; igAccountId: string | null; workspaceId?: string }): string {
+        const redirectUrl = data.workspaceId ? `${this.FRONTEND_URL}/workspaces/${data.workspaceId}/integrations` : this.FRONTEND_URL;
+
         const content = `
             <h1>Conexão concluída</h1>
             <p>Sua conta foi conectada com sucesso. Agora o NorthWay pode acessar os recursos autorizados.</p>
@@ -240,10 +298,12 @@ export class MetaIntegrationService {
                     <span class="info-value">${data.igAccountId}</span>
                 ` : ''}
             </div>
-            <a href="${this.FRONTEND_URL}/settings/channels" class="btn">Conectar outra conta</a>
-            <a href="${this.FRONTEND_URL}" class="btn btn-secondary">Voltar para o Omni</a>
+            <p style="font-size: 14px; margin-bottom: 20px; color: var(--text-sub);">Redirecionando de volta em 3 segundos...</p>
+            <a href="${redirectUrl}" class="btn">Voltar agora</a>
         `;
-        return this.getLayout('Conectado', content);
+
+        const extraHead = `<meta http-equiv="refresh" content="3;url=${redirectUrl}">`;
+        return this.getLayout('Conectado', content, extraHead);
     }
 
     renderErrorPage(reason: string, details?: string): string {
