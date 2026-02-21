@@ -26,30 +26,50 @@ export class MetaWebhookService {
 
     async processWebhook(body: any) {
         try {
+            console.log('[Meta Webhook] Incoming body:', JSON.stringify(body));
             const entries = body.entry || [];
 
             for (const entry of entries) {
                 const entryId = entry.id;
 
-                // Buscar o canal pelo pageId ou igAccountId (Instagram)
-                const channel = await this.prisma.channel.findFirst({
-                    where: {
-                        OR: [
-                            { pageId: entryId, status: 'ACTIVE' },
-                            { igAccountId: entryId, status: 'ACTIVE' },
-                        ],
-                    },
-                });
-
-                if (!channel) {
-                    console.log(`[Meta Webhook] No active channel found for entry ID: ${entryId}`);
-                    continue;
-                }
-
                 // Processar mensagens (Instagram DM + Messenger compartilham esse formato)
                 const messaging = entry.messaging || entry.changes?.[0]?.value?.messages || [];
 
                 for (const event of messaging) {
+                    // 1. Tentar encontrar o canal específico pelo recipient.id (mais preciso para distinguir IG de Messenger)
+                    const recipientId = event.recipient?.id;
+                    let channel = null;
+
+                    if (recipientId) {
+                        channel = await this.prisma.channel.findFirst({
+                            where: {
+                                OR: [
+                                    { pageId: recipientId, status: 'ACTIVE' },
+                                    { igAccountId: recipientId, status: 'ACTIVE' }
+                                ]
+                            }
+                        });
+                    }
+
+                    // 2. Fallback para o entryId (ID da Página que disparou o webhook)
+                    if (!channel) {
+                        channel = await this.prisma.channel.findFirst({
+                            where: {
+                                OR: [
+                                    { pageId: entryId, status: 'ACTIVE' },
+                                    { igAccountId: entryId, status: 'ACTIVE' },
+                                ],
+                            },
+                        });
+                    }
+
+                    if (!channel) {
+                        console.log(`[Meta Webhook] No active channel found for entry: ${entryId}, recipient: ${recipientId}`);
+                        continue;
+                    }
+
+                    console.log(`[Meta Webhook] Processing event for channel: ${channel.name} (${channel.id})`);
+
                     if (event.message) {
                         await this.handleIncomingMessage(channel, event);
                     } else if (event.read) {
@@ -62,14 +82,21 @@ export class MetaWebhookService {
                 // WhatsApp tem estrutura diferente
                 if (entry.changes) {
                     for (const change of entry.changes) {
+                        console.log(`[Meta Webhook] Change field: ${change.field}`);
                         if (change.field === 'messages') {
-                            await this.handleWhatsAppWebhook(channel, change.value);
+                            // Localizar canal WhatsApp
+                            const channel = await this.prisma.channel.findFirst({
+                                where: { pageId: entryId, type: 'WHATSAPP', status: 'ACTIVE' }
+                            });
+                            if (channel) {
+                                await this.handleWhatsAppWebhook(channel, change.value);
+                            }
                         }
                     }
                 }
             }
         } catch (err) {
-            console.error('Webhook processing error:', err);
+            console.error('[Meta Webhook] processing error:', err);
         }
     }
 
