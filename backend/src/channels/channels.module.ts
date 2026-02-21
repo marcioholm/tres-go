@@ -10,6 +10,8 @@ import { ContactsModule } from '../contacts/contacts.module';
 import { ConversationsModule } from '../conversations/conversations.module';
 import { MessagesModule } from '../messages/messages.module';
 import { forwardRef } from '@nestjs/common';
+import { MetaIntegrationController } from './meta-integration.controller';
+import { MetaIntegrationService } from './meta-integration.service';
 
 @Module({
     imports: [
@@ -19,8 +21,8 @@ import { forwardRef } from '@nestjs/common';
         ConversationsModule,
         forwardRef(() => MessagesModule)
     ],
-    providers: [ChannelsService, MetaOAuthService, MetaWebhookService],
-    controllers: [ChannelsController, MetaWebhookController],
+    providers: [ChannelsService, MetaOAuthService, MetaWebhookService, MetaIntegrationService],
+    controllers: [ChannelsController, MetaWebhookController, MetaIntegrationController],
     exports: [ChannelsService, MetaOAuthService],
 })
 export class ChannelsModule { }

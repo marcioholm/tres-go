@@ -97,6 +97,27 @@ The application provides specialized endpoints for monitoring and keep-alive:
 > [!NOTE]
 > If a global prefix (e.g., `/api`) is configured in the future, these endpoints will respond at `/api/health` and `/api/health/db`.
 
+## Integração Meta (OAuth)
+
+O sistema utiliza o fluxo oficial da Meta para conexão de Instagram e Facebook.
+
+### Variáveis de Ambiente Necessárias (Render)
+- `META_APP_ID`: ID do aplicativo no painel Meta for Developers.
+- `META_APP_SECRET`: Chave secreta do aplicativo.
+- `META_REDIRECT_URI`: `https://backend-tres-go.onrender.com/auth/meta/callback`
+- `META_OAUTH_STATE_SECRET`: Uma chave aleatória forte para segurança CSRF.
+- `APP_PUBLIC_URL`: URL base do backend (ex: `https://backend-tres-go.onrender.com`).
+
+### Páginas do Fluxo (Identidade NorthWay)
+- **Landing**: `/integrations/meta`
+- **Sucesso**: `/integrations/meta/success`
+- **Erro**: `/integrations/meta/error`
+
+### Como Testar
+1. Acesse `https://backend-tres-go.onrender.com/integrations/meta`.
+2. Clique em "Autorizar com Meta".
+3. Após a autorização no Facebook, você será redirecionado para a página de sucesso.
+
 ## Support
 
 Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).

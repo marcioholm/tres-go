@@ -71,6 +71,19 @@ model Channel {
   scheduledMessages ScheduledMessage[]
 }
 
+model MetaIntegration {
+  id                         String   @id @default(cuid())
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+  pageId                     String   @unique
+  pageName                   String
+  pageAccessToken            String
+  userAccessTokenLongLived   String
+  igBusinessAccountId        String?
+  tokenExpiresAt             DateTime?
+  status                     String   @default("active")
+}
+
 enum ChannelType {
   INSTAGRAM
   MESSENGER
