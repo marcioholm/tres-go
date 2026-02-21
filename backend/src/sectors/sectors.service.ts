@@ -37,7 +37,7 @@ export class SectorsService {
         });
     }
 
-    async create(workspaceId: string, data: any) {
+    async create(workspaceId: string, data: any, options: { skipLimitCheck?: boolean } = {}) {
         // If setting as default, unset others
         if (data.isDefault) {
             await this.prisma.sector.updateMany({
@@ -47,9 +47,11 @@ export class SectorsService {
         }
 
         // Check billing limits
-        const limitInfo = await this.billing.checkLimit(workspaceId, 'sectors');
-        if (!limitInfo.allowed) {
-            throw new Error(`Limite de setores (${limitInfo.limit}) atingido para o seu plano.`);
+        if (!options.skipLimitCheck) {
+            const limitInfo = await this.billing.checkLimit(workspaceId, 'sectors');
+            if (!limitInfo.allowed) {
+                throw new Error(`Limite de setores (${limitInfo.limit}) atingido para o seu plano.`);
+            }
         }
 
         // Create sector with default Kanban and SLA
@@ -206,7 +208,7 @@ export class SectorsService {
                 isDefault: true,
                 isActive: true,
                 order: 0
-            });
+            }, { skipLimitCheck: true });
         }
     }
 }
