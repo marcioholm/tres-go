@@ -62,6 +62,7 @@ export class MetaIntegrationService {
             response_type: 'code',
             scope: this.SCOPES,
             state: state,
+            auth_type: 'rerequest', // Forces Meta to show the permission dialog again
         });
         return `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
     }
