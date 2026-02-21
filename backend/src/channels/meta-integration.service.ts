@@ -62,49 +62,53 @@ export class MetaIntegrationService {
             response_type: 'code',
             scope: this.SCOPES,
             state: state,
-            auth_type: 'rerequest', // Forces Meta to show the permission dialog again
+            auth_type: 'reauthenticate', // Forces Meta to show the permission dialog again
         });
         return `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
     }
 
     async handleCallback(code: string) {
-        console.log('--- Meta Callback Start ---');
+        console.log('--- Meta Callback Deep Debug ---');
         // 1. Exchange short-lived token
         const exchangeUrl = `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${this.APP_ID}&redirect_uri=${encodeURIComponent(this.REDIRECT_URI)}&client_secret=${this.APP_SECRET}&code=${code}`;
         const resShort = await fetch(exchangeUrl);
         const dataShort = await resShort.json();
 
         if (dataShort.error) {
-            console.error('Meta Token Exchange Error:', dataShort.error);
+            console.error('Step 1 Fail:', dataShort.error);
             throw new Error(`token_exchange: ${dataShort.error.message}`);
         }
         const userAccessToken = dataShort.access_token;
-        console.log('Short-lived token obtained');
 
         // 2. Exchange long-lived token
         const longLivedUrl = `https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${this.APP_ID}&client_secret=${this.APP_SECRET}&fb_exchange_token=${userAccessToken}`;
         const resLong = await fetch(longLivedUrl);
         const dataLong = await resLong.json();
+
+        if (dataLong.error) {
+            console.error('Step 2 Fail:', dataLong.error);
+            throw new Error(`long_lived_exchange: ${dataLong.error.message}`);
+        }
+
         const longLivedToken = dataLong.access_token;
-        console.log('Long-lived token obtained');
 
         // 3. Get Pages
         const pagesUrl = `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,picture,access_token&access_token=${longLivedToken}`;
-        console.log('Fetching pages from /me/accounts...');
         const resPages = await fetch(pagesUrl);
         const pagesData = await resPages.json();
 
-        console.log('Pages record count:', pagesData.data?.length || 0);
         if (pagesData.error) {
-            console.error('Meta Pages API Error:', pagesData.error);
+            console.error('Step 3 Fail:', pagesData.error);
             throw new Error(`pages_api: ${pagesData.error.message}`);
         }
 
         const pages = pagesData.data || [];
 
         if (pages.length === 0) {
-            console.warn('No pages found in pagesData.data. Full response:', JSON.stringify(pagesData));
-            throw new Error('no_pages');
+            const raw = JSON.stringify(pagesData);
+            console.warn('Empty Page List Response:', raw);
+            // Including raw in the error details for the user to copy
+            throw new Error(`no_pages_found_in_fb: ${raw}`);
         }
 
         // Phase 1: auto-select first page
@@ -113,17 +117,14 @@ export class MetaIntegrationService {
         const pageName = page.name;
         const pageAccessToken = page.access_token;
 
-        console.log(`Processing page: ${pageName} (${pageId})`);
-
         // 4. Get IG Business Account
         const igUrl = `https://graph.facebook.com/v19.0/${pageId}?fields=instagram_business_account&access_token=${pageAccessToken}`;
         const resIg = await fetch(igUrl);
         const igData = await resIg.json();
         const igAccountId = igData.instagram_business_account?.id || null;
-        console.log('Instagram Account ID:', igAccountId);
 
         // 5. Persist
-        // @ts-ignore
+        // @ts-ignore - The model exists in DB but Prisma Client might need sync on build
         const integration = await this.prisma.metaIntegration.upsert({
             where: { pageId },
             update: {
@@ -143,7 +144,6 @@ export class MetaIntegrationService {
             },
         });
 
-        console.log('Integration persisted successfully');
         return integration;
     }
 
