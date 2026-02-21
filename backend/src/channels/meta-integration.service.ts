@@ -9,6 +9,7 @@ export class MetaIntegrationService {
     private readonly REDIRECT_URI = process.env.META_REDIRECT_URI;
     private readonly STATE_SECRET = process.env.META_OAUTH_STATE_SECRET || 'fallback-secret-for-dev';
     private readonly SCOPES = process.env.META_SCOPES || 'public_profile,pages_show_list,pages_read_engagement,pages_manage_metadata,pages_messaging,instagram_basic,instagram_manage_messages,business_management';
+    private readonly FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
     constructor(private readonly prisma: PrismaService) { }
 
@@ -68,16 +69,12 @@ export class MetaIntegrationService {
     }
 
     async handleCallback(code: string) {
-        console.log('--- Meta Callback Deep Debug v2 ---');
         // 1. Exchange short-lived token
         const exchangeUrl = `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${this.APP_ID}&redirect_uri=${encodeURIComponent(this.REDIRECT_URI)}&client_secret=${this.APP_SECRET}&code=${code}`;
         const resShort = await fetch(exchangeUrl);
         const dataShort = await resShort.json();
 
-        if (dataShort.error) {
-            console.error('Step 1 Fail:', dataShort.error);
-            throw new Error(`token_exchange: ${dataShort.error.message}`);
-        }
+        if (dataShort.error) throw new Error(`token_exchange: ${dataShort.error.message}`);
         const userAccessToken = dataShort.access_token;
 
         // 2. Exchange long-lived token
@@ -85,37 +82,18 @@ export class MetaIntegrationService {
         const resLong = await fetch(longLivedUrl);
         const dataLong = await resLong.json();
 
-        if (dataLong.error) {
-            console.error('Step 2 Fail:', dataLong.error);
-            throw new Error(`long_lived_exchange: ${dataLong.error.message}`);
-        }
-
+        if (dataLong.error) throw new Error(`long_lived_exchange: ${dataLong.error.message}`);
         const longLivedToken = dataLong.access_token;
-
-        // --- Verify actual permissions (DEBUG) ---
-        const debugUrl = `https://graph.facebook.com/debug_token?input_token=${longLivedToken}&access_token=${this.APP_ID}|${this.APP_SECRET}`;
-        const resDebug = await fetch(debugUrl);
-        const debugData = await resDebug.json();
-        const debugStr = JSON.stringify(debugData.data || debugData);
-        console.log('Token Debug:', debugStr);
-        // -----------------------------------------
 
         // 3. Get Pages
         const pagesUrl = `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,picture,access_token&access_token=${longLivedToken}`;
         const resPages = await fetch(pagesUrl);
         const pagesData = await resPages.json();
 
-        if (pagesData.error) {
-            console.error('Step 3 Fail:', pagesData.error);
-            throw new Error(`pages_api: ${pagesData.error.message}`);
-        }
-
+        if (pagesData.error) throw new Error(`pages_api: ${pagesData.error.message}`);
         const pages = pagesData.data || [];
 
-        if (pages.length === 0) {
-            // Including EVERYTHING in the error for the user to copy
-            throw new Error(`no_pages_found. TokenInfo: ${debugStr}. FullRes: ${JSON.stringify(pagesData)}`);
-        }
+        if (pages.length === 0) throw new Error('no_pages');
 
         // Phase 1: auto-select first page
         const page = pages[0];
@@ -262,8 +240,8 @@ export class MetaIntegrationService {
                     <span class="info-value">${data.igAccountId}</span>
                 ` : ''}
             </div>
-            <a href="/integrations/meta" class="btn">Conectar outra conta</a>
-            <a href="/integrations/meta" class="btn btn-secondary">Voltar</a>
+            <a href="${this.FRONTEND_URL}/settings/channels" class="btn">Conectar outra conta</a>
+            <a href="${this.FRONTEND_URL}" class="btn btn-secondary">Voltar para o Omni</a>
         `;
         return this.getLayout('Conectado', content);
     }
@@ -295,6 +273,7 @@ export class MetaIntegrationService {
             <p>${message}</p>
             <div style="font-size: 11px; color: #444; margin: 20px 0;">DEBUG: ${reason} ${details || ''}</div>
             <a href="/integrations/meta" class="btn">Tentar novamente</a>
+            <a href="${this.FRONTEND_URL}" class="btn btn-secondary" style="margin-top: 10px;">Voltar para o Omni</a>
             <p style="margin-top: 20px; font-size: 14px;">Fale com o suporte</p>
         `;
         return this.getLayout('Falha', content);
