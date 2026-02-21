@@ -10,9 +10,9 @@ export declare class MessagesController {
         status: string;
         type: string;
         content: import("@prisma/client/runtime/library").JsonValue;
+        externalId: string | null;
         conversationId: string;
         fromAgent: boolean;
         isInternalNote: boolean;
-        externalId: string | null;
     }>;
 }

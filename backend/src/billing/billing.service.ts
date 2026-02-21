@@ -41,14 +41,19 @@ export class BillingService {
         const trialEndsAt = new Date();
         trialEndsAt.setDate(trialEndsAt.getDate() + plan.trialDays);
 
-        return this.prisma.subscription.create({
-            data: {
-                workspaceId,
-                planId: plan.id,
-                status: 'TRIAL',
-                trialEndsAt,
-            },
-        });
+        try {
+            return await this.prisma.subscription.create({
+                data: {
+                    workspaceId,
+                    planId: plan.id,
+                    status: 'TRIAL',
+                    trialEndsAt,
+                },
+            });
+        } catch (error) {
+            console.error(`[Billing] Falha ao criar assinatura de Trial para workspace ${workspaceId}:`, error.message || error);
+            throw error;
+        }
     }
 
     // ── Ativar assinatura paga ───────────────────────────────────────────────────

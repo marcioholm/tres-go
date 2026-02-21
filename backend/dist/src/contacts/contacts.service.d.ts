@@ -14,6 +14,7 @@ export declare class ContactsService {
         lastName: string | null;
         workspaceId: string;
         phone: string | null;
+        externalId: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -66,6 +67,7 @@ export declare class ContactsService {
         lastName: string | null;
         workspaceId: string;
         phone: string | null;
+        externalId: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -85,6 +87,7 @@ export declare class ContactsService {
         lastName: string | null;
         workspaceId: string;
         phone: string | null;
+        externalId: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -104,6 +107,7 @@ export declare class ContactsService {
         lastName: string | null;
         workspaceId: string;
         phone: string | null;
+        externalId: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -123,6 +127,7 @@ export declare class ContactsService {
         lastName: string | null;
         workspaceId: string;
         phone: string | null;
+        externalId: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -142,6 +147,7 @@ export declare class ContactsService {
         lastName: string | null;
         workspaceId: string;
         phone: string | null;
+        externalId: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -182,5 +188,25 @@ export declare class ContactsService {
         action: 'add' | 'remove';
     }): Promise<{
         count: number;
+    }>;
+    findOrCreate(workspaceId: string, identifier: string, name?: string): Promise<{
+        id: string;
+        name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        workspaceId: string;
+        phone: string | null;
+        externalId: string | null;
+        source: import(".prisma/client").$Enums.TrafficSource | null;
+        sourceMedium: string | null;
+        sourceCampaign: string | null;
+        sourceContent: string | null;
+        utmSource: string | null;
+        utmMedium: string | null;
+        utmCampaign: string | null;
+        referredBy: string | null;
     }>;
 }

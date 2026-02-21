@@ -46,7 +46,7 @@ export class ConversationsService {
                 kanbanColumn: kanbanColumnId, // Use ID relationship ideally, but schema uses String?
                 status: 'OPEN'
             },
-            include: { sector: true }
+            include: { sector: true, contact: true }
         });
     }
 
@@ -184,6 +184,26 @@ export class ConversationsService {
             });
         }
 
-        return updatedConversation;
+    }
+
+    async findOrCreate(workspaceId: string, channelId: string, contactId: string) {
+        let conversation = await this.prisma.conversation.findFirst({
+            where: {
+                workspaceId,
+                channelId,
+                contactId,
+                status: 'OPEN'
+            },
+            include: { sector: true, contact: true }
+        });
+
+        if (!conversation) {
+            conversation = await this.create(workspaceId, {
+                channelId,
+                contactId,
+            });
+        }
+
+        return conversation;
     }
 }

@@ -74,16 +74,19 @@ let AuthService = class AuthService {
                 lastName,
                 niche
             });
+            console.log(`[Register] Usuário criado com sucesso: ${email} (ID: ${user.id})`);
         }
         catch (err) {
-            console.error("Erro fatal ao criar usuário no registro:", err);
+            console.error(`[Register] Erro fatal ao criar usuário (${email}):`, err.message || err);
             throw err;
         }
         try {
+            console.log(`[Register] Tentando criar workspace padrão para o usuário ${user.id}...`);
             await this.workspacesService.createDefaultWorkspace(user.id, workspaceName, taxId);
+            console.log(`[Register] Workspace criado com sucesso para o usuário ${user.id}`);
         }
         catch (err) {
-            console.error("Falha ao criar workspace no registro (tentará novamente no login):", err);
+            console.error(`[Register] Falha ao criar workspace (não bloqueante):`, err.message || err);
         }
         return this.login(user);
     }

@@ -15,6 +15,7 @@ export declare class KanbanController {
                     lastName: string | null;
                     workspaceId: string;
                     phone: string | null;
+                    externalId: string | null;
                     source: import(".prisma/client").$Enums.TrafficSource | null;
                     sourceMedium: string | null;
                     sourceCampaign: string | null;
@@ -57,8 +58,8 @@ export declare class KanbanController {
                 order: number;
                 agentId: string | null;
                 contactId: string;
-                conversationId: string | null;
                 notes: string | null;
+                conversationId: string | null;
                 title: string;
                 columnId: string;
                 expectedCloseAt: Date | null;
@@ -89,8 +90,8 @@ export declare class KanbanController {
         order: number;
         agentId: string | null;
         contactId: string;
-        conversationId: string | null;
         notes: string | null;
+        conversationId: string | null;
         title: string;
         columnId: string;
         expectedCloseAt: Date | null;
@@ -105,8 +106,8 @@ export declare class KanbanController {
         order: number;
         agentId: string | null;
         contactId: string;
-        conversationId: string | null;
         notes: string | null;
+        conversationId: string | null;
         title: string;
         columnId: string;
         expectedCloseAt: Date | null;
@@ -121,8 +122,8 @@ export declare class KanbanController {
         order: number;
         agentId: string | null;
         contactId: string;
-        conversationId: string | null;
         notes: string | null;
+        conversationId: string | null;
         title: string;
         columnId: string;
         expectedCloseAt: Date | null;

@@ -121,61 +121,86 @@ export class MessagesService {
     }
 
     // Método sendViaWhatsappOfficial — tratar áudio PTT:
-    private async sendViaWhatsappOfficial(config: any, to: string, dto: SendMessageDto, dbContent: any): Promise<string | undefined> {
-        const url = `https://graph.facebook.com/v17.0/${config.phoneNumberId}/messages`;
-        const headers = { Authorization: `Bearer ${config.accessToken}` };
+    private async sendViaWhatsappOfficial(channel: any, to: string, dto: SendMessageDto, dbContent: any): Promise<string | undefined> {
+        const url = `https://graph.facebook.com/v19.0/${channel.phoneNumberId || process.env.META_PHONE_NUMBER_ID}/messages`;
+        const token = channel.accessToken || process.env.META_SYSTEM_USER_TOKEN;
+        const headers = { Authorization: `Bearer ${token}` };
 
-        if (dbContent.isPtt) {
-            const body = {
-                messaging_product: 'whatsapp',
-                to,
-                recipient_type: 'individual',
-                type: 'audio',
-                audio: {
-                    link: dbContent.mediaUrl,
-                    ptt: true,
-                },
+        let body: any = {
+            messaging_product: 'whatsapp',
+            to,
+            recipient_type: 'individual',
+        };
+
+        if (dbContent.isPtt || dto.type === 'AUDIO') {
+            body.type = 'audio';
+            body.audio = {
+                link: dbContent.mediaUrl,
+                ptt: !!dbContent.isPtt,
             };
-            this.logger.log(`[Official API] Sending PTT Message to ${to}...`);
-            // MOCKED HTTP execution (replace with actual when doing real WA)
-            // const res = await axios.post(url, body, { headers });
-            // return res.data?.messages?.[0]?.id;
-            return "mock-official-message-id";
+        } else if (dto.type === 'IMAGE' || dto.type === 'VIDEO' || dto.type === 'DOCUMENT') {
+            const type = dto.type.toLowerCase();
+            body.type = type;
+            body[type] = {
+                link: dbContent.mediaUrl,
+                caption: dbContent.body
+            };
+        } else {
+            body.type = 'text';
+            body.text = { body: dbContent.body || dto.text || '' };
         }
 
-        if (dto.type === 'AUDIO') {
-            this.logger.log(`[Official API] Sending Normal Audio File to ${to}...`);
-            return "mock-normalaudio-id";
+        try {
+            this.logger.log(`[Official API] Sending Message to ${to}...`);
+            const res = await axios.post(url, body, { headers });
+            return res.data?.messages?.[0]?.id;
+        } catch (error) {
+            this.logger.error(`Failed to send message via Meta API`, error.response?.data || error.message);
+            throw error;
         }
-
-        // ... resto do método para outros tipos ...
-        return "mock-other-message-id";
     }
 
     // Método sendViaZapi — usar endpoint correto para PTT:
-    private async sendViaZapi(config: any, to: string, dto: SendMessageDto, dbContent: any): Promise<string | undefined> {
+    private async sendViaZapi(channel: any, to: string, dto: SendMessageDto, dbContent: any): Promise<string | undefined> {
+        const config = (channel.config as any) || {};
         const base = `https://api.z-api.io/instances/${config.instanceId}/token/${config.instanceToken}`;
         const headers = { 'Client-Token': config.clientToken };
         const phone = to.replace(/\D/g, '');
 
+        let endpoint = '/send-text';
+        let body: any = { phone };
+
         if (dbContent.isPtt || dto.type === 'AUDIO') {
-            // Z-API: /send-audio → PTT (mensagem de voz)
-            // Z-API: /send-file  → arquivo de áudio comum
             const isVoiceNote = dbContent.isPtt !== false;
-            const endpoint = isVoiceNote ? '/send-audio' : '/send-file';
-
-            const body = isVoiceNote
-                ? { phone, audio: dbContent.mediaUrl }             // PTT
-                : { phone, file: dbContent.mediaUrl, fileName: dto.filename || 'audio.mp3' }; // arquivo
-
-            this.logger.log(`[Z-API API] Sending ${isVoiceNote ? 'PTT Message' : 'Audio File'} to ${to}...`);
-            // MOCKED HTTP execution (replace with actual when doing real WA)
-            // const res = await axios.post(`${base}${endpoint}`, body, { headers });
-            // return res.data?.zaapId || res.data?.messageId;
-            return "mock-zapi-audio-id";
+            endpoint = isVoiceNote ? '/send-audio' : '/send-file';
+            if (isVoiceNote) {
+                body.audio = dbContent.mediaUrl;
+            } else {
+                body.file = dbContent.mediaUrl;
+                body.fileName = dto.filename || 'audio.mp3';
+            }
+        } else if (dto.type === 'IMAGE') {
+            endpoint = '/send-image';
+            body.image = dbContent.mediaUrl;
+            body.caption = dbContent.body;
+        } else if (dto.type === 'VIDEO') {
+            endpoint = '/send-video';
+            body.video = dbContent.mediaUrl;
+        } else if (dto.type === 'DOCUMENT') {
+            endpoint = '/send-document';
+            body.document = dbContent.mediaUrl;
+            body.fileName = dto.filename || 'document.pdf';
+        } else {
+            body.message = dbContent.body || dto.text || '';
         }
 
-        // ... resto do método ...
-        return "mock-zapi-other-message-id";
+        try {
+            this.logger.log(`[Z-API API] Sending Message to ${phone} via ${endpoint}...`);
+            const res = await axios.post(`${base}${endpoint}`, body, { headers });
+            return res.data?.zaapId || res.data?.messageId;
+        } catch (error) {
+            this.logger.error(`Failed to send message via Z-API`, error.response?.data || error.message);
+            throw error;
+        }
     }
 }

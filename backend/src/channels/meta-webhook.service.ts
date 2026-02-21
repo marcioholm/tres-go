@@ -2,13 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
 
+import { ContactsService } from '../contacts/contacts.service';
+import { ConversationsService } from '../conversations/conversations.service';
+import { MessagesService } from '../messages/messages.service';
+
 @Injectable()
 export class MetaWebhookService {
     constructor(
         private readonly prisma: PrismaService,
-        // Note: In a full implementation, these would be injected
-        // private readonly conversationsService: ConversationsService,
-        // private readonly messagesService: MessagesService,
+        private readonly contactsService: ContactsService,
+        private readonly conversationsService: ConversationsService,
+        private readonly messagesService: MessagesService,
     ) { }
 
     validateSignature(body: any, signature: string): boolean {
@@ -70,27 +74,23 @@ export class MetaWebhookService {
         // TODO: Integrate with ConversationsService and MessagesService
         console.log(`Incoming message from ${senderId} on channel ${channel.id}: ${text}`);
 
-        /*
-        const conversation = await this.conversationsService.findOrCreate({
-          channelId: channel.id,
-          workspaceId: channel.workspaceId,
-          externalId: senderId,
-          channelType: channel.type,
+        const conversation = await this.conversationsService.findOrCreate(
+            channel.workspaceId,
+            channel.id,
+            await this.contactsService.findOrCreate(channel.workspaceId, senderId).then(c => c.id)
+        );
+
+        await this.prisma.message.create({
+            data: {
+                conversationId: conversation.id,
+                externalId: mid,
+                fromAgent: false,
+                type: attachments.length > 0 ? 'ATTACHMENT' : 'TEXT',
+                content: { text: text },
+                status: 'SENT',
+                createdAt: new Date(event.timestamp)
+            }
         });
-    
-        await this.messagesService.create({
-          conversationId: conversation.id,
-          externalId: mid,
-          direction: 'INBOUND',
-          type: attachments.length > 0 ? 'ATTACHMENT' : 'TEXT',
-          content: text,
-          attachments: attachments.map((a: any) => ({
-            type: a.type,
-            url: a.payload?.url,
-          })),
-          receivedAt: new Date(event.timestamp * 1000),
-        });
-        */
     }
 
     private async handleWhatsAppWebhook(channel: any, value: any) {
@@ -99,32 +99,29 @@ export class MetaWebhookService {
 
         for (const msg of messages) {
             const phone = msg.from;
-            const contact = contacts.find((c: any) => c.wa_id === phone);
-            const senderName = contact?.profile?.name || phone;
+            const waContact = contacts.find((c: any) => c.wa_id === phone);
+            const senderName = waContact?.profile?.name || phone;
 
             console.log(`Incoming WhatsApp message from ${phone} (${senderName}) on channel ${channel.id}: ${msg.text?.body || ''}`);
 
-            /*
-            const conversation = await this.conversationsService.findOrCreate({
-              channelId: channel.id,
-              workspaceId: channel.workspaceId,
-              externalId: phone,
-              channelType: 'WHATSAPP',
-              contactName: senderName,
+            const contact = await this.contactsService.findOrCreate(channel.workspaceId, phone, senderName);
+            const conversation = await this.conversationsService.findOrCreate(
+                channel.workspaceId,
+                channel.id,
+                contact.id
+            );
+
+            await this.prisma.message.create({
+                data: {
+                    conversationId: conversation.id,
+                    externalId: msg.id,
+                    fromAgent: false,
+                    type: (msg.type || 'TEXT').toUpperCase(),
+                    content: { text: msg.text?.body || msg.caption || '' },
+                    status: 'SENT',
+                    createdAt: new Date(parseInt(msg.timestamp) * 1000),
+                }
             });
-      
-            await this.messagesService.create({
-              conversationId: conversation.id,
-              externalId: msg.id,
-              direction: 'INBOUND',
-              type: msg.type.toUpperCase(),
-              content: msg.text?.body || msg.caption || '',
-              attachments: msg.image || msg.video || msg.document
-                ? [{ type: msg.type, id: msg.image?.id || msg.video?.id || msg.document?.id }]
-                : [],
-              receivedAt: new Date(parseInt(msg.timestamp) * 1000),
-            });
-            */
         }
     }
 

@@ -16,6 +16,7 @@ export declare class ContactsController {
         lastName: string | null;
         workspaceId: string;
         phone: string | null;
+        externalId: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -68,6 +69,7 @@ export declare class ContactsController {
         lastName: string | null;
         workspaceId: string;
         phone: string | null;
+        externalId: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -87,6 +89,7 @@ export declare class ContactsController {
         lastName: string | null;
         workspaceId: string;
         phone: string | null;
+        externalId: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -106,6 +109,7 @@ export declare class ContactsController {
         lastName: string | null;
         workspaceId: string;
         phone: string | null;
+        externalId: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -125,6 +129,7 @@ export declare class ContactsController {
         lastName: string | null;
         workspaceId: string;
         phone: string | null;
+        externalId: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;
@@ -144,6 +149,7 @@ export declare class ContactsController {
         lastName: string | null;
         workspaceId: string;
         phone: string | null;
+        externalId: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
         sourceMedium: string | null;
         sourceCampaign: string | null;

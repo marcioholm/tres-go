@@ -61,6 +61,8 @@ model Channel {
   // Webhook
   webhookSecret String?     // Para validar assinatura do webhook
 
+  config        Json?       // Configurações flexíveis (Z-API instance, Meta secrets, etc)
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -90,6 +92,7 @@ model Contact {
   lastName       String?
   phone          String?
   email          String?
+  externalId     String?                  // ID externo (Instagram ID, Messenger ID, etc)
   source         TrafficSource?
   sourceMedium   String?
   sourceCampaign String?

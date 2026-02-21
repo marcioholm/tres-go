@@ -71,7 +71,6 @@ export class AuthService {
     async register(registerDto: any) {
         const { workspaceName, taxId, email, password, firstName, lastName, niche } = registerDto;
 
-        // 1. Criar o usuário (Mapeamento explícito para evitar erros de campos extras no Prisma)
         let user;
         try {
             user = await this.usersService.create({
@@ -81,16 +80,19 @@ export class AuthService {
                 lastName,
                 niche
             });
+            console.log(`[Register] Usuário criado com sucesso: ${email} (ID: ${user.id})`);
         } catch (err) {
-            console.error("Erro fatal ao criar usuário no registro:", err);
-            throw err; // Se falhar aqui, o registro não pode continuar
+            console.error(`[Register] Erro fatal ao criar usuário (${email}):`, err.message || err);
+            throw err;
         }
 
         // 2. Criar o workspace padrão (Não bloqueante)
         try {
+            console.log(`[Register] Tentando criar workspace padrão para o usuário ${user.id}...`);
             await this.workspacesService.createDefaultWorkspace(user.id, workspaceName, taxId);
+            console.log(`[Register] Workspace criado com sucesso para o usuário ${user.id}`);
         } catch (err) {
-            console.error("Falha ao criar workspace no registro (tentará novamente no login):", err);
+            console.error(`[Register] Falha ao criar workspace (não bloqueante):`, err.message || err);
         }
 
         // 3. Retornar o usuário com token para login automático no frontend

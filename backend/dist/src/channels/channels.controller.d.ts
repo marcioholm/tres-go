@@ -23,6 +23,7 @@ export declare class ChannelsController {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     findAll(workspaceId: string): Promise<{
         id: string;
@@ -42,6 +43,7 @@ export declare class ChannelsController {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue | null;
     }[]>;
     update(workspaceId: string, id: string, data: any): Promise<{
         id: string;
@@ -61,6 +63,7 @@ export declare class ChannelsController {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     remove(workspaceId: string, id: string): Promise<{
         id: string;
@@ -80,6 +83,7 @@ export declare class ChannelsController {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     getMetaOAuthUrl(workspaceId: string, type: 'INSTAGRAM' | 'MESSENGER', name: string): {
         url: string;
@@ -114,5 +118,6 @@ export declare class ChannelsController {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
 }

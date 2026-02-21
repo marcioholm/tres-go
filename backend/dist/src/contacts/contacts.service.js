@@ -175,6 +175,28 @@ let ContactsService = class ContactsService {
             return { count: result.count };
         }
     }
+    async findOrCreate(workspaceId, identifier, name) {
+        let contact = await this.prisma.contact.findFirst({
+            where: {
+                workspaceId,
+                OR: [
+                    { phone: identifier },
+                    { externalId: identifier }
+                ]
+            }
+        });
+        if (!contact) {
+            contact = await this.prisma.contact.create({
+                data: {
+                    workspaceId,
+                    name: name || identifier,
+                    phone: identifier,
+                    externalId: identifier,
+                }
+            });
+        }
+        return contact;
+    }
 };
 exports.ContactsService = ContactsService;
 exports.ContactsService = ContactsService = __decorate([

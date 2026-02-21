@@ -11,10 +11,10 @@ export declare class MessagesService {
         status: string;
         type: string;
         content: import("@prisma/client/runtime/library").JsonValue;
+        externalId: string | null;
         conversationId: string;
         fromAgent: boolean;
         isInternalNote: boolean;
-        externalId: string | null;
     }>;
     private sendViaWhatsappOfficial;
     private sendViaZapi;

@@ -9,6 +9,26 @@ export declare class ConversationsService {
     private billing;
     constructor(prisma: PrismaService, sectorsService: SectorsService, gateway: AppGateway, billing: BillingService);
     create(workspaceId: string, data: any): Promise<{
+        contact: {
+            id: string;
+            name: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            email: string | null;
+            firstName: string | null;
+            lastName: string | null;
+            workspaceId: string;
+            phone: string | null;
+            externalId: string | null;
+            source: import(".prisma/client").$Enums.TrafficSource | null;
+            sourceMedium: string | null;
+            sourceCampaign: string | null;
+            sourceContent: string | null;
+            utmSource: string | null;
+            utmMedium: string | null;
+            utmCampaign: string | null;
+            referredBy: string | null;
+        };
         sector: {
             id: string;
             name: string;
@@ -45,6 +65,7 @@ export declare class ConversationsService {
             lastName: string | null;
             workspaceId: string;
             phone: string | null;
+            externalId: string | null;
             source: import(".prisma/client").$Enums.TrafficSource | null;
             sourceMedium: string | null;
             sourceCampaign: string | null;
@@ -102,6 +123,7 @@ export declare class ConversationsService {
             lastName: string | null;
             workspaceId: string;
             phone: string | null;
+            externalId: string | null;
             source: import(".prisma/client").$Enums.TrafficSource | null;
             sourceMedium: string | null;
             sourceCampaign: string | null;
@@ -117,10 +139,10 @@ export declare class ConversationsService {
             status: string;
             type: string;
             content: import("@prisma/client/runtime/library").JsonValue;
+            externalId: string | null;
             conversationId: string;
             fromAgent: boolean;
             isInternalNote: boolean;
-            externalId: string | null;
         }[];
     } & {
         id: string;
@@ -180,7 +202,28 @@ export declare class ConversationsService {
         agentId?: string;
         sectorId?: string;
         note?: string;
-    }): Promise<{
+    }): Promise<void>;
+    findOrCreate(workspaceId: string, channelId: string, contactId: string): Promise<{
+        contact: {
+            id: string;
+            name: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            email: string | null;
+            firstName: string | null;
+            lastName: string | null;
+            workspaceId: string;
+            phone: string | null;
+            externalId: string | null;
+            source: import(".prisma/client").$Enums.TrafficSource | null;
+            sourceMedium: string | null;
+            sourceCampaign: string | null;
+            sourceContent: string | null;
+            utmSource: string | null;
+            utmMedium: string | null;
+            utmCampaign: string | null;
+            referredBy: string | null;
+        };
         sector: {
             id: string;
             name: string;

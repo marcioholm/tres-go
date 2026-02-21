@@ -193,4 +193,30 @@ export class ContactsService {
             return { count: result.count };
         }
     }
+
+    async findOrCreate(workspaceId: string, identifier: string, name?: string) {
+        // Assume identifier is phone or external platform ID
+        let contact = await this.prisma.contact.findFirst({
+            where: {
+                workspaceId,
+                OR: [
+                    { phone: identifier },
+                    { externalId: identifier }
+                ]
+            }
+        });
+
+        if (!contact) {
+            contact = await this.prisma.contact.create({
+                data: {
+                    workspaceId,
+                    name: name || identifier,
+                    phone: identifier,
+                    externalId: identifier,
+                }
+            });
+        }
+
+        return contact;
+    }
 }

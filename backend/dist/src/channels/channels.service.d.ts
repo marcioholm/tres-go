@@ -23,6 +23,7 @@ export declare class ChannelsService {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     findAll(workspaceId: string): Promise<{
         id: string;
@@ -42,6 +43,7 @@ export declare class ChannelsService {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue | null;
     }[]>;
     remove(id: string, workspaceId: string): Promise<{
         id: string;
@@ -61,6 +63,7 @@ export declare class ChannelsService {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     update(id: string, body: {
         name?: string;
@@ -83,6 +86,7 @@ export declare class ChannelsService {
         wabaId: string | null;
         displayName: string | null;
         webhookSecret: string | null;
+        config: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     requestWhatsAppCode(body: {
         phoneNumber: string;

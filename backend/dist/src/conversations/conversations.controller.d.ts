@@ -13,6 +13,7 @@ export declare class ConversationsController {
             lastName: string | null;
             workspaceId: string;
             phone: string | null;
+            externalId: string | null;
             source: import(".prisma/client").$Enums.TrafficSource | null;
             sourceMedium: string | null;
             sourceCampaign: string | null;
@@ -73,6 +74,7 @@ export declare class ConversationsController {
             lastName: string | null;
             workspaceId: string;
             phone: string | null;
+            externalId: string | null;
             source: import(".prisma/client").$Enums.TrafficSource | null;
             sourceMedium: string | null;
             sourceCampaign: string | null;
@@ -88,10 +90,10 @@ export declare class ConversationsController {
             status: string;
             type: string;
             content: import("@prisma/client/runtime/library").JsonValue;
+            externalId: string | null;
             conversationId: string;
             fromAgent: boolean;
             isInternalNote: boolean;
-            externalId: string | null;
         }[];
     } & {
         id: string;
@@ -109,32 +111,7 @@ export declare class ConversationsController {
         agentId?: string;
         sectorId?: string;
         note?: string;
-    }): Promise<{
-        sector: {
-            id: string;
-            name: string;
-            description: string | null;
-            isActive: boolean;
-            createdAt: Date;
-            updatedAt: Date;
-            workspaceId: string;
-            color: string;
-            icon: string;
-            isDefault: boolean;
-            order: number;
-        };
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        status: string;
-        workspaceId: string;
-        kanbanColumn: string | null;
-        sectorId: string | null;
-        agentId: string | null;
-        contactId: string;
-        channelId: string;
-    }>;
+    }): Promise<void>;
     assign(workspaceId: string, id: string, agentId: string): Promise<{
         id: string;
         createdAt: Date;
