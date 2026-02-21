@@ -155,6 +155,9 @@ export class MetaIntegrationService implements OnModuleInit {
         const igData = await resIg.json();
         const igAccountId = igData.instagram_business_account?.id || null;
 
+        // 5. Subscribe App to Page Webhooks
+        await this.subscribePageToApp(pageId, pageAccessToken);
+
         // 5. Persist MetaIntegration (Global Credential Store)
         // @ts-ignore - The model exists in DB but Prisma Client might need sync on build
         const integration = await this.prisma.metaIntegration.upsert({
@@ -390,5 +393,21 @@ export class MetaIntegrationService implements OnModuleInit {
             <p style="margin-top: 20px; font-size: 14px;">Fale com o suporte</p>
         `;
         return this.getLayout('Falha', content);
+    }
+
+    private async subscribePageToApp(pageId: string, pageAccessToken: string) {
+        console.log(`[Meta] Subscribing Page ${pageId} to App webhooks...`);
+        try {
+            const subscribeUrl = `https://graph.facebook.com/v19.0/${pageId}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,messaging_optins,message_deliveries,message_reads,instagram_manage_messages&access_token=${pageAccessToken}`;
+            const res = await fetch(subscribeUrl, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                console.log(`[Meta] Successfully subscribed Page ${pageId}`);
+            } else {
+                console.error(`[Meta] Failed to subscribe Page ${pageId}:`, data.error?.message);
+            }
+        } catch (e) {
+            console.error(`[Meta] Exception during Page ${pageId} subscription:`, e.message);
+        }
     }
 }
