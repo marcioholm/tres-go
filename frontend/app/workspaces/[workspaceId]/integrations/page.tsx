@@ -30,35 +30,36 @@ export default function IntegrationsPage() {
     const [whatsappMode, setWhatsappMode] = useState("official") // 'official' | 'zapi'
     const [channelName, setChannelName] = useState("")
     const [error, setError] = useState<string | null>(null)
+    const [channels, setChannels] = useState<any[]>([])
+
+    useEffect(() => {
+        const fetchChannels = async () => {
+            setLoading(true)
+            try {
+                const token = localStorage.getItem('token')
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/workspaces/${workspaceId}/channels`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                const data = await res.json()
+                setChannels(Array.isArray(data) ? data : [])
+            } catch (err) {
+                console.error('Failed to fetch channels:', err)
+            } finally {
+                setLoading(false)
+            }
+        }
+        if (workspaceId) fetchChannels()
+    }, [workspaceId])
 
     const handleStartMetaOAuth = async (selectedType: 'INSTAGRAM' | 'MESSENGER') => {
-        if (!channelName) {
-            setError('Por favor, dê um nome para este canal.')
-            return
-        }
-        setLoading(true)
-        setError(null)
-        try {
-            const token = localStorage.getItem('token')
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/workspaces/${workspaceId}/channels/oauth/meta?type=${selectedType}&name=${channelName}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            )
-            const { url } = await res.json()
-            window.location.href = url
-        } catch (err) {
-            setError('Falha ao iniciar conexão com a Meta.')
-            setLoading(false)
-        }
+        // Redireciona para o fluxo centralizado do backend
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://backend-tres-go.onrender.com';
+        window.location.href = `${backendUrl}/auth/meta/login?workspaceId=${workspaceId}`;
     }
 
     const handleConnect = () => {
-        if (provider === 'instagram') {
-            handleStartMetaOAuth('INSTAGRAM')
-            return
-        }
-        if (provider === 'messenger') {
-            handleStartMetaOAuth('MESSENGER')
+        if (provider === 'instagram' || provider === 'messenger') {
+            handleStartMetaOAuth(provider === 'instagram' ? 'INSTAGRAM' : 'MESSENGER')
             return
         }
 
@@ -210,15 +211,6 @@ export default function IntegrationsPage() {
                                                 <AlertTriangle size={14} /> {error}
                                             </div>
                                         )}
-                                        <div className="space-y-2">
-                                            <Label>Nome do Canal</Label>
-                                            <Input
-                                                placeholder="Ex: Instagram Vendas"
-                                                className="bg-white"
-                                                value={channelName}
-                                                onChange={(e) => setChannelName(e.target.value)}
-                                            />
-                                        </div>
                                         <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 space-y-3">
                                             <p className="text-xs text-blue-700 font-medium">
                                                 Você será redirecionado para o Facebook para selecionar as páginas que deseja conectar.
@@ -268,48 +260,39 @@ export default function IntegrationsPage() {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Active Connection Card Example */}
-                <Card className="border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="h-12 w-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                    <MessageCircle className="h-7 w-7 text-green-600" />
+                {channels.map((channel) => (
+                    <Card key={channel.id} className={`border-l-4 ${channel.type === 'INSTAGRAM' ? 'border-l-pink-500' : channel.type === 'MESSENGER' ? 'border-l-blue-500' : 'border-l-green-500'} shadow-sm hover:shadow-md transition-shadow`}>
+                        <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${channel.type === 'INSTAGRAM' ? 'bg-pink-50' : channel.type === 'MESSENGER' ? 'bg-blue-50' : 'bg-green-50'}`}>
+                                        {channel.type === 'INSTAGRAM' ? <Smartphone className="h-7 w-7 text-pink-600" /> : channel.type === 'MESSENGER' ? <Facebook className="h-7 w-7 text-blue-600" /> : <MessageCircle className="h-7 w-7 text-green-600" />}
+                                    </div>
+                                    <div>
+                                        <CardTitle className="text-base font-bold text-slate-800">{channel.name}</CardTitle>
+                                        <CardDescription className="text-xs mt-1">
+                                            {channel.phoneNumber || channel.pageName || 'Canal Conectado'}
+                                        </CardDescription>
+                                    </div>
                                 </div>
-                                <div>
-                                    <CardTitle className="text-base font-bold text-slate-800">Comercial</CardTitle>
-                                    <CardDescription className="font-mono text-xs mt-1">+55 11 99999-9999</CardDescription>
-                                </div>
+                                <Badge className={`${channel.status === 'ACTIVE' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+                                    {channel.status}
+                                </Badge>
                             </div>
-                            <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200">
-                                ATIVO
-                            </Badge>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="pb-3">
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500">Provedor:</span>
-                            <span className="font-semibold text-slate-700 flex items-center gap-1">
-                                <Check className="h-3 w-3 text-blue-500" /> API Oficial
-                            </span>
-                        </div>
-                    </CardContent>
-                    <CardFooter className="pt-2 gap-3">
-                        <Button variant="outline" size="sm" className="flex-1 font-semibold text-slate-600">Testar</Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 font-semibold text-slate-600"
-                            onClick={() => {
-                                setProvider("whatsapp")
-                                setWhatsappMode("official")
-                                setIsDialogOpen(true)
-                            }}
-                        >
-                            Configurar
-                        </Button>
-                    </CardFooter>
-                </Card>
+                        </CardHeader>
+                        <CardContent className="pb-3">
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-slate-500">Provedor:</span>
+                                <span className="font-semibold text-slate-700 flex items-center gap-1">
+                                    <Check className="h-3 w-3 text-blue-500" /> Oficial
+                                </span>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="pt-2 gap-3">
+                            <Button variant="outline" size="sm" className="flex-1 font-semibold text-slate-600">Configurar</Button>
+                        </CardFooter>
+                    </Card>
+                ))}
 
                 <Card
                     className="border-2 border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center p-8 space-y-4 hover:bg-red-50/30 hover:border-red-200 transition-all cursor-pointer group"
