@@ -7,8 +7,8 @@ export declare class MessagesService {
     findAll(workspaceId: string, conversationId: string, cursor?: string): Promise<any[]>;
     create(workspaceId: string, data: SendMessageDto): Promise<{
         id: string;
-        status: string;
         createdAt: Date;
+        status: string;
         type: string;
         content: import("@prisma/client/runtime/library").JsonValue;
         conversationId: string;

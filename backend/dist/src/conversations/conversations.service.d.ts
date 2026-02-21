@@ -12,10 +12,10 @@ export declare class ConversationsService {
         sector: {
             id: string;
             name: string;
-            createdAt: Date;
-            updatedAt: Date;
             description: string | null;
             isActive: boolean;
+            createdAt: Date;
+            updatedAt: Date;
             workspaceId: string;
             color: string;
             icon: string;
@@ -23,12 +23,12 @@ export declare class ConversationsService {
             order: number;
         };
     } & {
-        kanbanColumn: string | null;
         id: string;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
+        kanbanColumn: string | null;
         sectorId: string | null;
         agentId: string | null;
         contactId: string;
@@ -37,12 +37,12 @@ export declare class ConversationsService {
     findAll(workspaceId: string, params: any): Promise<({
         contact: {
             id: string;
-            email: string | null;
             name: string | null;
-            firstName: string | null;
-            lastName: string | null;
             createdAt: Date;
             updatedAt: Date;
+            email: string | null;
+            firstName: string | null;
+            lastName: string | null;
             workspaceId: string;
             phone: string | null;
             source: import(".prisma/client").$Enums.TrafficSource | null;
@@ -57,10 +57,10 @@ export declare class ConversationsService {
         sector: {
             id: string;
             name: string;
-            createdAt: Date;
-            updatedAt: Date;
             description: string | null;
             isActive: boolean;
+            createdAt: Date;
+            updatedAt: Date;
             workspaceId: string;
             color: string;
             icon: string;
@@ -80,12 +80,12 @@ export declare class ConversationsService {
             B: string;
         })[];
     } & {
-        kanbanColumn: string | null;
         id: string;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
+        kanbanColumn: string | null;
         sectorId: string | null;
         agentId: string | null;
         contactId: string;
@@ -94,12 +94,12 @@ export declare class ConversationsService {
     findOne(workspaceId: string, id: string): Promise<{
         contact: {
             id: string;
-            email: string | null;
             name: string | null;
-            firstName: string | null;
-            lastName: string | null;
             createdAt: Date;
             updatedAt: Date;
+            email: string | null;
+            firstName: string | null;
+            lastName: string | null;
             workspaceId: string;
             phone: string | null;
             source: import(".prisma/client").$Enums.TrafficSource | null;
@@ -113,8 +113,8 @@ export declare class ConversationsService {
         };
         messages: {
             id: string;
-            status: string;
             createdAt: Date;
+            status: string;
             type: string;
             content: import("@prisma/client/runtime/library").JsonValue;
             conversationId: string;
@@ -123,12 +123,12 @@ export declare class ConversationsService {
             externalId: string | null;
         }[];
     } & {
-        kanbanColumn: string | null;
         id: string;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
+        kanbanColumn: string | null;
         sectorId: string | null;
         agentId: string | null;
         contactId: string;
@@ -138,36 +138,36 @@ export declare class ConversationsService {
         columns: any[];
     }>;
     assign(workspaceId: string, id: string, agentId: string): Promise<{
-        kanbanColumn: string | null;
         id: string;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
+        kanbanColumn: string | null;
         sectorId: string | null;
         agentId: string | null;
         contactId: string;
         channelId: string;
     }>;
     resolve(workspaceId: string, id: string): Promise<{
-        kanbanColumn: string | null;
         id: string;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
+        kanbanColumn: string | null;
         sectorId: string | null;
         agentId: string | null;
         contactId: string;
         channelId: string;
     }>;
     reopen(workspaceId: string, id: string): Promise<{
-        kanbanColumn: string | null;
         id: string;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
+        kanbanColumn: string | null;
         sectorId: string | null;
         agentId: string | null;
         contactId: string;
@@ -184,10 +184,10 @@ export declare class ConversationsService {
         sector: {
             id: string;
             name: string;
-            createdAt: Date;
-            updatedAt: Date;
             description: string | null;
             isActive: boolean;
+            createdAt: Date;
+            updatedAt: Date;
             workspaceId: string;
             color: string;
             icon: string;
@@ -195,12 +195,12 @@ export declare class ConversationsService {
             order: number;
         };
     } & {
-        kanbanColumn: string | null;
         id: string;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         workspaceId: string;
+        kanbanColumn: string | null;
         sectorId: string | null;
         agentId: string | null;
         contactId: string;

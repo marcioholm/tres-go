@@ -11,12 +11,12 @@ export declare class KanbanService {
             deals: ({
                 contact: {
                     id: string;
-                    email: string | null;
                     name: string | null;
-                    firstName: string | null;
-                    lastName: string | null;
                     createdAt: Date;
                     updatedAt: Date;
+                    email: string | null;
+                    firstName: string | null;
+                    lastName: string | null;
                     workspaceId: string;
                     phone: string | null;
                     source: import(".prisma/client").$Enums.TrafficSource | null;
@@ -30,15 +30,15 @@ export declare class KanbanService {
                 };
                 agent: {
                     id: string;
-                    email: string;
                     name: string | null;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    email: string;
                     firstName: string | null;
                     lastName: string | null;
                     niche: string | null;
                     password: string;
                     status: string;
-                    createdAt: Date;
-                    updatedAt: Date;
                 };
                 tags: ({
                     tag: {
@@ -89,12 +89,12 @@ export declare class KanbanService {
             deals: ({
                 contact: {
                     id: string;
-                    email: string | null;
                     name: string | null;
-                    firstName: string | null;
-                    lastName: string | null;
                     createdAt: Date;
                     updatedAt: Date;
+                    email: string | null;
+                    firstName: string | null;
+                    lastName: string | null;
                     workspaceId: string;
                     phone: string | null;
                     source: import(".prisma/client").$Enums.TrafficSource | null;
@@ -108,15 +108,15 @@ export declare class KanbanService {
                 };
                 agent: {
                     id: string;
-                    email: string;
                     name: string | null;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    email: string;
                     firstName: string | null;
                     lastName: string | null;
                     niche: string | null;
                     password: string;
                     status: string;
-                    createdAt: Date;
-                    updatedAt: Date;
                 };
                 tags: ({
                     tag: {

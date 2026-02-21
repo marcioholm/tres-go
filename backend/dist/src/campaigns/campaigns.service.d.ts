@@ -12,14 +12,14 @@ export declare class CampaignsService {
     constructor(prisma: PrismaService, channelsService: ChannelsService, scheduledMessagesService: ScheduledMessagesService, campaignQueue: Queue, billing: BillingService);
     findAll(workspaceId: string): Promise<{
         id: string;
+        type: import(".prisma/client").$Enums.CampaignType;
         name: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        type: import(".prisma/client").$Enums.CampaignType;
-        content: string | null;
         config: import("@prisma/client/runtime/library").JsonValue;
+        content: string | null;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -32,14 +32,14 @@ export declare class CampaignsService {
     }[]>;
     findOne(workspaceId: string, id: string): Promise<{
         id: string;
+        type: import(".prisma/client").$Enums.CampaignType;
         name: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        type: import(".prisma/client").$Enums.CampaignType;
-        content: string | null;
         config: import("@prisma/client/runtime/library").JsonValue;
+        content: string | null;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -52,14 +52,14 @@ export declare class CampaignsService {
     }>;
     create(workspaceId: string, data: any): Promise<{
         id: string;
+        type: import(".prisma/client").$Enums.CampaignType;
         name: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        type: import(".prisma/client").$Enums.CampaignType;
-        content: string | null;
         config: import("@prisma/client/runtime/library").JsonValue;
+        content: string | null;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -76,14 +76,14 @@ export declare class CampaignsService {
     }>;
     pause(workspaceId: string, id: string): Promise<{
         id: string;
+        type: import(".prisma/client").$Enums.CampaignType;
         name: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        type: import(".prisma/client").$Enums.CampaignType;
-        content: string | null;
         config: import("@prisma/client/runtime/library").JsonValue;
+        content: string | null;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;
@@ -96,14 +96,14 @@ export declare class CampaignsService {
     }>;
     delete(workspaceId: string, id: string): Promise<{
         id: string;
+        type: import(".prisma/client").$Enums.CampaignType;
         name: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
         workspaceId: string;
-        type: import(".prisma/client").$Enums.CampaignType;
-        content: string | null;
         config: import("@prisma/client/runtime/library").JsonValue;
+        content: string | null;
         mediaUrl: string | null;
         mediaType: string | null;
         mediaCaption: string | null;

@@ -13,10 +13,10 @@ export declare class SalesController {
         }[];
     } & {
         id: string;
-        status: import(".prisma/client").$Enums.SaleStatus;
+        description: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        status: import(".prisma/client").$Enums.SaleStatus;
         workspaceId: string;
         agentId: string;
         contactId: string;
@@ -39,10 +39,10 @@ export declare class SalesController {
         }[];
     } & {
         id: string;
-        status: import(".prisma/client").$Enums.SaleStatus;
+        description: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        status: import(".prisma/client").$Enums.SaleStatus;
         workspaceId: string;
         agentId: string;
         contactId: string;

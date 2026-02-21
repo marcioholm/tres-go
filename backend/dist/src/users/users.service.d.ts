@@ -4,23 +4,23 @@ export declare class UsersService {
     constructor(prisma: PrismaService);
     findAll(workspaceId: string): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         firstName: string;
         lastName: string;
         niche: string;
     }[]>;
     update(id: string, data: any): Promise<{
         id: string;
-        email: string;
         name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
         status: string;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     findOne(email: string): Promise<{
         workspaces: {
@@ -36,15 +36,15 @@ export declare class UsersService {
         };
     } & {
         id: string;
-        email: string;
         name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
         status: string;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     findOneById(id: string): Promise<{
         workspaces: {
@@ -60,26 +60,26 @@ export declare class UsersService {
         };
     } & {
         id: string;
-        email: string;
         name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
         status: string;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     create(data: any): Promise<{
         id: string;
-        email: string;
         name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
         firstName: string | null;
         lastName: string | null;
         niche: string | null;
         password: string;
         status: string;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
 }

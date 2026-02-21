@@ -4,8 +4,8 @@ export declare class UsersController {
     constructor(usersService: UsersService);
     findAll(workspaceId: string): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         firstName: string;
         lastName: string;
         niche: string;

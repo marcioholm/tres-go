@@ -8,12 +8,12 @@ export declare class ContactsController {
     }[]>;
     findAll(workspaceId: string, search?: string, cursor?: string, limit?: string): Promise<{
         id: string;
-        email: string | null;
         name: string | null;
-        firstName: string | null;
-        lastName: string | null;
         createdAt: Date;
         updatedAt: Date;
+        email: string | null;
+        firstName: string | null;
+        lastName: string | null;
         workspaceId: string;
         phone: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
@@ -27,12 +27,12 @@ export declare class ContactsController {
     }[]>;
     findOne(workspaceId: string, id: string): Promise<{
         conversations: {
-            kanbanColumn: string | null;
             id: string;
-            status: string;
             createdAt: Date;
             updatedAt: Date;
+            status: string;
             workspaceId: string;
+            kanbanColumn: string | null;
             sectorId: string | null;
             agentId: string | null;
             contactId: string;
@@ -60,12 +60,12 @@ export declare class ContactsController {
         })[];
     } & {
         id: string;
-        email: string | null;
         name: string | null;
-        firstName: string | null;
-        lastName: string | null;
         createdAt: Date;
         updatedAt: Date;
+        email: string | null;
+        firstName: string | null;
+        lastName: string | null;
         workspaceId: string;
         phone: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
@@ -79,12 +79,12 @@ export declare class ContactsController {
     }>;
     create(workspaceId: string, data: any): Promise<{
         id: string;
-        email: string | null;
         name: string | null;
-        firstName: string | null;
-        lastName: string | null;
         createdAt: Date;
         updatedAt: Date;
+        email: string | null;
+        firstName: string | null;
+        lastName: string | null;
         workspaceId: string;
         phone: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
@@ -98,12 +98,12 @@ export declare class ContactsController {
     }>;
     update(workspaceId: string, id: string, data: any, req: any): Promise<{
         id: string;
-        email: string | null;
         name: string | null;
-        firstName: string | null;
-        lastName: string | null;
         createdAt: Date;
         updatedAt: Date;
+        email: string | null;
+        firstName: string | null;
+        lastName: string | null;
         workspaceId: string;
         phone: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
@@ -117,12 +117,12 @@ export declare class ContactsController {
     }>;
     updateSource(workspaceId: string, id: string, data: any, req: any): Promise<{
         id: string;
-        email: string | null;
         name: string | null;
-        firstName: string | null;
-        lastName: string | null;
         createdAt: Date;
         updatedAt: Date;
+        email: string | null;
+        firstName: string | null;
+        lastName: string | null;
         workspaceId: string;
         phone: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;
@@ -136,12 +136,12 @@ export declare class ContactsController {
     }>;
     remove(workspaceId: string, id: string, req: any): Promise<{
         id: string;
-        email: string | null;
         name: string | null;
-        firstName: string | null;
-        lastName: string | null;
         createdAt: Date;
         updatedAt: Date;
+        email: string | null;
+        firstName: string | null;
+        lastName: string | null;
         workspaceId: string;
         phone: string | null;
         source: import(".prisma/client").$Enums.TrafficSource | null;

@@ -22,9 +22,9 @@ export declare class AuthController {
         isSuperAdmin: boolean;
         workspaces: {
             id: string;
-            role: string;
             userId: string;
             workspaceId: string;
+            role: string;
         }[];
         superAdmin: {
             id: string;

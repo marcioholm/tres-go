@@ -17,12 +17,13 @@ export declare class AuditLogsService {
     getLogsByEntity(workspaceId: string, entityType: string, entityId: string): Promise<({
         user: {
             id: string;
-            email: string;
             name: string;
+            email: string;
         };
     } & {
         id: string;
         createdAt: Date;
+        userId: string | null;
         workspaceId: string | null;
         actionType: string;
         entityType: string | null;
@@ -32,6 +33,5 @@ export declare class AuditLogsService {
         ip: string | null;
         oldValue: Prisma.JsonValue | null;
         newValue: Prisma.JsonValue | null;
-        userId: string | null;
     })[]>;
 }

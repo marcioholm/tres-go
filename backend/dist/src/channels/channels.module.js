@@ -9,18 +9,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChannelsModule = void 0;
 const common_1 = require("@nestjs/common");
 const channels_service_1 = require("./channels.service");
+const meta_oauth_service_1 = require("./meta-oauth.service");
 const channels_controller_1 = require("./channels.controller");
 const prisma_module_1 = require("../prisma/prisma.module");
 const billing_module_1 = require("../billing/billing.module");
+const meta_webhook_controller_1 = require("./meta-webhook.controller");
+const meta_webhook_service_1 = require("./meta-webhook.service");
 let ChannelsModule = class ChannelsModule {
 };
 exports.ChannelsModule = ChannelsModule;
 exports.ChannelsModule = ChannelsModule = __decorate([
     (0, common_1.Module)({
         imports: [prisma_module_1.PrismaModule, billing_module_1.BillingModule],
-        providers: [channels_service_1.ChannelsService],
-        controllers: [channels_controller_1.ChannelsController],
-        exports: [channels_service_1.ChannelsService],
+        providers: [channels_service_1.ChannelsService, meta_oauth_service_1.MetaOAuthService, meta_webhook_service_1.MetaWebhookService],
+        controllers: [channels_controller_1.ChannelsController, meta_webhook_controller_1.MetaWebhookController],
+        exports: [channels_service_1.ChannelsService, meta_oauth_service_1.MetaOAuthService],
     })
 ], ChannelsModule);
 //# sourceMappingURL=channels.module.js.map

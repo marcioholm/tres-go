@@ -36,6 +36,7 @@ const archive_module_1 = require("./archive/archive.module");
 const billing_module_1 = require("./billing/billing.module");
 const bullmq_1 = require("@nestjs/bullmq");
 const super_admin_module_1 = require("./super-admin/super-admin.module");
+const legal_module_1 = require("./legal/legal.module");
 const workspace_block_middleware_1 = require("./common/middleware/workspace-block.middleware");
 let AppModule = class AppModule {
     configure(consumer) {
@@ -84,6 +85,7 @@ exports.AppModule = AppModule = __decorate([
             kanban_module_1.KanbanModule,
             schedule_1.ScheduleModule.forRoot(),
             archive_module_1.ArchiveModule,
+            legal_module_1.LegalModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

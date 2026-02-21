@@ -4,8 +4,8 @@ export declare class ScheduledMessagesController {
     constructor(scheduledMessagesService: ScheduledMessagesService);
     create(workspaceId: string, createScheduledMessageDto: any): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.ScheduledStatus;
         createdAt: Date;
+        status: import(".prisma/client").$Enums.ScheduledStatus;
         workspaceId: string;
         agentId: string;
         channelId: string;
@@ -18,8 +18,8 @@ export declare class ScheduledMessagesController {
     }>;
     findAll(workspaceId: string, conversationId?: string): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.ScheduledStatus;
         createdAt: Date;
+        status: import(".prisma/client").$Enums.ScheduledStatus;
         workspaceId: string;
         agentId: string;
         channelId: string;
@@ -32,8 +32,8 @@ export declare class ScheduledMessagesController {
     }[]>;
     remove(workspaceId: string, id: string): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.ScheduledStatus;
         createdAt: Date;
+        status: import(".prisma/client").$Enums.ScheduledStatus;
         workspaceId: string;
         agentId: string;
         channelId: string;

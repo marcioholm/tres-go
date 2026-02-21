@@ -18,10 +18,10 @@ export declare class SectorsController {
     } & {
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         description: string | null;
         isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
         workspaceId: string;
         color: string;
         icon: string;
@@ -29,6 +29,9 @@ export declare class SectorsController {
         order: number;
     })[]>;
     findOne(workspaceId: string, id: string): Promise<{
+        _count: {
+            conversations: number;
+        };
         kanbanBoard: {
             id: string;
             name: string;
@@ -36,28 +39,25 @@ export declare class SectorsController {
             workspaceId: string;
             sectorId: string | null;
         };
-        _count: {
-            conversations: number;
-        };
         members: ({
             user: {
                 id: string;
-                email: string;
                 name: string | null;
+                createdAt: Date;
+                updatedAt: Date;
+                email: string;
                 firstName: string | null;
                 lastName: string | null;
                 niche: string | null;
                 password: string;
                 status: string;
-                createdAt: Date;
-                updatedAt: Date;
             };
         } & {
             id: string;
             createdAt: Date;
             userId: string;
-            sectorId: string;
             role: import(".prisma/client").$Enums.SectorRole;
+            sectorId: string;
         })[];
         slaConfig: {
             id: string;
@@ -69,8 +69,8 @@ export declare class SectorsController {
         };
         autoRules: {
             id: string;
-            createdAt: Date;
             isActive: boolean;
+            createdAt: Date;
             sectorId: string;
             type: import(".prisma/client").$Enums.AutoRuleType;
             value: string;
@@ -79,10 +79,10 @@ export declare class SectorsController {
     } & {
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         description: string | null;
         isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
         workspaceId: string;
         color: string;
         icon: string;
@@ -108,10 +108,10 @@ export declare class SectorsController {
     } & {
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         description: string | null;
         isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
         workspaceId: string;
         color: string;
         icon: string;
@@ -121,10 +121,10 @@ export declare class SectorsController {
     update(workspaceId: string, id: string, body: any): Promise<{
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         description: string | null;
         isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
         workspaceId: string;
         color: string;
         icon: string;
@@ -134,10 +134,10 @@ export declare class SectorsController {
     delete(workspaceId: string, id: string): Promise<{
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         description: string | null;
         isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
         workspaceId: string;
         color: string;
         icon: string;
@@ -150,29 +150,29 @@ export declare class SectorsController {
     }): Promise<{
         user: {
             id: string;
-            email: string;
             name: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            email: string;
             firstName: string | null;
             lastName: string | null;
             niche: string | null;
             password: string;
             status: string;
-            createdAt: Date;
-            updatedAt: Date;
         };
     } & {
         id: string;
         createdAt: Date;
         userId: string;
-        sectorId: string;
         role: import(".prisma/client").$Enums.SectorRole;
+        sectorId: string;
     }>;
     removeMember(workspaceId: string, sectorId: string, userId: string): Promise<{
         id: string;
         createdAt: Date;
         userId: string;
-        sectorId: string;
         role: import(".prisma/client").$Enums.SectorRole;
+        sectorId: string;
     }>;
     updateMemberRole(workspaceId: string, sectorId: string, userId: string, body: {
         role: 'AGENT' | 'SUPERVISOR';
@@ -180,7 +180,7 @@ export declare class SectorsController {
         id: string;
         createdAt: Date;
         userId: string;
-        sectorId: string;
         role: import(".prisma/client").$Enums.SectorRole;
+        sectorId: string;
     }>;
 }

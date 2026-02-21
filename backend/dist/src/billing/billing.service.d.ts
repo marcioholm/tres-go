@@ -8,9 +8,10 @@ export declare class BillingService {
     constructor(prisma: PrismaService, asaas: AsaasService, gateway: AppGateway);
     startTrial(workspaceId: string, planSlug?: string): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.SubscriptionStatus;
         createdAt: Date;
         updatedAt: Date;
+        status: import(".prisma/client").$Enums.SubscriptionStatus;
+        workspaceId: string;
         billingCycle: import(".prisma/client").$Enums.BillingCycle;
         asaasCustomerId: string | null;
         asaasSubscriptionId: string | null;
@@ -21,7 +22,6 @@ export declare class BillingService {
         blockedAt: Date | null;
         priceOverride: number | null;
         discountPercent: number | null;
-        workspaceId: string;
         planId: string;
     }>;
     activateSubscription(workspaceId: string, data: {
@@ -39,9 +39,10 @@ export declare class BillingService {
         creditCardHolderInfo?: any;
     }): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.SubscriptionStatus;
         createdAt: Date;
         updatedAt: Date;
+        status: import(".prisma/client").$Enums.SubscriptionStatus;
+        workspaceId: string;
         billingCycle: import(".prisma/client").$Enums.BillingCycle;
         asaasCustomerId: string | null;
         asaasSubscriptionId: string | null;
@@ -52,14 +53,14 @@ export declare class BillingService {
         blockedAt: Date | null;
         priceOverride: number | null;
         discountPercent: number | null;
-        workspaceId: string;
         planId: string;
     }>;
     changePlan(workspaceId: string, newPlanSlug: string): Promise<{
         id: string;
-        status: import(".prisma/client").$Enums.SubscriptionStatus;
         createdAt: Date;
         updatedAt: Date;
+        status: import(".prisma/client").$Enums.SubscriptionStatus;
+        workspaceId: string;
         billingCycle: import(".prisma/client").$Enums.BillingCycle;
         asaasCustomerId: string | null;
         asaasSubscriptionId: string | null;
@@ -70,7 +71,6 @@ export declare class BillingService {
         blockedAt: Date | null;
         priceOverride: number | null;
         discountPercent: number | null;
-        workspaceId: string;
         planId: string;
     }>;
     cancelSubscription(workspaceId: string, reason?: string): Promise<void>;
