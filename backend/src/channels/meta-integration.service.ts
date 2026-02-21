@@ -8,7 +8,7 @@ export class MetaIntegrationService {
     private readonly APP_SECRET = process.env.META_APP_SECRET;
     private readonly REDIRECT_URI = process.env.META_REDIRECT_URI;
     private readonly STATE_SECRET = process.env.META_OAUTH_STATE_SECRET || 'fallback-secret-for-dev';
-    private readonly SCOPES = process.env.META_SCOPES || 'public_profile,pages_show_list,pages_read_engagement,pages_manage_metadata,pages_messaging,instagram_basic,instagram_manage_messages';
+    private readonly SCOPES = process.env.META_SCOPES || 'public_profile,pages_show_list,pages_read_engagement,pages_manage_metadata,pages_messaging,instagram_basic,instagram_manage_messages,business_management';
 
     constructor(private readonly prisma: PrismaService) { }
 
@@ -68,7 +68,7 @@ export class MetaIntegrationService {
     }
 
     async handleCallback(code: string) {
-        console.log('--- Meta Callback Deep Debug ---');
+        console.log('--- Meta Callback Deep Debug v2 ---');
         // 1. Exchange short-lived token
         const exchangeUrl = `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${this.APP_ID}&redirect_uri=${encodeURIComponent(this.REDIRECT_URI)}&client_secret=${this.APP_SECRET}&code=${code}`;
         const resShort = await fetch(exchangeUrl);
@@ -96,7 +96,8 @@ export class MetaIntegrationService {
         const debugUrl = `https://graph.facebook.com/debug_token?input_token=${longLivedToken}&access_token=${this.APP_ID}|${this.APP_SECRET}`;
         const resDebug = await fetch(debugUrl);
         const debugData = await resDebug.json();
-        console.log('Token Debug Information:', JSON.stringify(debugData));
+        const debugStr = JSON.stringify(debugData.data || debugData);
+        console.log('Token Debug:', debugStr);
         // -----------------------------------------
 
         // 3. Get Pages
@@ -112,10 +113,8 @@ export class MetaIntegrationService {
         const pages = pagesData.data || [];
 
         if (pages.length === 0) {
-            const raw = JSON.stringify(pagesData);
-            console.warn('Empty Page List Response:', raw);
-            // Including raw in the error details for the user to copy
-            throw new Error(`no_pages_found_in_fb: ${raw}`);
+            // Including EVERYTHING in the error for the user to copy
+            throw new Error(`no_pages_found. TokenInfo: ${debugStr}. FullRes: ${JSON.stringify(pagesData)}`);
         }
 
         // Phase 1: auto-select first page
