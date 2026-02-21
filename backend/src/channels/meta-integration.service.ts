@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
 
 @Injectable()
-export class MetaIntegrationService {
+export class MetaIntegrationService implements OnModuleInit {
     private readonly APP_ID = process.env.META_APP_ID;
     private readonly APP_SECRET = process.env.META_APP_SECRET;
     private readonly REDIRECT_URI = process.env.META_REDIRECT_URI;
@@ -12,6 +12,53 @@ export class MetaIntegrationService {
     private readonly FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
     constructor(private readonly prisma: PrismaService) { }
+
+    async onModuleInit() {
+        console.log('[Meta] Starting database schema repair...');
+        try {
+            await this.prisma.$executeRawUnsafe(`
+                DO $$ 
+                BEGIN 
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='config') THEN
+                        ALTER TABLE "Channel" ADD COLUMN "config" JSONB;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='pageId') THEN
+                        ALTER TABLE "Channel" ADD COLUMN "pageId" TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='pageName') THEN
+                        ALTER TABLE "Channel" ADD COLUMN "pageName" TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='pageAvatar') THEN
+                        ALTER TABLE "Channel" ADD COLUMN "pageAvatar" TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='accessToken') THEN
+                        ALTER TABLE "Channel" ADD COLUMN "accessToken" TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='igAccountId') THEN
+                        ALTER TABLE "Channel" ADD COLUMN "igAccountId" TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='phoneNumber') THEN
+                        ALTER TABLE "Channel" ADD COLUMN "phoneNumber" TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='phoneNumberId') THEN
+                        ALTER TABLE "Channel" ADD COLUMN "phoneNumberId" TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='wabaId') THEN
+                        ALTER TABLE "Channel" ADD COLUMN "wabaId" TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='displayName') THEN
+                        ALTER TABLE "Channel" ADD COLUMN "displayName" TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Channel' AND column_name='webhookSecret') THEN
+                        ALTER TABLE "Channel" ADD COLUMN "webhookSecret" TEXT;
+                    END IF;
+                END $$;
+            `);
+            console.log('[Meta] Database repair executed successfully');
+        } catch (e) {
+            console.error('[Meta] Database auto-repair failed:', e.message);
+        }
+    }
 
     // ─── AUTH LOGIC ──────────────────────────────────────────────────────────
 
@@ -69,27 +116,6 @@ export class MetaIntegrationService {
     }
 
     async handleCallback(code: string, workspaceId: string) {
-        // --- EMERGENCY SCHEMA REPAIR (Production Drift) ---
-        // Ensure Channel table has all columns expected by Prisma schema
-        try {
-            await this.prisma.$executeRawUnsafe(`
-                ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "config" JSONB;
-                ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "pageId" TEXT;
-                ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "pageName" TEXT;
-                ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "pageAvatar" TEXT;
-                ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "accessToken" TEXT;
-                ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "igAccountId" TEXT;
-                ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "phoneNumber" TEXT;
-                ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "phoneNumberId" TEXT;
-                ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "wabaId" TEXT;
-                ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "displayName" TEXT;
-                ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "webhookSecret" TEXT;
-            `);
-            console.log('Channel schema repair (IF NOT EXISTS) executed successfully');
-        } catch (e) {
-            console.error('Schema repair warning (non-fatal):', e.message);
-        }
-        // ---------------------------------------------------
         // 1. Exchange short-lived token
         const exchangeUrl = `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${this.APP_ID}&redirect_uri=${encodeURIComponent(this.REDIRECT_URI)}&client_secret=${this.APP_SECRET}&code=${code}`;
         const resShort = await fetch(exchangeUrl);
