@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { useLanguage } from "@/lib/language-context"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, MessageCircle, Smartphone, Check, AlertTriangle, Facebook, Loader2, Link2 } from "lucide-react"
 import {
@@ -294,7 +295,11 @@ export default function IntegrationsPage() {
                             </div>
                         </CardContent>
                         <CardFooter className="pt-2 gap-3">
-                            <Button variant="outline" size="sm" className="flex-1 font-semibold text-slate-600">Configurar</Button>
+                            <Button asChild variant="outline" size="sm" className="flex-1 font-semibold text-slate-600">
+                                <Link href={`/workspaces/${workspaceId}/settings/channels`}>
+                                    Configurar
+                                </Link>
+                            </Button>
                         </CardFooter>
                     </Card>
                 ))}

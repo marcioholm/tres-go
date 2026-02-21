@@ -257,18 +257,19 @@ function Sidebar({ routes, pathname, user }: any) {
                     {routes.map((route: any) => {
                         const isActive = pathname === route.href;
                         return (
-                            <Link key={route.href} href={route.href}>
-                                <Button
-                                    variant="ghost"
-                                    className={`w-full justify-start gap-3 h-10 px-4 rounded-lg font-medium transition-colors ${isActive
-                                        ? "bg-red-50 text-red-600"
-                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                        }`}
-                                >
+                            <Button
+                                asChild
+                                variant="ghost"
+                                className={`w-full justify-start gap-3 h-10 px-4 rounded-lg font-medium transition-colors ${isActive
+                                    ? "bg-red-50 text-red-600"
+                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                    }`}
+                            >
+                                <Link key={route.href} href={route.href}>
                                     <route.icon className={`h-5 w-5 ${isActive ? "text-red-600" : "text-slate-400"}`} />
                                     <span>{t(route.id)}</span>
-                                </Button>
-                            </Link>
+                                </Link>
+                            </Button>
                         );
                     })}
                 </nav>
