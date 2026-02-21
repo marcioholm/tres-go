@@ -37,17 +37,48 @@ model Workspace {
 }
 
 model Channel {
-  id            String         @id @default(cuid())
+  id            String      @id @default(cuid())
   workspaceId   String
-  type          String
-  config        Json
-  isActive      Boolean        @default(true)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  name          String
-  workspace     Workspace      @relation(fields: [workspaceId], references: [id])
-  conversations Conversation[]
+  workspace     Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  type          ChannelType // INSTAGRAM | MESSENGER | WHATSAPP
+  name          String      // Nome amigável definido pelo usuário
+  status        ChannelStatus @default(CONNECTING)
+
+  // Meta OAuth (Instagram + Messenger)
+  pageId        String?     // ID da Página do Facebook
+  pageName      String?     // Nome da Página
+  pageAvatar    String?     // URL da foto da Página
+  accessToken   String?     // Page Access Token (criptografado)
+  igAccountId   String?     // Instagram Account ID (só para Instagram)
+
+  // WhatsApp Business API
+  phoneNumber   String?     // Número verificado
+  phoneNumberId String?     // Phone Number ID da Meta
+  wabaId        String?     // WhatsApp Business Account ID
+  displayName   String?     // Nome de exibição no WhatsApp
+
+  // Webhook
+  webhookSecret String?     // Para validar assinatura do webhook
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  conversations     Conversation[]
   scheduledMessages ScheduledMessage[]
+}
+
+enum ChannelType {
+  INSTAGRAM
+  MESSENGER
+  WHATSAPP
+}
+
+enum ChannelStatus {
+  CONNECTING
+  ACTIVE
+  ERROR
+  DISCONNECTED
 }
 
 // ── Contact: adicionar campos de origem
