@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
 import { Channel } from '@prisma/client';
+import { encrypt } from '../utils/crypto.util';
 
 @Injectable()
 export class ChannelsService {
@@ -22,8 +23,8 @@ export class ChannelsService {
             data: {
                 ...data,
                 workspaceId,
-                config: data.config || {}, // Store encrypted credentials here
-                isActive: true,
+                accessToken: data.accessToken ? encrypt(data.accessToken) : undefined,
+                config: data.config || {},
             },
         });
     }

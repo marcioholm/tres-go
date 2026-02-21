@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import axios from 'axios';
+import { decrypt } from '../utils/crypto.util';
 
 @Injectable()
 export class MessagesService {
@@ -99,8 +100,9 @@ export class MessagesService {
                 const channelProvider = conversation.channel.type || 'META_CLOUD';
 
                 if (channelProvider === 'WHATSAPP') {
-                    // Try to send via Meta first, or Z-api if config says so (assuming we use WhatsApp for both)
                     await this.sendViaWhatsappOfficial(conversation.channel, conversation.contact.phone || '', data, dbContent);
+                } else if (channelProvider === 'INSTAGRAM' || channelProvider === 'MESSENGER') {
+                    await this.sendViaMetaMessenger(conversation.channel, conversation.contact.externalId || '', data, dbContent);
                 }
 
                 // Update message immediately if fast execution OK
@@ -123,7 +125,7 @@ export class MessagesService {
     // Método sendViaWhatsappOfficial — tratar áudio PTT:
     private async sendViaWhatsappOfficial(channel: any, to: string, dto: SendMessageDto, dbContent: any): Promise<string | undefined> {
         const url = `https://graph.facebook.com/v19.0/${channel.phoneNumberId || process.env.META_PHONE_NUMBER_ID}/messages`;
-        const token = channel.accessToken || process.env.META_SYSTEM_USER_TOKEN;
+        const token = channel.accessToken ? decrypt(channel.accessToken) : process.env.META_SYSTEM_USER_TOKEN;
         const headers = { Authorization: `Bearer ${token}` };
 
         let body: any = {
@@ -154,6 +156,37 @@ export class MessagesService {
             this.logger.log(`[Official API] Sending Message to ${to}...`);
             const res = await axios.post(url, body, { headers });
             return res.data?.messages?.[0]?.id;
+        } catch (error) {
+            this.logger.error(`Failed to send message via Meta API`, error.response?.data || error.message);
+            throw error;
+        }
+    }
+
+    private async sendViaMetaMessenger(channel: any, to: string, dto: SendMessageDto, dbContent: any): Promise<string | undefined> {
+        const url = `https://graph.facebook.com/v19.0/me/messages?access_token=${channel.accessToken ? decrypt(channel.accessToken) : process.env.META_SYSTEM_USER_TOKEN}`;
+
+        const body: any = {
+            recipient: { id: to },
+            message: {},
+            messaging_type: 'RESPONSE'
+        };
+
+        if (dto.type === 'IMAGE' || dto.type === 'VIDEO' || dto.type === 'DOCUMENT' || dto.type === 'AUDIO') {
+            body.message.attachment = {
+                type: dto.type.toLowerCase(),
+                payload: {
+                    url: dbContent.mediaUrl,
+                    is_selectable: true
+                }
+            };
+        } else {
+            body.message.text = dbContent.body || dto.text || '';
+        }
+
+        try {
+            this.logger.log(`[Meta Messenger/IG] Sending Message to ${to}...`);
+            const res = await axios.post(url, body);
+            return res.data?.message_id;
         } catch (error) {
             this.logger.error(`Failed to send message via Meta API`, error.response?.data || error.message);
             throw error;
