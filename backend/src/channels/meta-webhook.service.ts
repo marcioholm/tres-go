@@ -201,7 +201,13 @@ export class MetaWebhookService {
 
         this.gateway.emitToWorkspace(channel.workspaceId, 'newMessage', {
             conversationId: conversation.id,
-            message: socketMessage
+            message: socketMessage,
+            contact: {
+                id: contact.id,
+                name: (contact as any).handle ? `@${(contact as any).handle}` : contact.name,
+                avatarUrl: (contact as any).avatarUrl || null,
+                handle: (contact as any).handle || null,
+            }
         });
 
         console.log('Mensagem salva e emitida:', message.id);
