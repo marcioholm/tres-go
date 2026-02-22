@@ -5,6 +5,7 @@ const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default_secret_key_32_char
 const IV_LENGTH = 16;
 
 function getKeyBuffer(): Buffer {
+    console.log(`[Crypto] ENCRYPTION_KEY length: ${ENCRYPTION_KEY.length}, Hex mode: ${ENCRYPTION_KEY.length === 64}`);
     if (ENCRYPTION_KEY.length === 64) {
         return Buffer.from(ENCRYPTION_KEY, 'hex');
     }

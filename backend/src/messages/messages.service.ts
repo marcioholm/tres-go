@@ -173,6 +173,8 @@ export class MessagesService {
             const encryptedToken = channel.accessToken;
             const token = encryptedToken ? decrypt(encryptedToken) : process.env.META_SYSTEM_USER_TOKEN;
 
+            console.log(`[Messages Service] Decrypted token length: ${token?.length}, Prefix: ${token?.substring(0, 5)}...`);
+
             if (!token) {
                 this.logger.error('[Messages Service] Meta token not found or decryption failed');
                 throw new Error('Access token not found');
