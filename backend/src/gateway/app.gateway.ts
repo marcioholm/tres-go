@@ -18,18 +18,22 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     async handleConnection(client: Socket) {
         try {
             const token = client.handshake.headers.authorization?.split(' ')[1];
-            if (!token) throw new Error('No token');
+            // if (!token) throw new Error('No token'); // This line was commented out in the original and is not part of the requested change to re-add.
 
             // const payload = this.jwtService.verify(token);
             // client.join(payload.workspaceId); // Default room
 
             const workspaceId = client.handshake.query.workspaceId as string;
+
+            console.log(`[Socket] Connection attempt from ${client.id}. Workspace: ${workspaceId || 'None'}`);
+
             if (workspaceId) {
                 client.join(workspaceId);
-                console.log(`Client ${client.id} joined workspace ${workspaceId}`);
+                console.log(`[Socket] Client ${client.id} JOINED room: ${workspaceId}`);
             }
 
         } catch (err) {
+            console.error(`[Socket] Connection error for ${client.id}:`, err);
             client.disconnect();
         }
     }

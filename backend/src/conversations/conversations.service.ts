@@ -38,7 +38,7 @@ export class ConversationsService {
             }
         }
 
-        return this.prisma.conversation.create({
+        const conversation = await this.prisma.conversation.create({
             data: {
                 ...data,
                 workspaceId,
@@ -48,6 +48,11 @@ export class ConversationsService {
             },
             include: { sector: true, contact: true }
         });
+
+        console.log('Emitindo new_conversation para workspace:', workspaceId);
+        this.gateway.emitToWorkspace(workspaceId, 'new_conversation', conversation);
+
+        return conversation;
     }
 
     async findAll(workspaceId: string, params: any) {
@@ -62,24 +67,44 @@ export class ConversationsService {
             ];
         }
 
-        return this.prisma.conversation.findMany({
+        const conversations = await this.prisma.conversation.findMany({
             where,
             include: {
                 contact: true,
                 ConversationToTag: { include: { Tag: true } },
-                sector: true
+                sector: true,
+                messages: { take: 1, orderBy: { createdAt: 'desc' } } // Include last message for preview
             },
-            take: params.limit,
+            take: Number(params.limit) || 20,
             skip: params.cursor ? 1 : 0,
             orderBy: { updatedAt: 'desc' }
         });
+
+        // Map messages to ensure 'text' exists
+        return conversations.map(conv => ({
+            ...conv,
+            messages: conv.messages.map(m => ({
+                ...m,
+                text: typeof m.content === 'string' ? m.content : (m.content as any)?.text || (m.content as any)?.body || ''
+            }))
+        }));
     }
 
     async findOne(workspaceId: string, id: string) {
-        return this.prisma.conversation.findUnique({
+        const conversation = await this.prisma.conversation.findUnique({
             where: { id },
             include: { contact: true, messages: { take: 50, orderBy: { createdAt: 'desc' } } },
         });
+
+        if (!conversation) return null;
+
+        return {
+            ...conversation,
+            messages: conversation.messages.map(m => ({
+                ...m,
+                text: typeof m.content === 'string' ? m.content : (m.content as any)?.text || (m.content as any)?.body || ''
+            })).reverse() // Show in chronological order for frontend
+        };
     }
 
     async getKanban(workspaceId: string) {
@@ -166,21 +191,26 @@ export class ConversationsService {
                 fromAgent: true,
                 isInternalNote: true,
                 type: 'text',
-                content: { text: systemText },
+                content: systemText,
                 status: 'SENT'
             }
         });
 
         // Emit socket event via Gateway
+        const socketMessage = {
+            ...newMessage,
+            text: typeof newMessage.content === 'string' ? newMessage.content : (newMessage.content as any)?.text || ''
+        };
+
         if (updatedConversation.sectorId) {
-            this.gateway.emitToSector(workspaceId, updatedConversation.sectorId, 'conversationTransferred', {
-                conversation: updatedConversation,
-                transfer: { note: data.note, toAgentId: data.agentId }
+            this.gateway.emitToSector(workspaceId, updatedConversation.sectorId, 'newMessage', {
+                conversationId: id,
+                message: socketMessage
             });
         } else {
-            this.gateway.emitToWorkspace(workspaceId, 'conversationTransferred', {
-                conversation: updatedConversation,
-                transfer: { note: data.note, toAgentId: data.agentId }
+            this.gateway.emitToWorkspace(workspaceId, 'newMessage', {
+                conversationId: id,
+                message: socketMessage
             });
         }
 

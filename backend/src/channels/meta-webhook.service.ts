@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import { ContactsService } from '../contacts/contacts.service';
 import { ConversationsService } from '../conversations/conversations.service';
 import { MessagesService } from '../messages/messages.service';
+import { AppGateway } from '../gateway/app.gateway';
 import { decrypt } from '../utils/crypto.util';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class MetaWebhookService {
         private readonly contactsService: ContactsService,
         private readonly conversationsService: ConversationsService,
         private readonly messagesService: MessagesService,
+        private readonly gateway: AppGateway,
     ) { }
 
     validateSignature(rawBody: Buffer, signature: string): boolean {
@@ -154,25 +156,38 @@ export class MetaWebhookService {
         );
 
         // Salvar mensagem
+        const messageContent = text; // User requested normalization to string for simple text
+
         const message = await this.prisma.message.create({
             data: {
                 conversationId: conversation.id,
                 externalId: mid,
                 fromAgent: false,
                 type: attachments.length > 0 ? 'ATTACHMENT' : 'TEXT',
-                content: {
+                content: attachments.length > 0 ? {
                     text: text,
                     attachments: attachments.map((a: any) => ({
                         type: a.type,
                         url: a.payload?.url,
                     })),
-                },
+                } : text,
                 status: 'SENT',
                 createdAt: new Date(event.timestamp)
             }
         });
 
-        console.log('Mensagem salva:', message);
+        // Emit socket event via Gateway
+        const socketMessage = {
+            ...message,
+            text: typeof message.content === 'string' ? message.content : (message.content as any)?.text || ''
+        };
+
+        this.gateway.emitToWorkspace(channel.workspaceId, 'newMessage', {
+            conversationId: conversation.id,
+            message: socketMessage
+        });
+
+        console.log('Mensagem salva e emitida:', message.id);
     }
 
     private async handleWhatsAppWebhook(channel: any, value: any) {
@@ -191,20 +206,23 @@ export class MetaWebhookService {
                 contact.id
             );
 
-            await this.prisma.message.create({
+            const message = await this.prisma.message.create({
                 data: {
                     conversationId: conversation.id,
                     externalId: msg.id,
                     fromAgent: false,
                     type: (msg.type || 'TEXT').toUpperCase(),
-                    content: {
-                        text: msg.text?.body || msg.caption || '',
-                        attachments: msg.image || msg.video || msg.document
-                            ? [{ type: msg.type, id: msg.image?.id || msg.video?.id || msg.document?.id }]
-                            : [],
-                    },
+                    content: msg.text?.body || msg.caption || '',
                     status: 'SENT',
                     createdAt: new Date(parseInt(msg.timestamp) * 1000),
+                }
+            });
+
+            this.gateway.emitToWorkspace(channel.workspaceId, 'newMessage', {
+                conversationId: conversation.id,
+                message: {
+                    ...message,
+                    text: typeof message.content === 'string' ? message.content : (message.content as any)?.text || ''
                 }
             });
         }

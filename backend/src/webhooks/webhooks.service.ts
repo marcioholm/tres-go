@@ -78,7 +78,7 @@ export class WebhooksService {
         const newMessage = await this.prisma.message.create({
             data: {
                 conversationId: conversation.id,
-                content: { text: messageBody },
+                content: messageBody, // Normalized to string
                 type: message.type || 'text',
                 status: 'RECEIVED',
                 fromAgent: false,
@@ -86,16 +86,21 @@ export class WebhooksService {
             }
         });
 
+        const socketMessage = {
+            ...newMessage,
+            text: typeof newMessage.content === 'string' ? newMessage.content : (newMessage.content as any)?.text || ''
+        };
+
         // Emit socket event via Gateway
         if (conversation.sectorId) {
             this.gateway.emitToSector(workspaceId, conversation.sectorId, 'newMessage', {
                 conversationId: conversation.id,
-                message: newMessage
+                message: socketMessage
             });
         } else {
             this.gateway.emitToWorkspace(workspaceId, 'newMessage', {
                 conversationId: conversation.id,
-                message: newMessage
+                message: socketMessage
             });
         }
     }
