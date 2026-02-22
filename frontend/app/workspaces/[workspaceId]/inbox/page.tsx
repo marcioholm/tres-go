@@ -139,12 +139,13 @@ export default function InboxPage() {
                         text: data.message.text || (data.message as any).content?.text || (data.message as any).content?.body || (data.message as any).content || ''
                     }
 
-                    // Evitar duplicatas
-                    const messageExists = conv.messages.some(m => String(m.id) === String(mappedMessage.id))
+                    // Evitar duplicatas (guard against undefined messages array)
+                    const currentMessages = Array.isArray(conv.messages) ? conv.messages : []
+                    const messageExists = currentMessages.some(m => String(m.id) === String(mappedMessage.id))
                     return {
                         ...conv,
                         unread: conv.id === activeChatId ? conv.unread : conv.unread + 1,
-                        messages: messageExists ? conv.messages : [...conv.messages, mappedMessage]
+                        messages: messageExists ? currentMessages : [...currentMessages, mappedMessage]
                     }
                 }
                 return conv
