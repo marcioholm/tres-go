@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import { ContactsService } from '../contacts/contacts.service';
 import { ConversationsService } from '../conversations/conversations.service';
 import { MessagesService } from '../messages/messages.service';
+import { decrypt } from '../utils/crypto.util';
 
 @Injectable()
 export class MetaWebhookService {
@@ -123,15 +124,23 @@ export class MetaWebhookService {
         let profileName = undefined;
         try {
             if (channel.type === 'INSTAGRAM' || channel.type === 'MESSENGER') {
+                const token = channel.accessToken ? decrypt(channel.accessToken) : process.env.META_SYSTEM_USER_TOKEN;
+                console.log(`[Meta Webhook] Fetching profile for ${senderId} using token...`);
+
                 const profileRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${senderId}?fields=name&access_token=${channel.accessToken}`
+                    `https://graph.facebook.com/v19.0/${senderId}?fields=name&access_token=${token}`
                 );
                 const profileData = await profileRes.json();
-                profileName = profileData.name;
-                console.log(`[Meta Webhook] Fetched profile name for ${senderId}: ${profileName}`);
+
+                if (profileData.name) {
+                    profileName = profileData.name;
+                    console.log(`[Meta Webhook] SUCCESS: Fetched profile name for ${senderId}: ${profileName}`);
+                } else {
+                    console.warn(`[Meta Webhook] Profile data returned no name:`, profileData);
+                }
             }
         } catch (error) {
-            console.error('[Meta Webhook] Failed to fetch profile name:', error);
+            console.error('[Meta Webhook] CRITICAL: Failed to fetch profile name:', error);
         }
 
         // Buscar ou criar contato (usando o perfil se encontrado)

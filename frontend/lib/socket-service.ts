@@ -13,7 +13,10 @@ class SocketService {
     getSocket(workspaceId?: string): Socket {
         if (!this.socket) {
             this.socket = io(SOCKET_URL, {
-                transports: ['websocket'],
+                transports: ['polling', 'websocket'],
+                reconnection: true,
+                reconnectionDelay: 2000,
+                reconnectionAttempts: 10,
                 query: workspaceId ? { workspaceId } : undefined
             });
 
