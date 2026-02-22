@@ -1,3 +1,4 @@
 -- AlterTable
-ALTER TABLE "Contact" ADD COLUMN "avatarUrl" TEXT,
-ADD COLUMN "handle" TEXT;
+-- As colunas "avatarUrl" e "handle" já foram adicionadas manualmente via SQL Editor.
+-- Deixamos este arquivo vazio para que o Prisma marque a migração como "aplicada" 
+-- no banco de dados de produção do Render sem tentar criar as colunas novamente.
