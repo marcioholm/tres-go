@@ -215,14 +215,18 @@ export class ContactsService {
                     externalId: identifier,
                     avatarUrl,
                     handle
-                }
+                } as any
             });
         } else {
-            // Atualizar metadados se mudaram ou eram vazios
+            // Atualizar metadados do contato quando disponíveis
             const updates: any = {};
-            if (name && contact.name === identifier) updates.name = name;
-            if (avatarUrl && contact.avatarUrl !== avatarUrl) updates.avatarUrl = avatarUrl;
-            if (handle && contact.handle !== handle) updates.handle = handle;
+            const c = contact as any;
+            // Atualizar nome se temos um nome real (não o IGSID/phone como fallback)
+            if (name && name !== identifier && contact.name === identifier) updates.name = name;
+            // Sempre atualizar avatar — URLs da Meta expiram
+            if (avatarUrl) updates.avatarUrl = avatarUrl;
+            // Preencher handle se estava vazio, ou se mudou
+            if (handle && (!c.handle || c.handle !== handle)) updates.handle = handle;
 
             if (Object.keys(updates).length > 0) {
                 contact = await this.prisma.contact.update({

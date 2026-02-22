@@ -145,9 +145,13 @@ export class MetaWebhookService {
                     }
                 );
                 const profileData = await profileRes.json();
+                console.log('[Meta Webhook] Raw profile data:', JSON.stringify(profileData));
 
                 if (profileData.name) profileName = profileData.name;
-                if (profileData.profile_pic) avatarUrl = profileData.profile_pic;
+                // Try both profile_pic and profile_picture_url (varies by API version)
+                if (profileData.profile_pic || profileData.profile_picture_url) {
+                    avatarUrl = profileData.profile_pic || profileData.profile_picture_url;
+                }
                 if (profileData.username) handle = profileData.username;
 
                 console.log(`[Meta Webhook] Profile Fetch Result:`, { profileName, avatarUrl, handle });
@@ -214,8 +218,31 @@ export class MetaWebhookService {
 
         console.log(`[Meta Webhook] Echo message detected (sent from phone/page). Recipient: ${recipientId}`);
 
-        // Find contact by externalId (the recipient)
-        const contact = await this.contactsService.findOrCreate(channel.workspaceId, recipientId, undefined, undefined, undefined);
+        // Try to fetch recipient profile too
+        let profileName: string | undefined;
+        let avatarUrl: string | undefined;
+        let handle: string | undefined;
+        try {
+            const encryptedToken = channel.accessToken;
+            const token = encryptedToken ? decrypt(encryptedToken) : process.env.META_SYSTEM_USER_TOKEN;
+            const fields = channel.type === 'INSTAGRAM' ? 'name,username,profile_pic' : 'name,profile_pic';
+            const profileRes = await fetch(
+                `https://graph.facebook.com/v21.0/${recipientId}?fields=${fields}`,
+                { headers: { 'Authorization': `Bearer ${token}` } }
+            );
+            const profileData = await profileRes.json();
+            console.log('[Meta Webhook] Echo recipient profile:', JSON.stringify(profileData));
+            if (profileData.name) profileName = profileData.name;
+            if (profileData.profile_pic || profileData.profile_picture_url) {
+                avatarUrl = profileData.profile_pic || profileData.profile_picture_url;
+            }
+            if (profileData.username) handle = profileData.username;
+        } catch (e) {
+            console.error('[Meta Webhook] Echo profile fetch error:', e.message);
+        }
+
+        // Find or create contact with fetched profile data
+        const contact = await this.contactsService.findOrCreate(channel.workspaceId, recipientId, profileName, avatarUrl, handle);
 
         // Find or create conversation
         const conversation = await this.conversationsService.findOrCreate(
