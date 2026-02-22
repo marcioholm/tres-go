@@ -180,8 +180,12 @@ export class MessagesService {
                 throw new Error('Access token not found');
             }
 
-            // Using Header Auth instead of Query Param for better parsing and security
-            const url = `https://graph.facebook.com/v19.0/me/messages`;
+            const pageId = channel.pageId || 'me';
+            const url = `https://graph.facebook.com/v19.0/${pageId}/messages`;
+
+            console.log(`[Messages Service] URL: ${url}`);
+            console.log(`[Messages Service] Channel Info - PageID: ${channel.pageId}, IG: ${channel.igAccountId}`);
+
             const body: any = {
                 recipient: { id: recipientId },
                 message: {},
