@@ -133,10 +133,12 @@ export default function InboxPage() {
             console.log('[Socket] New message received:', data)
             setConversations(prev => prev.map(conv => {
                 if (String(conv.id) === String(data.conversationId)) {
-                    // Mapear mensagem para garantir que tenha o campo 'text'
+                    // Mapear mensagem para garantir que tenha o campo 'text' e 'fromMe'
                     const mappedMessage = {
                         ...data.message,
-                        text: data.message.text || (data.message as any).content?.text || (data.message as any).content?.body || (data.message as any).content || ''
+                        text: data.message.text || (data.message as any).content?.text || (data.message as any).content?.body || (data.message as any).content || '',
+                        fromMe: (data.message as any).fromAgent ?? data.message.fromMe ?? false,
+                        time: data.message.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     }
 
                     // Evitar duplicatas (guard against undefined messages array)
