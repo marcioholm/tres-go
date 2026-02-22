@@ -164,7 +164,11 @@ export class MessagesService {
 
     private async sendViaMetaMessenger(channel: any, recipientId: string, dto: SendMessageDto, dbContent: any): Promise<string | undefined> {
         try {
-            console.log(`[Messages Service] Sending via Meta Messenger/Instagram. Channel: ${channel.name} (${channel.type}), Recipient: ${recipientId}`);
+            console.log('Enviando mensagem para Meta:', {
+                recipientId,
+                channelId: channel.id,
+                channelType: channel.type
+            });
 
             const encryptedToken = channel.accessToken;
             const token = encryptedToken ? decrypt(encryptedToken) : process.env.META_SYSTEM_USER_TOKEN;
@@ -200,13 +204,13 @@ export class MessagesService {
             });
 
             const data = await response.json();
+            console.log('Resposta da Meta:', JSON.stringify(data, null, 2));
 
             if (!response.ok) {
                 console.error(`[Messages Service] Meta API Error Details:`, JSON.stringify(data));
                 throw new Error(data.error?.message || 'Failed to send message via Meta API');
             }
 
-            console.log(`[Messages Service] Meta API Success:`, JSON.stringify(data));
             return data.message_id;
         } catch (error) {
             console.error(`[Messages Service] CRITICAL Error sending via Meta Messenger:`, error.message);
