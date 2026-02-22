@@ -124,44 +124,37 @@ export class MetaWebhookService {
 
         // Buscar nome do perfil via API da Meta se for Instagram
         let profileName = undefined;
+        let avatarUrl = undefined;
+        let handle = undefined;
+
         try {
             if (channel.type === 'INSTAGRAM' || channel.type === 'MESSENGER') {
                 const encryptedToken = channel.accessToken;
-                console.log(`[Meta Webhook] Decrypt Attempt. Channel: ${channel.name}, Type: ${channel.type}, Encrypted Start: ${encryptedToken?.substring(0, 15)}...`);
-
                 const token = encryptedToken ? decrypt(encryptedToken) : process.env.META_SYSTEM_USER_TOKEN;
 
-                if (!token) {
-                    console.error('[Meta Webhook] CRITICAL: Decrypted token is empty/null');
-                } else {
-                    console.log(`[Meta Webhook] Decryption SUCCESS. Token Start: ${token.substring(0, 10)}... (Length: ${token.length})`);
-                }
-
+                const fields = channel.type === 'INSTAGRAM' ? 'name,username,profile_pic' : 'name,profile_pic';
                 const profileRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${senderId}?fields=name`,
+                    `https://graph.facebook.com/v19.0/${senderId}?fields=${fields}`,
                     {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
+                        headers: { 'Authorization': `Bearer ${token}` }
                     }
                 );
                 const profileData = await profileRes.json();
 
-                if (profileData.name) {
-                    profileName = profileData.name;
-                    console.log(`[Meta Webhook] SUCCESS: Fetched profile name for ${senderId}: ${profileName}`);
-                } else {
-                    console.warn(`[Meta Webhook] Profile data returned no name or error:`, JSON.stringify(profileData));
-                }
+                if (profileData.name) profileName = profileData.name;
+                if (profileData.profile_pic) avatarUrl = profileData.profile_pic;
+                if (profileData.username) handle = profileData.username;
+
+                console.log(`[Meta Webhook] Profile Fetch Result:`, { profileName, avatarUrl, handle });
             }
         } catch (error) {
-            console.error('[Meta Webhook] CRITICAL: Error in profile fetching flow:', error.message);
+            console.error('[Meta Webhook] Error in profile fetching flow:', error.message);
         }
 
         // Buscar ou criar contato (usando o perfil se encontrado)
-        console.log(`[Meta Webhook] Identifying contact for Workspace: ${channel.workspaceId}, Identifier: ${senderId}, Name: ${profileName || 'Unknown'}`);
-        const contact = await this.contactsService.findOrCreate(channel.workspaceId, senderId, profileName);
-        console.log(`[Meta Webhook] Contact identified: ${contact.id} (${contact.name})`);
+        console.log(`[Meta Webhook] Identifying contact for Workspace: ${channel.workspaceId}, Identifier: ${senderId}, Name: ${profileName || 'Unknown'}, Handle: ${handle || 'N/A'}`);
+        const contact = await this.contactsService.findOrCreate(channel.workspaceId, senderId, profileName, avatarUrl, handle);
+        console.log(`[Meta Webhook] Contact identified: ${contact.id} (${contact.name}) @${contact.handle}`);
 
         // Buscar ou criar conversa
         const conversation = await this.conversationsService.findOrCreate(

@@ -40,6 +40,14 @@ interface Sector {
     color: string
 }
 
+interface Contact {
+    id: string
+    name: string
+    phone: string
+    avatarUrl?: string
+    handle?: string
+}
+
 interface Conversation {
     id: string
     name?: string
@@ -51,7 +59,7 @@ interface Conversation {
     sectorId?: string
     sector?: Sector
     contactId: string
-    contact?: any
+    contact?: Contact
 }
 
 export default function InboxPage() {
@@ -408,8 +416,8 @@ export default function InboxPage() {
                         >
                             <div className="relative">
                                 <Avatar>
-                                    <AvatarImage src={chat.avatar} />
-                                    <AvatarFallback className="bg-red-100 text-red-600 font-medium">{(chat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
+                                    <AvatarImage src={chat.contact?.avatarUrl || chat.avatar} />
+                                    <AvatarFallback className="bg-red-100 text-red-600 font-medium">{(chat.contact?.name || chat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 {/* SLA Indicator */}
                                 <div className={cn(
@@ -427,7 +435,9 @@ export default function InboxPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-baseline mb-1">
-                                    <h3 className="font-semibold text-sm text-slate-900 truncate">{chat?.contact?.name || chat?.contact?.phone || chat?.name || "Sem nome"}</h3>
+                                    <h3 className="font-semibold text-sm text-slate-900 truncate">
+                                        {chat.contact?.handle ? `@${chat.contact.handle}` : (chat.contact?.name || chat?.contact?.phone || chat?.name || "Sem nome")}
+                                    </h3>
                                     <span className="text-xs text-slate-500">{chat?.messages?.[(chat?.messages?.length || 0) - 1]?.time || ""}</span>
                                 </div>
                                 <p className="text-xs text-slate-500 truncate">
@@ -452,167 +462,177 @@ export default function InboxPage() {
                 {activeChat ? (
                     <>
                         <div className="h-16 border-b bg-white flex items-center justify-between px-6 shadow-sm z-10">
-                            <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src={activeChat.avatar} />
-                                    <AvatarFallback className="bg-red-100 text-red-600">{(activeChat?.contact?.name || activeChat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <h2 className="font-bold text-sm text-slate-900">{activeChat?.contact?.name || activeChat?.contact?.phone || activeChat?.name || "Sem nome"}</h2>
-                                    <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                                        <span className="block h-2 w-2 rounded-full bg-emerald-500" />
-                                        Online
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2 text-slate-500">
-                                <Button variant="ghost" size="icon"><Phone className="h-5 w-5" /></Button>
-                                <Button variant="ghost" size="icon"><Video className="h-5 w-5" /></Button>
-
-                                <div className="h-6 w-px bg-slate-200 mx-2" />
-
-                                <Button
-                                    variant="ghost"
-                                    className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                                    onClick={() => setIsTransferOpen(true)}
-                                >
-                                    <ArrowRightLeft className="mr-2 h-4 w-4" /> Transferir
-                                </Button>
-                                <Button variant="outline" className="ml-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                                    <CheckCheck className="mr-2 h-4 w-4" /> Resolver
-                                </Button>
+                            <Avatar className="h-9 w-9">
+                                <AvatarImage src={activeChat?.contact?.avatarUrl || activeChat.avatar} />
+                                <AvatarFallback className="bg-red-100 text-red-600">{(activeChat?.contact?.name || activeChat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <h2 className="font-bold text-sm text-slate-900 group flex items-center gap-2">
+                                    {activeChat?.contact?.name || activeChat?.contact?.phone || activeChat?.name || "Sem nome"}
+                                    {activeChat?.contact?.handle && (
+                                        <span className="text-[10px] font-normal text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                                            @{activeChat.contact.handle}
+                                        </span>
+                                    )}
+                                </h2>
+                                <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                                    <span className="block h-2 w-2 rounded-full bg-emerald-500" />
+                                    Online
+                                </p>
                             </div>
                         </div>
+                        <div className="flex items-center gap-2 text-slate-500">
+                            <Button variant="ghost" size="icon"><Phone className="h-5 w-5" /></Button>
+                            <Button variant="ghost" size="icon"><Video className="h-5 w-5" /></Button>
 
-                        {/* Messages Area */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                            {/* Timestamp */}
-                            <div className="flex justify-center">
-                                <span className="bg-white/60 px-3 py-1 rounded-full text-xs text-slate-500 font-medium shadow-sm">Hoje</span>
-                            </div>
+                            <div className="h-6 w-px bg-slate-200 mx-2" />
 
-                            {(activeChat?.messages || []).map((msg) => {
-                                if (msg.isSystem) {
-                                    return (
-                                        <div key={msg.id} className="flex justify-center my-4">
-                                            <span className="bg-slate-200/80 px-3 py-1 rounded text-xs text-slate-500 font-medium">
-                                                {msg.text === "system:agent_joined" ? `Você assumiu este atendimento - ${msg.time}` :
-                                                    msg.text === "system:transferred" ? `Atendimento transferido - ${msg.time}` : msg.text}
-                                            </span>
-                                        </div>
-                                    )
-                                }
-
-                                return (
-                                    <div key={msg.id} className={`flex flex-col gap-1 ${msg.fromMe ? 'items-end' : 'items-start'}`}>
-                                        <div className={`p-3 rounded-2xl shadow-sm max-w-[75%] text-sm relative group overflow-hidden ${msg.isInternal
-                                            ? 'bg-yellow-100 text-yellow-900 border border-yellow-200'
-                                            : msg.fromMe
-                                                ? 'bg-red-600 text-white rounded-br-sm'
-                                                : 'bg-white text-slate-800 rounded-bl-sm'
-                                            } ${msg.isScheduled ? 'border-2 border-dashed border-slate-300 opacity-80 bg-slate-50 text-slate-600' : ''}`}>
-
-                                            {/* Internal Note Label */}
-                                            {msg.isInternal && (
-                                                <div className="flex items-center gap-1 mb-1 opacity-70 border-b border-yellow-200 pb-1">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider">Nota Interna</span>
-                                                </div>
-                                            )}
-
-                                            {/* Scheduled Label */}
-                                            {msg.isScheduled && (
-                                                <div className="flex items-center gap-1 mb-1 opacity-70 border-b border-slate-200 pb-1 text-slate-500">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                                                        Agendado para {msg.scheduledTo?.toLocaleDateString()} às {msg.scheduledTo?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                </div>
-                                            )}
-
-                                            {/* Media Rendering */}
-                                            {msg.mediaUrl && (
-                                                <div className="mb-2 rounded-lg overflow-hidden">
-                                                    {msg.mediaType === 'image' && (
-                                                        <img src={msg.mediaUrl} alt="Attachment" className="max-w-full h-auto object-cover max-h-[300px]" />
-                                                    )}
-                                                    {msg.mediaType === 'video' && (
-                                                        <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px]" />
-                                                    )}
-                                                    {msg.mediaType === 'audio' && (
-                                                        msg.isPtt ? (
-                                                            <AudioPttBubble
-                                                                message={{
-                                                                    id: msg.id as number,
-                                                                    content: { mediaUrl: msg.mediaUrl, waveform: msg.waveform, duration: msg.duration }
-                                                                }}
-                                                                fromAgent={msg.fromMe}
-                                                            />
-                                                        ) : (
-                                                            <audio src={msg.mediaUrl} controls className="max-w-full" />
-                                                        )
-                                                    )}
-                                                    {msg.mediaType === 'document' && (
-                                                        <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
-                                                            <Paperclip className="h-5 w-5" />
-                                                            <span className="underline">Ver Documento</span>
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            <p className="whitespace-pre-wrap">{msg?.text || ""}</p>
-
-                                            <div className={`flex items-center gap-1 mt-1 ${msg?.fromMe ? 'justify-end' : 'justify-end'}`}>
-                                                <span className={`text-[10px] ${msg?.fromMe ? 'text-white/80' : 'text-slate-400'} ${msg?.isInternal ? 'text-yellow-700' : ''} ${msg?.isScheduled ? 'text-slate-400' : ''}`}>{msg?.time || ""}</span>
-                                                {msg.fromMe && !msg.isInternal && !msg.isScheduled && <CheckCheck className="h-3 w-3 text-white/90" />}
-                                                {msg.isScheduled && <span className="text-[10px] text-slate-400">Agendado</span>}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )
-                            })}
+                            <Button
+                                variant="ghost"
+                                className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                                onClick={() => setIsTransferOpen(true)}
+                            >
+                                <ArrowRightLeft className="mr-2 h-4 w-4" /> Transferir
+                            </Button>
+                            <Button variant="outline" className="ml-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                                <CheckCheck className="mr-2 h-4 w-4" /> Resolver
+                            </Button>
                         </div>
-
-                        {/* Input Area */}
-                        {activeChat.status === 'pending' ? (
-                            <div className="p-4 bg-white border-t min-h-[80px] flex items-center justify-center bg-slate-50/50">
-                                <div className="text-center w-full max-maxWidth-md space-y-3">
-                                    <p className="text-sm text-slate-500">Esta conversa está pendente. Aceite para iniciar o atendimento.</p>
-                                    <Button
-                                        onClick={handleAcceptChat}
-                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-100 h-12 text-base animate-pulse"
-                                    >
-                                        <CheckCheck className="mr-2 h-5 w-5" />
-                                        INICIAR ATENDIMENTO
-                                    </Button>
-                                </div>
-                            </div>
-                        ) : (
-                            <Composer onSendMessage={handleSendMessage} onScheduleMessage={handleScheduleMessage} />
-                        )}
-                    </>
-                ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400 space-y-4">
-                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
-                            <MessageSquare className="h-8 w-8 text-slate-300" />
-                        </div>
-                        <p className="text-sm font-medium">Selecione uma conversa para começar</p>
                     </div>
-                )}
             </div>
 
-            {/* Right Pane: Contact Details */}
-            {activeChat && (
-                <ContactProfilePanel
-                    workspaceId={workspaceId}
-                    contactId={activeChat.contactId}
-                />
-            )}
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Timestamp */}
+                <div className="flex justify-center">
+                    <span className="bg-white/60 px-3 py-1 rounded-full text-xs text-slate-500 font-medium shadow-sm">Hoje</span>
+                </div>
 
-            <TransferAgentDialog
-                open={isTransferOpen}
-                onOpenChange={setIsTransferOpen}
-                onTransfer={handleTransfer}
-            />
+                {(activeChat?.messages || []).map((msg) => {
+                    if (msg.isSystem) {
+                        return (
+                            <div key={msg.id} className="flex justify-center my-4">
+                                <span className="bg-slate-200/80 px-3 py-1 rounded text-xs text-slate-500 font-medium">
+                                    {msg.text === "system:agent_joined" ? `Você assumiu este atendimento - ${msg.time}` :
+                                        msg.text === "system:transferred" ? `Atendimento transferido - ${msg.time}` : msg.text}
+                                </span>
+                            </div>
+                        )
+                    }
+
+                    return (
+                        <div key={msg.id} className={`flex flex-col gap-1 ${msg.fromMe ? 'items-end' : 'items-start'}`}>
+                            <div className={`p-3 rounded-2xl shadow-sm max-w-[75%] text-sm relative group overflow-hidden ${msg.isInternal
+                                ? 'bg-yellow-100 text-yellow-900 border border-yellow-200'
+                                : msg.fromMe
+                                    ? 'bg-red-600 text-white rounded-br-sm'
+                                    : 'bg-white text-slate-800 rounded-bl-sm'
+                                } ${msg.isScheduled ? 'border-2 border-dashed border-slate-300 opacity-80 bg-slate-50 text-slate-600' : ''}`}>
+
+                                {/* Internal Note Label */}
+                                {msg.isInternal && (
+                                    <div className="flex items-center gap-1 mb-1 opacity-70 border-b border-yellow-200 pb-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider">Nota Interna</span>
+                                    </div>
+                                )}
+
+                                {/* Scheduled Label */}
+                                {msg.isScheduled && (
+                                    <div className="flex items-center gap-1 mb-1 opacity-70 border-b border-slate-200 pb-1 text-slate-500">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                                            Agendado para {msg.scheduledTo?.toLocaleDateString()} às {msg.scheduledTo?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Media Rendering */}
+                                {msg.mediaUrl && (
+                                    <div className="mb-2 rounded-lg overflow-hidden">
+                                        {msg.mediaType === 'image' && (
+                                            <img src={msg.mediaUrl} alt="Attachment" className="max-w-full h-auto object-cover max-h-[300px]" />
+                                        )}
+                                        {msg.mediaType === 'video' && (
+                                            <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px]" />
+                                        )}
+                                        {msg.mediaType === 'audio' && (
+                                            msg.isPtt ? (
+                                                <AudioPttBubble
+                                                    message={{
+                                                        id: msg.id as number,
+                                                        content: { mediaUrl: msg.mediaUrl, waveform: msg.waveform, duration: msg.duration }
+                                                    }}
+                                                    fromAgent={msg.fromMe}
+                                                />
+                                            ) : (
+                                                <audio src={msg.mediaUrl} controls className="max-w-full" />
+                                            )
+                                        )}
+                                        {msg.mediaType === 'document' && (
+                                            <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
+                                                <Paperclip className="h-5 w-5" />
+                                                <span className="underline">Ver Documento</span>
+                                            </a>
+                                        )}
+                                    </div>
+                                )}
+
+                                <p className="whitespace-pre-wrap">{msg?.text || ""}</p>
+
+                                <div className={`flex items-center gap-1 mt-1 ${msg?.fromMe ? 'justify-end' : 'justify-end'}`}>
+                                    <span className={`text-[10px] ${msg?.fromMe ? 'text-white/80' : 'text-slate-400'} ${msg?.isInternal ? 'text-yellow-700' : ''} ${msg?.isScheduled ? 'text-slate-400' : ''}`}>{msg?.time || ""}</span>
+                                    {msg.fromMe && !msg.isInternal && !msg.isScheduled && <CheckCheck className="h-3 w-3 text-white/90" />}
+                                    {msg.isScheduled && <span className="text-[10px] text-slate-400">Agendado</span>}
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+
+            {/* Input Area */}
+            {activeChat.status === 'pending' ? (
+                <div className="p-4 bg-white border-t min-h-[80px] flex items-center justify-center bg-slate-50/50">
+                    <div className="text-center w-full max-maxWidth-md space-y-3">
+                        <p className="text-sm text-slate-500">Esta conversa está pendente. Aceite para iniciar o atendimento.</p>
+                        <Button
+                            onClick={handleAcceptChat}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-100 h-12 text-base animate-pulse"
+                        >
+                            <CheckCheck className="mr-2 h-5 w-5" />
+                            INICIAR ATENDIMENTO
+                        </Button>
+                    </div>
+                </div>
+            ) : (
+                <Composer onSendMessage={handleSendMessage} onScheduleMessage={handleScheduleMessage} />
+            )}
+        </>
+    ) : (
+        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 space-y-4">
+            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
+                <MessageSquare className="h-8 w-8 text-slate-300" />
+            </div>
+            <p className="text-sm font-medium">Selecione uma conversa para começar</p>
         </div>
+    )
+}
+            </div >
+
+    {/* Right Pane: Contact Details */ }
+{
+    activeChat && (
+        <ContactProfilePanel
+            workspaceId={workspaceId}
+            contactId={activeChat.contactId}
+        />
+    )
+}
+
+<TransferAgentDialog
+    open={isTransferOpen}
+    onOpenChange={setIsTransferOpen}
+    onTransfer={handleTransfer}
+/>
+        </div >
     )
 }

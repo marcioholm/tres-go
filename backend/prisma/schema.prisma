@@ -107,6 +107,8 @@ model Contact {
   lastName       String?
   phone          String?
   email          String?
+  avatarUrl      String?                  // URL da foto de perfil
+  handle         String?                  // Instagram username ou handler
   externalId     String?                  // ID externo (Instagram ID, Messenger ID, etc)
   source         TrafficSource?
   sourceMedium   String?

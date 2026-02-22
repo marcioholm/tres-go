@@ -194,7 +194,7 @@ export class ContactsService {
         }
     }
 
-    async findOrCreate(workspaceId: string, identifier: string, name?: string) {
+    async findOrCreate(workspaceId: string, identifier: string, name?: string, avatarUrl?: string, handle?: string) {
         // Assume identifier is phone or external platform ID
         let contact = await this.prisma.contact.findFirst({
             where: {
@@ -213,14 +213,23 @@ export class ContactsService {
                     name: name || identifier,
                     phone: identifier,
                     externalId: identifier,
+                    avatarUrl,
+                    handle
                 }
             });
-        } else if (name && contact.name === identifier) {
-            // Se o contato já existe mas o nome era apenas o ID, atualizamos com o nome real
-            contact = await this.prisma.contact.update({
-                where: { id: contact.id },
-                data: { name }
-            });
+        } else {
+            // Atualizar metadados se mudaram ou eram vazios
+            const updates: any = {};
+            if (name && contact.name === identifier) updates.name = name;
+            if (avatarUrl && contact.avatarUrl !== avatarUrl) updates.avatarUrl = avatarUrl;
+            if (handle && contact.handle !== handle) updates.handle = handle;
+
+            if (Object.keys(updates).length > 0) {
+                contact = await this.prisma.contact.update({
+                    where: { id: contact.id },
+                    data: updates
+                });
+            }
         }
 
         return contact;

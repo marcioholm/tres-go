@@ -162,38 +162,54 @@ export class MessagesService {
         }
     }
 
-    private async sendViaMetaMessenger(channel: any, to: string, dto: SendMessageDto, dbContent: any): Promise<string | undefined> {
-        const url = `https://graph.facebook.com/v19.0/me/messages`;
-        const token = channel.accessToken ? decrypt(channel.accessToken) : process.env.META_SYSTEM_USER_TOKEN;
-        const headers = {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-
-        const body: any = {
-            recipient: { id: to },
-            message: {},
-            messaging_type: 'RESPONSE'
-        };
-
-        if (dto.type === 'IMAGE' || dto.type === 'VIDEO' || dto.type === 'DOCUMENT' || dto.type === 'AUDIO') {
-            body.message.attachment = {
-                type: dto.type.toLowerCase(),
-                payload: {
-                    url: dbContent.mediaUrl,
-                    is_selectable: true
-                }
-            };
-        } else {
-            body.message.text = dbContent.body || dto.text || '';
-        }
-
+    private async sendViaMetaMessenger(channel: any, recipientId: string, dto: SendMessageDto, dbContent: any): Promise<string | undefined> {
         try {
-            this.logger.log(`[Meta Messenger/IG] Sending Message to ${to}...`);
-            const res = await axios.post(url, body, { headers });
-            return res.data?.message_id;
+            console.log(`[Messages Service] Sending via Meta Messenger/Instagram. Channel: ${channel.name} (${channel.type}), Recipient: ${recipientId}`);
+
+            const encryptedToken = channel.accessToken;
+            const token = encryptedToken ? decrypt(encryptedToken) : process.env.META_SYSTEM_USER_TOKEN;
+
+            if (!token) {
+                this.logger.error('[Messages Service] Meta token not found or decryption failed');
+                throw new Error('Access token not found');
+            }
+
+            const url = `https://graph.facebook.com/v19.0/me/messages?access_token=${token}`;
+            const body: any = {
+                recipient: { id: recipientId },
+                message: {},
+                messaging_type: 'RESPONSE'
+            };
+
+            if (dto.type === 'IMAGE' || dto.type === 'VIDEO' || dto.type === 'DOCUMENT' || dto.type === 'AUDIO') {
+                body.message.attachment = {
+                    type: dto.type.toLowerCase(),
+                    payload: {
+                        url: dbContent.mediaUrl,
+                        is_selectable: true
+                    }
+                };
+            } else {
+                body.message.text = dbContent.body || dto.text || '';
+            }
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error(`[Messages Service] Meta API Error Details:`, JSON.stringify(data));
+                throw new Error(data.error?.message || 'Failed to send message via Meta API');
+            }
+
+            console.log(`[Messages Service] Meta API Success:`, JSON.stringify(data));
+            return data.message_id;
         } catch (error) {
-            this.logger.error(`Failed to send message via Meta API`, error.response?.data || error.message);
+            console.error(`[Messages Service] CRITICAL Error sending via Meta Messenger:`, error.message);
             throw error;
         }
     }
