@@ -135,7 +135,7 @@ export default function InboxPage() {
             setConversations(prev => prev.map(conv => {
                 if (String(conv.id) === String(data.conversationId)) {
                     // Mapear mensagem para garantir que tenha o campo 'text' e 'fromMe'
-                    const mappedMessage = {
+                    const mappedMessage: Message = {
                         ...data.message,
                         text: data.message.text || (data.message as any).content?.text || (data.message as any).content?.body || (data.message as any).content || '',
                         fromMe: (data.message as any).fromAgent ?? data.message.fromMe ?? false,
@@ -150,22 +150,28 @@ export default function InboxPage() {
                         Object.entries(contactUpdate).filter(([_, v]) => v != null)
                     ) : null;
 
-                    const updatedConv = {
+                    // Building the updated conversation explicitly to satisfy TypeScript
+                    const updatedConv: Conversation = {
                         ...conv,
-                        ...(safeContactUpdate ? {
-                            name: safeContactUpdate.name || conv.name,
-                            contact: { ...conv.contact, ...safeContactUpdate }
-                        } : {}),
                         unread: String(conv.id) === String(activeChatId) ? conv.unread : conv.unread + 1,
+                    };
+
+                    if (safeContactUpdate) {
+                        updatedConv.name = (safeContactUpdate.name as string) || conv.name;
+                        updatedConv.contact = {
+                            ...(conv.contact || { id: conv.contactId, name: conv.name || '', phone: '' }),
+                            ...safeContactUpdate
+                        } as Contact;
                     }
 
                     // Evitar duplicatas (guard against undefined messages array)
                     const currentMessages = Array.isArray(conv.messages) ? conv.messages : []
                     const messageExists = currentMessages.some(m => String(m.id) === String(mappedMessage.id))
+
                     return {
                         ...updatedConv,
                         messages: messageExists ? currentMessages : [...currentMessages, mappedMessage]
-                    }
+                    } as Conversation
                 }
                 return conv
             }))
