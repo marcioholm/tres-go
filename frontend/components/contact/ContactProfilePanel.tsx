@@ -41,11 +41,11 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
 
                 // Fetch sales history
                 const salesRes = await api.get(`/workspaces/${workspaceId}/sales?contactId=${contactId}`)
-                setSales(salesRes.data)
+                setSales(Array.isArray(salesRes.data) ? salesRes.data : [])
 
                 // Fetch available tags
                 const tagsRes = await api.get(`/workspaces/${workspaceId}/tags`)
-                setAvailableTags(tagsRes.data)
+                setAvailableTags(Array.isArray(tagsRes.data) ? tagsRes.data : [])
 
                 // Initialize phone editing value
                 if (contactRes.data?.phone) setPhoneValue(contactRes.data.phone)
@@ -287,7 +287,7 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                                                 {new Date(sale.createdAt).toLocaleDateString()}
                                             </span>
                                             <span className="text-sm font-bold text-slate-800">
-                                                R$ {sale.amount.toFixed(2)}
+                                                R$ {(sale.amount || 0).toFixed(2)}
                                             </span>
                                         </div>
                                     </div>

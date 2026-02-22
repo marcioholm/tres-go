@@ -42,7 +42,7 @@ export default function PerformanceDashboardPage({ params }: { params: { workspa
                 ])
                 setConfig(configRes.data)
                 setMetrics(metricsRes.data)
-                setAgentMetrics(agentsRes.data)
+                setAgentMetrics(Array.isArray(agentsRes.data) ? agentsRes.data : [])
             } catch (error) {
                 console.error("Failed to fetch performance data", error)
                 toast.error("Erro ao carregar dados de performance")

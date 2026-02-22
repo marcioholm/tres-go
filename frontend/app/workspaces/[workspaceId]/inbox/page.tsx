@@ -76,7 +76,7 @@ export default function InboxPage() {
         const fetchSectors = async () => {
             try {
                 const { data } = await api.get(`/workspaces/${workspaceId}/sectors`)
-                setSectors(data)
+                setSectors(Array.isArray(data) ? data : [])
             } catch (error) {
                 console.error("Failed to fetch sectors", error)
                 // Fallback mock
@@ -99,7 +99,7 @@ export default function InboxPage() {
         setLoadingConversations(true)
         try {
             const { data } = await api.get(`/workspaces/${workspaceId}/conversations`)
-            setConversations(data)
+            setConversations(Array.isArray(data) ? data : [])
         } catch (error) {
             console.error("Failed to fetch conversations", error)
         } finally {
