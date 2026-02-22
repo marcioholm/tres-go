@@ -12,6 +12,7 @@ import { MessagesModule } from '../messages/messages.module';
 import { forwardRef } from '@nestjs/common';
 import { MetaIntegrationController } from './meta-integration.controller';
 import { MetaIntegrationService } from './meta-integration.service';
+import { GatewayModule } from '../gateway/gateway.module';
 
 @Module({
     imports: [
@@ -19,7 +20,8 @@ import { MetaIntegrationService } from './meta-integration.service';
         BillingModule,
         ContactsModule,
         ConversationsModule,
-        forwardRef(() => MessagesModule)
+        forwardRef(() => MessagesModule),
+        GatewayModule
     ],
     providers: [ChannelsService, MetaOAuthService, MetaWebhookService, MetaIntegrationService],
     controllers: [ChannelsController, MetaWebhookController, MetaIntegrationController],
