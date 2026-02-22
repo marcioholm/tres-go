@@ -87,7 +87,12 @@ export class MetaWebhookService {
                     console.log(`[Meta Webhook] Processing event for channel: ${channel.name} (${channel.id})`);
 
                     if (event.message) {
-                        await this.handleIncomingMessage(channel, event);
+                        if (event.message.is_echo) {
+                            // Message sent by the page itself (from phone/desktop IG)
+                            await this.handleEchoMessage(channel, event);
+                        } else {
+                            await this.handleIncomingMessage(channel, event);
+                        }
                     } else if (event.read) {
                         await this.handleMessageRead(channel, event);
                     } else if (event.delivery) {
@@ -196,6 +201,49 @@ export class MetaWebhookService {
         });
 
         console.log('Mensagem salva e emitida:', message.id);
+    }
+
+    // Mensagem enviada a partir do celular/IG pela própria página: registrar como fromAgent
+    private async handleEchoMessage(channel: any, event: any) {
+        // On echo: sender = page, recipient = user
+        const recipientId = event.recipient?.id;
+        const text = event.message?.text || '';
+        const mid = event.message?.mid;
+
+        if (!recipientId) return;
+
+        console.log(`[Meta Webhook] Echo message detected (sent from phone/page). Recipient: ${recipientId}`);
+
+        // Find contact by externalId (the recipient)
+        const contact = await this.contactsService.findOrCreate(channel.workspaceId, recipientId, undefined, undefined, undefined);
+
+        // Find or create conversation
+        const conversation = await this.conversationsService.findOrCreate(
+            channel.workspaceId,
+            channel.id,
+            contact.id,
+        );
+
+        // Save message as fromAgent = true (sent by the agent from phone)
+        const message = await this.prisma.message.create({
+            data: {
+                conversationId: conversation.id,
+                externalId: mid,
+                fromAgent: true,
+                type: 'TEXT',
+                content: text,
+                status: 'DELIVERED',
+                createdAt: new Date(event.timestamp * 1000)
+            }
+        });
+
+        // Emit socket event so the UI updates in real time
+        this.gateway.emitToWorkspace(channel.workspaceId, 'newMessage', {
+            conversationId: conversation.id,
+            message: { ...message, text }
+        });
+
+        console.log('[Meta Webhook] Echo message saved as fromAgent:', message.id);
     }
 
     private async handleWhatsAppWebhook(channel: any, value: any) {
