@@ -80,9 +80,10 @@ export class ConversationsService {
             orderBy: { updatedAt: 'desc' }
         });
 
-        // Map messages to ensure 'text' exists
+        // Map messages and name for frontend compatibility
         return conversations.map(conv => ({
             ...conv,
+            name: conv.contact?.name || conv.contact?.phone || 'Sem nome',
             messages: conv.messages.map(m => ({
                 ...m,
                 text: typeof m.content === 'string' ? m.content : (m.content as any)?.text || (m.content as any)?.body || ''
@@ -100,6 +101,7 @@ export class ConversationsService {
 
         return {
             ...conversation,
+            name: conversation.contact?.name || conversation.contact?.phone || 'Sem nome',
             messages: conversation.messages.map(m => ({
                 ...m,
                 text: typeof m.content === 'string' ? m.content : (m.content as any)?.text || (m.content as any)?.body || ''

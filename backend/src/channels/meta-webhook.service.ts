@@ -159,7 +159,9 @@ export class MetaWebhookService {
         }
 
         // Buscar ou criar contato (usando o perfil se encontrado)
+        console.log(`[Meta Webhook] Identifying contact for Workspace: ${channel.workspaceId}, Identifier: ${senderId}, Name: ${profileName || 'Unknown'}`);
         const contact = await this.contactsService.findOrCreate(channel.workspaceId, senderId, profileName);
+        console.log(`[Meta Webhook] Contact identified: ${contact.id} (${contact.name})`);
 
         // Buscar ou criar conversa
         const conversation = await this.conversationsService.findOrCreate(

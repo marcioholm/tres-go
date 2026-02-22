@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils"
 import { socketService } from "@/lib/socket-service"
 
 interface Message {
-    id: number
+    id: string | number
     text: string
     time: string
     fromMe: boolean
@@ -41,8 +41,8 @@ interface Sector {
 }
 
 interface Conversation {
-    id: number
-    name: string
+    id: string
+    name?: string
     status: string
     avatar: string
     unread: number
@@ -50,6 +50,8 @@ interface Conversation {
     sla: 'ok' | 'warning' | 'danger'
     sectorId?: string
     sector?: Sector
+    contactId: string
+    contact?: any
 }
 
 export default function InboxPage() {
@@ -111,7 +113,7 @@ export default function InboxPage() {
         return c.status === filter
     })
 
-    const [activeChatId, setActiveChatId] = useState<number | null>(null)
+    const [activeChatId, setActiveChatId] = useState<string | null>(null)
 
     // Socket.io Real-time Updates
     useEffect(() => {
@@ -119,16 +121,22 @@ export default function InboxPage() {
 
         const socket = socketService.getSocket(workspaceId)
 
-        socket.on('newMessage', (data: { conversationId: number, message: Message }) => {
+        socket.on('newMessage', (data: { conversationId: string, message: Message }) => {
             console.log('[Socket] New message received:', data)
             setConversations(prev => prev.map(conv => {
-                if (conv.id === data.conversationId) {
+                if (String(conv.id) === String(data.conversationId)) {
+                    // Mapear mensagem para garantir que tenha o campo 'text'
+                    const mappedMessage = {
+                        ...data.message,
+                        text: data.message.text || (data.message as any).content?.text || (data.message as any).content?.body || (data.message as any).content || ''
+                    }
+
                     // Evitar duplicatas
-                    const messageExists = conv.messages.some(m => m.id === data.message.id)
+                    const messageExists = conv.messages.some(m => String(m.id) === String(mappedMessage.id))
                     return {
                         ...conv,
                         unread: conv.id === activeChatId ? conv.unread : conv.unread + 1,
-                        messages: messageExists ? conv.messages : [...conv.messages, data.message]
+                        messages: messageExists ? conv.messages : [...conv.messages, mappedMessage]
                     }
                 }
                 return conv
@@ -139,9 +147,19 @@ export default function InboxPage() {
             fetchConversations() // Recarrega para atualizar status e setores
         })
 
+        socket.on('new_conversation', (conversation: Conversation) => {
+            console.log('[Socket] New conversation received:', conversation)
+            setConversations(prev => {
+                // Evitar duplicatas
+                if (prev.some(c => c.id === conversation.id)) return prev
+                return [conversation, ...prev]
+            })
+        })
+
         return () => {
             socket.off('newMessage')
             socket.off('conversationTransferred')
+            socket.off('new_conversation')
         }
     }, [workspaceId, activeChatId])
 
@@ -149,7 +167,7 @@ export default function InboxPage() {
 
     const handleAcceptChat = () => {
         if (!activeChatId) return
-        setConversations(conversations.map(c => {
+        setConversations(prev => prev.map(c => {
             if (c.id === activeChatId) {
                 return {
                     ...c,
@@ -169,9 +187,34 @@ export default function InboxPage() {
 
     const handleSendMessage = async (text: string, mediaUrl?: string, mediaType?: 'image' | 'video' | 'audio' | 'document', isInternal?: boolean, mediaMeta?: any) => {
         if (activeChatId) {
+            // Optimistic Update
+            const tempId = Date.now().toString()
+            const newMessage: Message = {
+                id: tempId,
+                text: text,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                fromMe: true,
+                mediaUrl,
+                mediaType,
+                isInternal,
+                isPtt: mediaMeta?.isPtt,
+                duration: mediaMeta?.duration,
+                waveform: mediaMeta?.waveform
+            }
+
+            setConversations(prev => prev.map(c => {
+                if (String(c.id) === String(activeChatId)) {
+                    return {
+                        ...c,
+                        messages: [...c.messages, newMessage]
+                    }
+                }
+                return c
+            }))
+
             try {
                 await api.post(`/workspaces/${workspaceId}/messages`, {
-                    conversationId: activeChatId.toString(),
+                    conversationId: activeChatId,
                     type: mediaType || 'text',
                     fromMe: true,
                     isInternal: isInternal,
@@ -191,6 +234,7 @@ export default function InboxPage() {
                 })
             } catch (error) {
                 console.error("Failed to send message:", error)
+                // Optionally remove the message from state if it failed
             }
         }
     }
@@ -200,7 +244,7 @@ export default function InboxPage() {
     const handleScheduleMessage = async (date: Date, text: string, mediaUrl?: string, mediaType?: 'image' | 'video' | 'audio' | 'document', mediaMeta?: any) => {
         if (!activeChatId) return
         // Optimistic Update
-        setConversations(conversations.map(c => {
+        setConversations(prev => prev.map(c => {
             if (c.id === activeChatId) {
                 return {
                     ...c,
@@ -246,7 +290,7 @@ export default function InboxPage() {
             await api.post(`/workspaces/${workspaceId}/conversations/${activeChatId}/transfer`, data)
 
             // Update local state to show system message
-            setConversations(conversations.map(c => {
+            setConversations(prev => prev.map(c => {
                 if (c.id === activeChatId) {
                     return {
                         ...c,
@@ -383,7 +427,7 @@ export default function InboxPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-baseline mb-1">
-                                    <h3 className="font-semibold text-sm text-slate-900 truncate">{chat?.name || "Sem nome"}</h3>
+                                    <h3 className="font-semibold text-sm text-slate-900 truncate">{chat?.contact?.name || chat?.contact?.phone || chat?.name || "Sem nome"}</h3>
                                     <span className="text-xs text-slate-500">{chat?.messages?.[(chat?.messages?.length || 0) - 1]?.time || ""}</span>
                                 </div>
                                 <p className="text-xs text-slate-500 truncate">
@@ -411,10 +455,10 @@ export default function InboxPage() {
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-9 w-9">
                                     <AvatarImage src={activeChat.avatar} />
-                                    <AvatarFallback className="bg-red-100 text-red-600">{(activeChat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
+                                    <AvatarFallback className="bg-red-100 text-red-600">{(activeChat?.contact?.name || activeChat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <h2 className="font-bold text-sm text-slate-900">{activeChat?.name || "Sem nome"}</h2>
+                                    <h2 className="font-bold text-sm text-slate-900">{activeChat?.contact?.name || activeChat?.contact?.phone || activeChat?.name || "Sem nome"}</h2>
                                     <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
                                         <span className="block h-2 w-2 rounded-full bg-emerald-500" />
                                         Online
@@ -497,7 +541,7 @@ export default function InboxPage() {
                                                         msg.isPtt ? (
                                                             <AudioPttBubble
                                                                 message={{
-                                                                    id: msg.id,
+                                                                    id: msg.id as number,
                                                                     content: { mediaUrl: msg.mediaUrl, waveform: msg.waveform, duration: msg.duration }
                                                                 }}
                                                                 fromAgent={msg.fromMe}
@@ -560,7 +604,7 @@ export default function InboxPage() {
             {activeChat && (
                 <ContactProfilePanel
                     workspaceId={workspaceId}
-                    contactId={activeChat.id}
+                    contactId={activeChat.contactId}
                 />
             )}
 

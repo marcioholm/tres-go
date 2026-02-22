@@ -75,19 +75,21 @@ export function Composer({ onSendMessage, onScheduleMessage }: ComposerProps) {
     }
 
     const handleSend = async (forceAttachment?: any) => {
-        const currentAttachment = forceAttachment || attachment;
-        if (!message.trim() && !currentAttachment) return
+        // If called from onClick, forceAttachment might be the MouseEvent object
+        const cleanAttachment = (forceAttachment && forceAttachment instanceof File) ? forceAttachment : attachment;
+        if (!message.trim() && !cleanAttachment) return
 
         let mediaUrl = undefined
         let mediaType = undefined
         let mediaMeta = undefined
 
-        if (currentAttachment) {
-            const isPtt = currentAttachment.file.name === 'voice_note.webm';
-            const uploadResult = await uploadFile(currentAttachment.file, isPtt)
+        if (cleanAttachment) {
+            const isPtt = (cleanAttachment as any).file?.name === 'voice_note.webm' || (cleanAttachment as any).name === 'voice_note.webm';
+            const fileToUpload = (cleanAttachment as any).file || cleanAttachment;
+            const uploadResult = await uploadFile(fileToUpload, isPtt)
             if (uploadResult) {
                 mediaUrl = uploadResult.url
-                mediaType = currentAttachment.type
+                mediaType = (cleanAttachment as any).type || (cleanAttachment as any).file?.type || 'document' // Fallback
                 mediaMeta = {
                     isPtt: uploadResult.isPtt,
                     duration: uploadResult.duration,
@@ -96,7 +98,7 @@ export function Composer({ onSendMessage, onScheduleMessage }: ComposerProps) {
             }
         }
 
-        onSendMessage(message, mediaUrl, mediaType, isInternal, mediaMeta)
+        onSendMessage(message, mediaUrl, mediaType as any, isInternal, mediaMeta)
 
         // Reset state
         setMessage("")
@@ -263,7 +265,7 @@ export function Composer({ onSendMessage, onScheduleMessage }: ComposerProps) {
                         setAttachment(null);
                         if (fileInputRef.current) fileInputRef.current.value = ""
                     }}
-                    onSend={() => handleSend(attachment)}
+                    onSend={() => handleSend(attachment.file)}
                 />
             </div>
         )
@@ -425,8 +427,8 @@ export function Composer({ onSendMessage, onScheduleMessage }: ComposerProps) {
                         </Popover>
 
                         <Button
-                            onClick={handleSend}
-                            disabled={(!message.trim() && !attachment) || false}
+                            onClick={() => handleSend()}
+                            disabled={(!message.trim() && !attachment)}
                             className={cn(
                                 "rounded-full px-6 transition-all duration-300 ml-auto", // ml-auto to push it to the right
                                 isInternal ? "bg-yellow-500 hover:bg-yellow-600 text-white" : "bg-red-600 hover:bg-red-700 text-white"
