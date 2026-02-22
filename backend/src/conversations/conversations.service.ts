@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SectorsService } from '../sectors/sectors.service';
 import { AppGateway } from '../gateway/app.gateway';
 import { BillingService } from '../billing/billing.service';
+import { SessionService } from '../performance/session.service';
 
 @Injectable()
 export class ConversationsService {
@@ -10,7 +11,8 @@ export class ConversationsService {
         private prisma: PrismaService,
         private sectorsService: SectorsService,
         private gateway: AppGateway,
-        private billing: BillingService
+        private billing: BillingService,
+        private sessionService: SessionService
     ) { }
 
     async create(workspaceId: string, data: any) {
@@ -51,6 +53,10 @@ export class ConversationsService {
 
         console.log('Emitindo new_conversation para workspace:', workspaceId);
         this.gateway.emitToWorkspace(workspaceId, 'new_conversation', conversation);
+
+        if (data.agentId) {
+            await this.sessionService.startSession(conversation.id, data.agentId);
+        }
 
         return conversation;
     }
@@ -125,17 +131,21 @@ export class ConversationsService {
     }
 
     async assign(workspaceId: string, id: string, agentId: string) {
-        return this.prisma.conversation.update({
+        const result = await this.prisma.conversation.update({
             where: { id },
             data: { agentId },
         });
+        await this.sessionService.startSession(id, agentId);
+        return result;
     }
 
     async resolve(workspaceId: string, id: string) {
-        return this.prisma.conversation.update({
+        const result = await this.prisma.conversation.update({
             where: { id },
             data: { status: 'RESOLVED' },
         });
+        await this.sessionService.endActiveSession(id, 'RESOLVED');
+        return result;
     }
 
     async reopen(workspaceId: string, id: string) {
@@ -174,6 +184,13 @@ export class ConversationsService {
             data: updateData,
             include: { sector: true }
         });
+
+        // Session tracking for transfer
+        if (data.agentId) {
+            await this.sessionService.startSession(id, data.agentId);
+        } else {
+            await this.sessionService.endActiveSession(id, 'TRANSFERRED');
+        }
 
         // 2. Record Transfer History
         await this.prisma.conversationTransfer.create({

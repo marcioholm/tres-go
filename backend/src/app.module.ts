@@ -30,6 +30,7 @@ import { BillingModule } from './billing/billing.module';
 import { BullModule } from '@nestjs/bullmq';
 import { SuperAdminModule } from './super-admin/super-admin.module';
 import { LegalModule } from './legal/legal.module';
+import { PerformanceModule } from './performance/performance.module';
 import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.middleware';
 
 @Module({

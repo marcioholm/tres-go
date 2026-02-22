@@ -32,6 +32,7 @@ interface Message {
     isPtt?: boolean
     duration?: number
     waveform?: number[]
+    senderName?: string
 }
 
 interface Sector {
@@ -143,13 +144,19 @@ export default function InboxPage() {
 
                     // Update contact info if provided in the socket payload
                     const contactUpdate = (data as any).contact
+
+                    // CRITICAL FIX: filter out null values from contactUpdate to avoid overriding valid data with null (causing crashes in rendering)
+                    const safeContactUpdate = contactUpdate ? Object.fromEntries(
+                        Object.entries(contactUpdate).filter(([_, v]) => v != null)
+                    ) : null;
+
                     const updatedConv = {
                         ...conv,
-                        ...(contactUpdate ? {
-                            name: contactUpdate.name || conv.name,
-                            contact: { ...conv.contact, ...contactUpdate }
+                        ...(safeContactUpdate ? {
+                            name: safeContactUpdate.name || conv.name,
+                            contact: { ...conv.contact, ...safeContactUpdate }
                         } : {}),
-                        unread: conv.id === activeChatId ? conv.unread : conv.unread + 1,
+                        unread: String(conv.id) === String(activeChatId) ? conv.unread : conv.unread + 1,
                     }
 
                     // Evitar duplicatas (guard against undefined messages array)
@@ -237,12 +244,25 @@ export default function InboxPage() {
     const handleSendMessage = async (text: string, mediaUrl?: string, mediaType?: 'image' | 'video' | 'audio' | 'document', isInternal?: boolean, mediaMeta?: any) => {
         if (activeChatId) {
             // Optimistic Update
+            // Get agent name from localStorage
+            let currentUserName = "Agente";
+            try {
+                const storedUser = localStorage.getItem('user');
+                if (storedUser) {
+                    const parsed = JSON.parse(storedUser);
+                    currentUserName = parsed.name || parsed.firstName || "Agente";
+                }
+            } catch (e) {
+                console.error("Failed to parse user for senderName", e);
+            }
+
             const tempId = Date.now().toString()
             const newMessage: Message = {
                 id: tempId,
                 text: text,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 fromMe: true,
+                senderName: currentUserName,
                 mediaUrl,
                 mediaType,
                 isInternal,
@@ -266,6 +286,7 @@ export default function InboxPage() {
                     conversationId: activeChatId,
                     type: mediaType || 'text',
                     fromMe: true,
+                    senderName: currentUserName, // Pass the sender name to the backend
                     isInternal: isInternal,
                     mediaUrl: mediaUrl,
                     mediaType: mediaType,
@@ -562,6 +583,11 @@ export default function InboxPage() {
 
                                 return (
                                     <div key={msg.id} className={`flex flex-col gap-1 ${msg.fromMe ? 'items-end' : 'items-start'}`}>
+                                        {msg.fromMe && (msg as any).senderName && (
+                                            <span className="text-[10px] text-slate-400 font-medium px-1 mb-0.5">
+                                                {(msg as any).senderName}
+                                            </span>
+                                        )}
                                         <div className={`p-3 rounded-2xl shadow-sm max-w-[75%] text-sm relative group overflow-hidden ${msg.isInternal
                                             ? 'bg-yellow-100 text-yellow-900 border border-yellow-200'
                                             : msg.fromMe

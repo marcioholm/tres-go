@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { BarChart3 } from "lucide-react"
 
 export default function SettingsPage({ params }: { params: { workspaceId: string } }) {
     const { t } = useLanguage()
@@ -62,6 +63,19 @@ export default function SettingsPage({ params }: { params: { workspaceId: string
                     </CardHeader>
                     <CardContent>
                         <Button variant="secondary" className="w-full">Gerenciar Setores</Button>
+                    </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => window.location.href = `/workspaces/${params.workspaceId}/settings/performance`}>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-indigo-600">
+                            <BarChart3 className="h-5 w-5" />
+                            Performance e Métricas
+                        </CardTitle>
+                        <CardDescription>Configure metas, regras de atribuição e KPIs da equipe.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button variant="secondary" className="w-full">Configurar Performance</Button>
                     </CardContent>
                 </Card>
 

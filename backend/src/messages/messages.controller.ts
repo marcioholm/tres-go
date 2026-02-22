@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Query, UseGuards, Req } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { JwtAuthGuard } from '../auth/jwt.strategy';
 import { SendMessageDto } from './dto/send-message.dto';
@@ -21,7 +21,9 @@ export class MessagesController {
     }
 
     @Post()
-    create(@Param('workspaceId') workspaceId: string, @Body() createMessageDto: SendMessageDto) {
-        return this.messagesService.create(workspaceId, createMessageDto);
+    create(@Param('workspaceId') workspaceId: string, @Body() createMessageDto: SendMessageDto, @Req() req: any) {
+        const senderName = req.user?.name || req.user?.firstName || "Agente";
+        const agentId = req.user?.id;
+        return this.messagesService.create(workspaceId, createMessageDto, senderName, agentId);
     }
 }

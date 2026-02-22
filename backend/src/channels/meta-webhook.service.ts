@@ -6,6 +6,7 @@ import { ContactsService } from '../contacts/contacts.service';
 import { ConversationsService } from '../conversations/conversations.service';
 import { MessagesService } from '../messages/messages.service';
 import { AppGateway } from '../gateway/app.gateway';
+import { SessionService } from '../performance/session.service';
 import { decrypt } from '../utils/crypto.util';
 
 @Injectable()
@@ -16,6 +17,7 @@ export class MetaWebhookService {
         private readonly conversationsService: ConversationsService,
         private readonly messagesService: MessagesService,
         private readonly gateway: AppGateway,
+        private readonly sessionService: SessionService,
     ) { }
 
     validateSignature(rawBody: Buffer, signature: string): boolean {
@@ -172,6 +174,8 @@ export class MetaWebhookService {
             contact.id,
         );
 
+        await this.sessionService.trackClientMessage(conversation.id);
+
         // Salvar mensagem
         const messageContent = text; // User requested normalization to string for simple text
 
@@ -263,6 +267,7 @@ export class MetaWebhookService {
                 conversationId: conversation.id,
                 externalId: mid,
                 fromAgent: true,
+                senderName: 'Celular',
                 type: 'TEXT',
                 content: text,
                 status: 'DELIVERED',
@@ -294,6 +299,8 @@ export class MetaWebhookService {
                 channel.id,
                 contact.id
             );
+
+            await this.sessionService.trackClientMessage(conversation.id);
 
             const message = await this.prisma.message.create({
                 data: {

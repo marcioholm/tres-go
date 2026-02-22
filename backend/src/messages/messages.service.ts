@@ -3,11 +3,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import axios from 'axios';
 import { decrypt } from '../utils/crypto.util';
+import { SessionService } from '../performance/session.service';
 
 @Injectable()
 export class MessagesService {
     private readonly logger = new Logger(MessagesService.name);
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private sessionService: SessionService
+    ) { }
 
     async findAll(workspaceId: string, conversationId: string, cursor?: string) {
         let messages = [];
@@ -56,7 +60,7 @@ export class MessagesService {
         return messages;
     }
 
-    async create(workspaceId: string, data: SendMessageDto) {
+    async create(workspaceId: string, data: SendMessageDto, senderName?: string, agentId?: string) {
         // Prepare content structure
         const contentPayload = data.text ? data.text : undefined;
         let dbContent: any = { body: contentPayload };
@@ -81,6 +85,7 @@ export class MessagesService {
                 type: data.type || (dbContent.mediaUrl ? (dbContent.isPtt ? 'AUDIO' : 'DOCUMENT') : 'TEXT'),
                 content: dbContent,
                 fromAgent: true,
+                senderName,
                 status: 'PENDING'
             }
         });
@@ -117,6 +122,15 @@ export class MessagesService {
                     data: { status: 'FAILED' }
                 });
             }
+        }
+
+        if (conversation && conversation.channel) {
+            // ... (keep existing code)
+        }
+
+        // Track session metrics
+        if (agentId) {
+            await this.sessionService.trackAgentMessage(data.conversationId, agentId);
         }
 
         return message;

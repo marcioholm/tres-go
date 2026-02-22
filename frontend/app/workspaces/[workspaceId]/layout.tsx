@@ -27,7 +27,9 @@ import {
     Megaphone,
     AlertTriangle,
     CreditCard,
-    ShieldCheck
+    ShieldCheck,
+    BarChart3,
+    Award
 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
@@ -111,6 +113,7 @@ export default function DashboardLayout({
         }
     }, [workspaceId, router]);
 
+    // List of all navigation routes
     const allRoutes = [
         { name: "Dashboard", id: "dashboard", href: `/workspaces/${workspaceId}`, icon: LayoutGrid },
         { name: "Inbox", id: "inbox", href: `/workspaces/${workspaceId}/inbox`, icon: MessageSquare },
@@ -118,6 +121,8 @@ export default function DashboardLayout({
         { name: "Kanban", id: "kanban", href: `/workspaces/${workspaceId}/kanban`, icon: SquareKanban },
         { name: "Integrations", id: "integrations", href: `/workspaces/${workspaceId}/integrations`, icon: Radio },
         { name: "Contacts", id: "contacts", href: `/workspaces/${workspaceId}/contacts`, icon: Users },
+        { name: "Relatórios", id: "reports", href: `/workspaces/${workspaceId}/reports`, icon: BarChart3 },
+        { name: "Performance", id: "performance", href: `/workspaces/${workspaceId}/reports/performance`, icon: Award },
         { name: "Settings", id: "settings", href: `/workspaces/${workspaceId}/settings`, icon: Settings },
     ]
 
@@ -140,7 +145,6 @@ export default function DashboardLayout({
         window.addEventListener('userUpdated', updateUserData)
         return () => window.removeEventListener('userUpdated', updateUserData)
     }, [])
-
     // Cálculo das rotas visíveis baseado no perfil
     const routes = allRoutes.filter(r => {
         // Se for Super Admin, esconde abas operacionais
