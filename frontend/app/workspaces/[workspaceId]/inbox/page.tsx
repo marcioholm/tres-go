@@ -100,6 +100,19 @@ export default function InboxPage() {
         if (workspaceId) fetchConversations()
     }, [workspaceId])
 
+
+
+    const [filter, setFilter] = useState<'all' | 'pending' | 'active'>('all')
+
+    const filteredConversations = (conversations || []).filter(c => {
+        if (!c) return false
+        if (selectedSector && c.sectorId !== selectedSector) return false
+        if (filter === 'all') return true
+        return c.status === filter
+    })
+
+    const [activeChatId, setActiveChatId] = useState<number | null>(null)
+
     // Socket.io Real-time Updates
     useEffect(() => {
         if (!workspaceId) return
@@ -131,17 +144,6 @@ export default function InboxPage() {
             socket.off('conversationTransferred')
         }
     }, [workspaceId, activeChatId])
-
-    const [filter, setFilter] = useState<'all' | 'pending' | 'active'>('all')
-
-    const filteredConversations = (conversations || []).filter(c => {
-        if (!c) return false
-        if (selectedSector && c.sectorId !== selectedSector) return false
-        if (filter === 'all') return true
-        return c.status === filter
-    })
-
-    const [activeChatId, setActiveChatId] = useState<number | null>(null)
 
     const activeChat = (conversations || []).find(c => c.id === activeChatId) || null
 
