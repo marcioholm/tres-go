@@ -215,6 +215,12 @@ export class ContactsService {
                     externalId: identifier,
                 }
             });
+        } else if (name && contact.name === identifier) {
+            // Se o contato já existe mas o nome era apenas o ID, atualizamos com o nome real
+            contact = await this.prisma.contact.update({
+                where: { id: contact.id },
+                data: { name }
+            });
         }
 
         return contact;

@@ -119,8 +119,23 @@ export class MetaWebhookService {
         const attachments = event.message?.attachments || [];
         const mid = event.message?.mid;
 
-        // Buscar ou criar contato (precisamos de um nome, usamos o ID como fallback se não houver perfil)
-        const contact = await this.contactsService.findOrCreate(channel.workspaceId, senderId);
+        // Buscar nome do perfil via API da Meta se for Instagram
+        let profileName = undefined;
+        try {
+            if (channel.type === 'INSTAGRAM' || channel.type === 'MESSENGER') {
+                const profileRes = await fetch(
+                    `https://graph.facebook.com/v19.0/${senderId}?fields=name&access_token=${channel.accessToken}`
+                );
+                const profileData = await profileRes.json();
+                profileName = profileData.name;
+                console.log(`[Meta Webhook] Fetched profile name for ${senderId}: ${profileName}`);
+            }
+        } catch (error) {
+            console.error('[Meta Webhook] Failed to fetch profile name:', error);
+        }
+
+        // Buscar ou criar contato (usando o perfil se encontrado)
+        const contact = await this.contactsService.findOrCreate(channel.workspaceId, senderId, profileName);
 
         // Buscar ou criar conversa
         const conversation = await this.conversationsService.findOrCreate(
@@ -130,7 +145,7 @@ export class MetaWebhookService {
         );
 
         // Salvar mensagem
-        await this.prisma.message.create({
+        const message = await this.prisma.message.create({
             data: {
                 conversationId: conversation.id,
                 externalId: mid,
@@ -147,6 +162,8 @@ export class MetaWebhookService {
                 createdAt: new Date(event.timestamp)
             }
         });
+
+        console.log('Mensagem salva:', message);
     }
 
     private async handleWhatsAppWebhook(channel: any, value: any) {

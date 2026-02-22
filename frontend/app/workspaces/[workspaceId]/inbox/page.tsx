@@ -16,6 +16,7 @@ import { AudioPttBubble } from "@/components/chat/AudioPttBubble"
 import { useParams } from "next/navigation"
 import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { socketService } from "@/lib/socket-service"
 
 interface Message {
     id: number
@@ -83,20 +84,53 @@ export default function InboxPage() {
     const [loadingConversations, setLoadingConversations] = useState(true)
 
     // Fetch Conversations
-    useEffect(() => {
-        const fetchConversations = async () => {
-            setLoadingConversations(true)
-            try {
-                const { data } = await api.get(`/workspaces/${workspaceId}/conversations`)
-                setConversations(data)
-            } catch (error) {
-                console.error("Failed to fetch conversations", error)
-            } finally {
-                setLoadingConversations(false)
-            }
+    const fetchConversations = async () => {
+        setLoadingConversations(true)
+        try {
+            const { data } = await api.get(`/workspaces/${workspaceId}/conversations`)
+            setConversations(data)
+        } catch (error) {
+            console.error("Failed to fetch conversations", error)
+        } finally {
+            setLoadingConversations(false)
         }
+    }
+
+    useEffect(() => {
         if (workspaceId) fetchConversations()
     }, [workspaceId])
+
+    // Socket.io Real-time Updates
+    useEffect(() => {
+        if (!workspaceId) return
+
+        const socket = socketService.getSocket(workspaceId)
+
+        socket.on('newMessage', (data: { conversationId: number, message: Message }) => {
+            console.log('[Socket] New message received:', data)
+            setConversations(prev => prev.map(conv => {
+                if (conv.id === data.conversationId) {
+                    // Evitar duplicatas
+                    const messageExists = conv.messages.some(m => m.id === data.message.id)
+                    return {
+                        ...conv,
+                        unread: conv.id === activeChatId ? conv.unread : conv.unread + 1,
+                        messages: messageExists ? conv.messages : [...conv.messages, data.message]
+                    }
+                }
+                return conv
+            }))
+        })
+
+        socket.on('conversationTransferred', () => {
+            fetchConversations() // Recarrega para atualizar status e setores
+        })
+
+        return () => {
+            socket.off('newMessage')
+            socket.off('conversationTransferred')
+        }
+    }, [workspaceId, activeChatId])
 
     const [filter, setFilter] = useState<'all' | 'pending' | 'active'>('all')
 

@@ -19,7 +19,7 @@ import { Column, Deal } from "@/types/kanban"
 import { api } from "@/lib/api"
 import { createPortal } from "react-dom"
 
-import { io } from "socket.io-client"
+import { socketService } from "@/lib/socket-service"
 
 interface KanbanBoardProps {
     workspaceId: string
@@ -60,16 +60,14 @@ export function KanbanBoard({ workspaceId }: KanbanBoardProps) {
     useEffect(() => {
         fetchBoard()
 
-        const socket = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001", {
-            query: { workspaceId }
-        });
+        const socket = socketService.getSocket(workspaceId)
 
         socket.on("board_updated", () => {
             fetchBoard();
         });
 
         return () => {
-            socket.disconnect();
+            socket.off("board_updated");
         }
     }, [workspaceId])
 
