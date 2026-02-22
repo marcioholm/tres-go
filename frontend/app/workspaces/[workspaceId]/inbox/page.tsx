@@ -231,6 +231,29 @@ export default function InboxPage() {
         }
     }
 
+    if (loadingConversations) {
+        return (
+            <div className="flex h-[calc(100vh-theme(spacing.4))] items-center justify-center bg-white border rounded-xl shadow-sm m-2">
+                <div className="flex flex-col items-center gap-2">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-red-600" />
+                    <p className="text-sm text-slate-500 font-medium">Carregando conversas...</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (!conversations || conversations.length === 0) {
+        return (
+            <div className="flex h-[calc(100vh-theme(spacing.4))] items-center justify-center bg-white border rounded-xl shadow-sm m-2 text-slate-500">
+                <div className="text-center">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4 text-slate-200" />
+                    <p className="font-medium text-lg text-slate-400">Nenhuma conversa encontrada</p>
+                    <p className="text-sm">Conecte um canal para começar a receber mensagens.</p>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="flex h-[calc(100vh-theme(spacing.4))] overflow-hidden bg-white border rounded-xl shadow-sm m-2">
             {/* Left Pane: Chat List */}
@@ -297,47 +320,48 @@ export default function InboxPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
-                    <div
-                        key={chat.id}
-                        onClick={() => setActiveChatId(chat.id)}
-                        className={`flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-100 transition-colors border-b border-slate-50 ${activeChatId === chat.id ? 'bg-red-50/50 border-l-4 border-l-red-600' : ''}`}
-                    >
-                        <div className="relative">
-                            <Avatar>
-                                <AvatarImage src={chat.avatar} />
-                                <AvatarFallback className="bg-red-100 text-red-600 font-medium">{(chat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            {/* SLA Indicator */}
-                            <div className={cn(
-                                "absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white",
-                                chat.sla === 'danger' ? "bg-red-500" :
-                                    chat.sla === 'warning' ? "bg-yellow-500" : "bg-emerald-500"
-                            )} title="Status SLA" />
-                            {chat.sector && (
-                                <div
-                                    className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white"
-                                    style={{ backgroundColor: chat.sector.color }}
-                                    title={`Setor: ${chat.sector.name}`}
-                                />
+                    {filteredConversations.map((chat) => (
+                        <div
+                            key={chat.id}
+                            onClick={() => setActiveChatId(chat.id)}
+                            className={`flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-100 transition-colors border-b border-slate-50 ${activeChatId === chat.id ? 'bg-red-50/50 border-l-4 border-l-red-600' : ''}`}
+                        >
+                            <div className="relative">
+                                <Avatar>
+                                    <AvatarImage src={chat.avatar} />
+                                    <AvatarFallback className="bg-red-100 text-red-600 font-medium">{(chat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                {/* SLA Indicator */}
+                                <div className={cn(
+                                    "absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white",
+                                    chat.sla === 'danger' ? "bg-red-500" :
+                                        chat.sla === 'warning' ? "bg-yellow-500" : "bg-emerald-500"
+                                )} title="Status SLA" />
+                                {chat.sector && (
+                                    <div
+                                        className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white"
+                                        style={{ backgroundColor: chat.sector.color }}
+                                        title={`Setor: ${chat.sector.name}`}
+                                    />
+                                )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <h3 className="font-semibold text-sm text-slate-900 truncate">{chat?.name || "Sem nome"}</h3>
+                                    <span className="text-xs text-slate-500">{chat?.messages?.[(chat?.messages?.length || 0) - 1]?.time || ""}</span>
+                                </div>
+                                <p className="text-xs text-slate-500 truncate">
+                                    {chat?.messages?.[(chat?.messages?.length || 0) - 1]?.isSystem ?
+                                        (chat?.messages?.[(chat?.messages?.length || 0) - 1]?.text === "system:transferred" ? "Conversa transferida" : "Você entrou na conversa")
+                                        : (chat?.messages?.[(chat?.messages?.length || 0) - 1]?.text || "Sem mensagens")}
+                                </p>
+                            </div>
+                            {chat.unread > 0 && (
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                                    {chat.unread}
+                                </span>
                             )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-baseline mb-1">
-                                <h3 className="font-semibold text-sm text-slate-900 truncate">{chat?.name || "Sem nome"}</h3>
-                                <span className="text-xs text-slate-500">{chat?.messages?.[(chat?.messages?.length || 0) - 1]?.time || ""}</span>
-                            </div>
-                            <p className="text-xs text-slate-500 truncate">
-                                {chat?.messages?.[(chat?.messages?.length || 0) - 1]?.isSystem ?
-                                    (chat?.messages?.[(chat?.messages?.length || 0) - 1]?.text === "system:transferred" ? "Conversa transferida" : "Você entrou na conversa")
-                                    : (chat?.messages?.[(chat?.messages?.length || 0) - 1]?.text || "Sem mensagens")}
-                            </p>
-                        </div>
-                        {chat.unread > 0 && (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
-                                {chat.unread}
-                            </span>
-                        )}
-                    </div>
                     ))}
                 </div>
             </div>
