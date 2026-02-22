@@ -180,11 +180,14 @@ export class MessagesService {
                 throw new Error('Access token not found');
             }
 
-            const pageId = channel.pageId || 'me';
-            const url = `https://graph.facebook.com/v21.0/${pageId}/messages`;
+            // Instagram Business API uses igAccountId (not pageId) and Instagram User Token (IGAAX)
+            const igAccountId = channel.igAccountId;
+            const pageId = channel.pageId;
+            const endpointId = igAccountId || pageId || 'me';
+            const url = `https://graph.facebook.com/v21.0/${endpointId}/messages`;
 
             console.log(`[Messages Service] URL: ${url}`);
-            console.log(`[Messages Service] Channel Info - PageID: ${channel.pageId}, IG: ${channel.igAccountId}`);
+            console.log(`[Messages Service] Channel Info - PageID: ${pageId}, IG: ${igAccountId}, Using: ${endpointId}`);
 
             const body: any = {
                 recipient: { id: recipientId },
