@@ -180,14 +180,17 @@ export class MessagesService {
                 throw new Error('Access token not found');
             }
 
-            // Instagram Business API uses igAccountId (not pageId) and Instagram User Token (IGAAX)
+            // Auto-detect token type and use correct endpoint:
+            // EAA (Page/System User token) → Messenger Platform → /{pageId}/messages
+            // IGAAX (Instagram User token) → Instagram Business API → /{igAccountId}/messages
+            const isPageToken = token.startsWith('EAA');
             const igAccountId = channel.igAccountId;
             const pageId = channel.pageId;
-            const endpointId = igAccountId || pageId || 'me';
+            const endpointId = isPageToken ? (pageId || igAccountId || 'me') : (igAccountId || pageId || 'me');
             const url = `https://graph.facebook.com/v21.0/${endpointId}/messages`;
 
+            console.log(`[Messages Service] Token type: ${isPageToken ? 'EAA/Page' : 'IGAAX/IG'}, Endpoint: ${endpointId}`);
             console.log(`[Messages Service] URL: ${url}`);
-            console.log(`[Messages Service] Channel Info - PageID: ${pageId}, IG: ${igAccountId}, Using: ${endpointId}`);
 
             const body: any = {
                 recipient: { id: recipientId },
