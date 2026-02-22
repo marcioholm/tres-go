@@ -163,7 +163,12 @@ export class MessagesService {
     }
 
     private async sendViaMetaMessenger(channel: any, to: string, dto: SendMessageDto, dbContent: any): Promise<string | undefined> {
-        const url = `https://graph.facebook.com/v19.0/me/messages?access_token=${channel.accessToken ? decrypt(channel.accessToken) : process.env.META_SYSTEM_USER_TOKEN}`;
+        const url = `https://graph.facebook.com/v19.0/me/messages`;
+        const token = channel.accessToken ? decrypt(channel.accessToken) : process.env.META_SYSTEM_USER_TOKEN;
+        const headers = {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
 
         const body: any = {
             recipient: { id: to },
@@ -185,7 +190,7 @@ export class MessagesService {
 
         try {
             this.logger.log(`[Meta Messenger/IG] Sending Message to ${to}...`);
-            const res = await axios.post(url, body);
+            const res = await axios.post(url, body, { headers });
             return res.data?.message_id;
         } catch (error) {
             this.logger.error(`Failed to send message via Meta API`, error.response?.data || error.message);

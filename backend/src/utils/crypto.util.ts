@@ -21,12 +21,18 @@ export function encrypt(text: string): string {
 }
 
 export function decrypt(text: string): string {
-    if (!text) return '';
-    const textParts = text.split(':');
-    const iv = Buffer.from(textParts.shift()!, 'hex');
-    const encryptedText = Buffer.from(textParts.join(':'), 'hex');
-    const decipher = crypto.createDecipheriv(ALGORITHM, getKeyBuffer(), iv);
-    let decrypted = decipher.update(encryptedText);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-    return decrypted.toString();
+    if (!text || !text.includes(':')) return text;
+
+    try {
+        const textParts = text.split(':');
+        const iv = Buffer.from(textParts.shift()!, 'hex');
+        const encryptedText = Buffer.from(textParts.join(':'), 'hex');
+        const decipher = crypto.createDecipheriv(ALGORITHM, getKeyBuffer(), iv);
+        let decrypted = decipher.update(encryptedText);
+        decrypted = Buffer.concat([decrypted, decipher.final()]);
+        return decrypted.toString();
+    } catch (error: any) {
+        console.error('[Crypto] Decryption failed, returning original text. Message:', error.message);
+        return text;
+    }
 }

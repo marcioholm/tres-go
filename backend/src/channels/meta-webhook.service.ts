@@ -127,7 +127,7 @@ export class MetaWebhookService {
         try {
             if (channel.type === 'INSTAGRAM' || channel.type === 'MESSENGER') {
                 const token = channel.accessToken ? decrypt(channel.accessToken) : process.env.META_SYSTEM_USER_TOKEN;
-                console.log(`[Meta Webhook] Fetching profile for ${senderId} using token...`);
+                console.log(`[Meta Webhook] Fetching profile for ${senderId} using token starting with ${token?.substring(0, 10)}...`);
 
                 const profileRes = await fetch(
                     `https://graph.facebook.com/v19.0/${senderId}?fields=name&access_token=${token}`
@@ -142,7 +142,7 @@ export class MetaWebhookService {
                 }
             }
         } catch (error) {
-            console.error('[Meta Webhook] CRITICAL: Failed to fetch profile name:', error);
+            console.error('[Meta Webhook] CRITICAL: Failed to fetch profile name:', error.message);
         }
 
         // Buscar ou criar contato (usando o perfil se encontrado)
