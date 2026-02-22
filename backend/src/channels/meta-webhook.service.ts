@@ -233,7 +233,7 @@ export class MetaWebhookService {
                 type: 'TEXT',
                 content: text,
                 status: 'DELIVERED',
-                createdAt: new Date(event.timestamp * 1000)
+                createdAt: new Date(event.timestamp) // timestamp já vem em ms para IG/Messenger
             }
         });
 
