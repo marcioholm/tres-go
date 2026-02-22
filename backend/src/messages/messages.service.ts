@@ -181,15 +181,14 @@ export class MessagesService {
             }
 
             const pageId = channel.pageId || 'me';
-            const url = `https://graph.facebook.com/v19.0/${pageId}/messages`;
+            const url = `https://graph.facebook.com/v21.0/${pageId}/messages`;
 
             console.log(`[Messages Service] URL: ${url}`);
             console.log(`[Messages Service] Channel Info - PageID: ${channel.pageId}, IG: ${channel.igAccountId}`);
 
             const body: any = {
                 recipient: { id: recipientId },
-                message: {},
-                messaging_type: 'RESPONSE'
+                message: {}
             };
 
             if (dto.type === 'IMAGE' || dto.type === 'VIDEO' || dto.type === 'DOCUMENT' || dto.type === 'AUDIO') {
@@ -203,6 +202,8 @@ export class MessagesService {
             } else {
                 body.message.text = dbContent.body || dto.text || '';
             }
+
+            console.log('[Messages Service] Request Body:', JSON.stringify(body));
 
             const response = await fetch(url, {
                 method: 'POST',
