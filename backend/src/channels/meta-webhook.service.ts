@@ -130,7 +130,12 @@ export class MetaWebhookService {
                 console.log(`[Meta Webhook] Fetching profile for ${senderId} using token starting with ${token?.substring(0, 10)}...`);
 
                 const profileRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${senderId}?fields=name&access_token=${token}`
+                    `https://graph.facebook.com/v19.0/${senderId}?fields=name`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
                 );
                 const profileData = await profileRes.json();
 
