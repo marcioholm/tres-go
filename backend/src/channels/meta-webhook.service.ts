@@ -126,8 +126,16 @@ export class MetaWebhookService {
         let profileName = undefined;
         try {
             if (channel.type === 'INSTAGRAM' || channel.type === 'MESSENGER') {
-                const token = channel.accessToken ? decrypt(channel.accessToken) : process.env.META_SYSTEM_USER_TOKEN;
-                console.log(`[Meta Webhook] Fetching profile for ${senderId} using token starting with ${token?.substring(0, 10)}...`);
+                const encryptedToken = channel.accessToken;
+                console.log(`[Meta Webhook] Decrypt Attempt. Channel: ${channel.name}, Type: ${channel.type}, Encrypted Start: ${encryptedToken?.substring(0, 15)}...`);
+
+                const token = encryptedToken ? decrypt(encryptedToken) : process.env.META_SYSTEM_USER_TOKEN;
+
+                if (!token) {
+                    console.error('[Meta Webhook] CRITICAL: Decrypted token is empty/null');
+                } else {
+                    console.log(`[Meta Webhook] Decryption SUCCESS. Token Start: ${token.substring(0, 10)}... (Length: ${token.length})`);
+                }
 
                 const profileRes = await fetch(
                     `https://graph.facebook.com/v19.0/${senderId}?fields=name`,
@@ -143,11 +151,11 @@ export class MetaWebhookService {
                     profileName = profileData.name;
                     console.log(`[Meta Webhook] SUCCESS: Fetched profile name for ${senderId}: ${profileName}`);
                 } else {
-                    console.warn(`[Meta Webhook] Profile data returned no name:`, profileData);
+                    console.warn(`[Meta Webhook] Profile data returned no name or error:`, JSON.stringify(profileData));
                 }
             }
         } catch (error) {
-            console.error('[Meta Webhook] CRITICAL: Failed to fetch profile name:', error.message);
+            console.error('[Meta Webhook] CRITICAL: Error in profile fetching flow:', error.message);
         }
 
         // Buscar ou criar contato (usando o perfil se encontrado)
