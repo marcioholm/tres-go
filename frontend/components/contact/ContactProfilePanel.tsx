@@ -26,6 +26,8 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
     const [updatingSource, setUpdatingSource] = useState(false)
     const [availableTags, setAvailableTags] = useState<TagType[]>([])
     const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false)
+    const [editingPhone, setEditingPhone] = useState(false)
+    const [phoneValue, setPhoneValue] = useState('')
 
     useEffect(() => {
         if (!contactId) return
@@ -44,6 +46,9 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                 // Fetch available tags
                 const tagsRes = await api.get(`/workspaces/${workspaceId}/tags`)
                 setAvailableTags(tagsRes.data)
+
+                // Initialize phone editing value
+                if (contactRes.data?.phone) setPhoneValue(contactRes.data.phone)
             } catch (error) {
                 console.error("Failed to fetch contact profile:", error)
                 setContact(null)
@@ -67,6 +72,17 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
             console.error("Failed to update source:", error)
         } finally {
             setUpdatingSource(false)
+        }
+    }
+
+    const handlePhoneSave = async () => {
+        if (!contact) return
+        try {
+            await api.patch(`/workspaces/${workspaceId}/contacts/${contact.id}`, { phone: phoneValue })
+            setContact({ ...contact, phone: phoneValue })
+            setEditingPhone(false)
+        } catch (error) {
+            console.error('Failed to update phone:', error)
         }
     }
 
@@ -147,10 +163,25 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                     <div className="space-y-4">
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Telefone</label>
-                            <div className="flex items-center gap-2 text-sm text-slate-700">
-                                <Phone className="h-4 w-4 text-slate-400" />
-                                <span>{contact?.phone || "N/A"}</span>
-                            </div>
+                            {editingPhone ? (
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        className="flex-1 border border-slate-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        value={phoneValue}
+                                        onChange={(e) => setPhoneValue(e.target.value)}
+                                        placeholder="+55 11 99999-9999"
+                                        autoFocus
+                                    />
+                                    <button onClick={handlePhoneSave} className="text-xs text-blue-600 font-medium hover:underline">Salvar</button>
+                                    <button onClick={() => setEditingPhone(false)} className="text-xs text-slate-400 hover:underline">✕</button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 text-sm text-slate-700">
+                                    <Phone className="h-4 w-4 text-slate-400" />
+                                    <span className="flex-1">{contact?.phone || "Adicionar telefone"}</span>
+                                    <button onClick={() => { setPhoneValue(contact?.phone || ''); setEditingPhone(true) }} className="text-xs text-slate-400 hover:text-blue-500">✏️</button>
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-1">

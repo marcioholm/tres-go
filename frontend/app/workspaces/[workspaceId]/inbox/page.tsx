@@ -172,6 +172,34 @@ export default function InboxPage() {
         }
     }, [workspaceId, activeChatId])
 
+
+    // Load full message history when a chat is opened
+    useEffect(() => {
+        if (!activeChatId || !workspaceId) return
+        const loadHistory = async () => {
+            try {
+                const { data } = await api.get(`/workspaces/${workspaceId}/conversations/${activeChatId}`)
+                setConversations(prev => prev.map(c => {
+                    if (c.id === activeChatId) {
+                        return {
+                            ...c,
+                            messages: (data.messages || []).map((m: any) => ({
+                                ...m,
+                                text: m.text || (typeof m.content === 'string' ? m.content : m.content?.text || m.content?.body || ''),
+                                time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                fromMe: m.fromAgent
+                            }))
+                        }
+                    }
+                    return c
+                }))
+            } catch (error) {
+                console.error('Failed to load message history:', error)
+            }
+        }
+        loadHistory()
+    }, [activeChatId, workspaceId])
+
     const activeChat = (conversations || []).find(c => c.id === activeChatId) || null
 
     const handleAcceptChat = () => {
