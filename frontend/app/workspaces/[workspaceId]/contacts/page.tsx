@@ -497,7 +497,7 @@ export default function ContactsPage() {
                                         <TableCell className="font-medium">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-8 w-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs">
-                                                    {contact.name.substring(0, 2).toUpperCase()}
+                                                    {(contact?.name || "?").substring(0, 2).toUpperCase()}
                                                 </div>
                                                 {contact.name}
                                             </div>

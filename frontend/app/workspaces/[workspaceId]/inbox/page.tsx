@@ -305,7 +305,7 @@ export default function InboxPage() {
                             <div className="relative">
                                 <Avatar>
                                     <AvatarImage src={chat.avatar} />
-                                    <AvatarFallback className="bg-red-100 text-red-600 font-medium">{chat.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                    <AvatarFallback className="bg-red-100 text-red-600 font-medium">{(chat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 {/* SLA Indicator */}
                                 <div className={cn(
@@ -351,7 +351,7 @@ export default function InboxPage() {
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-9 w-9">
                                     <AvatarImage src={activeChat.avatar} />
-                                    <AvatarFallback className="bg-red-100 text-red-600">{activeChat.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                    <AvatarFallback className="bg-red-100 text-red-600">{(activeChat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <div>
                                     <h2 className="font-bold text-sm text-slate-900">{activeChat.name}</h2>

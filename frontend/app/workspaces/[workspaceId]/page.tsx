@@ -356,7 +356,7 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                             {trafficData.length > 0 ? trafficData.map((s, i) => (
                                 <div key={i} className="flex items-center gap-3">
                                     <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 bg-slate-50 font-bold text-slate-600">
-                                        {s.name.substring(0, 1)}
+                                        {(s?.name || "?").substring(0, 1)}
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex justify-between text-xs mb-1">
@@ -421,7 +421,7 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                             {agentPerformance.slice(0, 4).map((a, i) => (
                                 <div key={i} className="flex items-center gap-3 hover:bg-slate-50 p-1.5 rounded-lg -mx-1.5 transition-colors">
                                     <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                                        {a.name.substring(0, 2).toUpperCase()}
+                                        {(a?.name || "?").substring(0, 2).toUpperCase()}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between text-xs mb-1">
@@ -474,7 +474,7 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                                             <td className="px-5 py-3.5 text-xs font-black text-slate-400">{i + 1}</td>
                                             <td className="px-3 py-3.5">
                                                 <div className="flex items-center gap-2.5">
-                                                    <div className={`w-8 h-8 rounded-full bg-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center`}>{a.name.substring(0, 2).toUpperCase()}</div>
+                                                    <div className={`w-8 h-8 rounded-full bg-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center`}>{(a?.name || "?").substring(0, 2).toUpperCase()}</div>
                                                     <div><p className="text-xs font-bold text-slate-700">{a.name}</p><p className="text-[10px] text-slate-500">Agente</p></div>
                                                 </div>
                                             </td>
@@ -505,7 +505,7 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                                 {pendingConversations.length > 0 ? pendingConversations.map((c, i) => (
                                     <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl border border-red-100 bg-red-50/50">
                                         <div className="w-8 h-8 rounded-full bg-white border border-red-100 text-red-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                                            {(c.contact.firstName || c.contact.name || "?").substring(0, 2).toUpperCase()}
+                                            {(c?.contact?.firstName || c?.contact?.name || "?").substring(0, 2).toUpperCase()}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-xs font-bold text-slate-800 truncate">{c.contact.firstName || c.contact.name}</p>
