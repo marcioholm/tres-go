@@ -100,7 +100,8 @@ export default function InboxPage() {
 
     const [filter, setFilter] = useState<'all' | 'pending' | 'active'>('all')
 
-    const filteredConversations = conversations.filter(c => {
+    const filteredConversations = (conversations || []).filter(c => {
+        if (!c) return false
         if (selectedSector && c.sectorId !== selectedSector) return false
         if (filter === 'all') return true
         return c.status === filter
@@ -108,7 +109,7 @@ export default function InboxPage() {
 
     const [activeChatId, setActiveChatId] = useState<number | null>(null)
 
-    const activeChat = conversations.find(c => c.id === activeChatId) || null
+    const activeChat = (conversations || []).find(c => c.id === activeChatId) || null
 
     const handleAcceptChat = () => {
         if (!activeChatId) return
@@ -296,48 +297,47 @@ export default function InboxPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
-                    {filteredConversations.map((chat) => (
-                        <div
-                            key={chat.id}
-                            onClick={() => setActiveChatId(chat.id)}
-                            className={`flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-100 transition-colors border-b border-slate-50 ${activeChatId === chat.id ? 'bg-red-50/50 border-l-4 border-l-red-600' : ''}`}
-                        >
-                            <div className="relative">
-                                <Avatar>
-                                    <AvatarImage src={chat.avatar} />
-                                    <AvatarFallback className="bg-red-100 text-red-600 font-medium">{(chat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                                {/* SLA Indicator */}
-                                <div className={cn(
-                                    "absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white",
-                                    chat.sla === 'danger' ? "bg-red-500" :
-                                        chat.sla === 'warning' ? "bg-yellow-500" : "bg-emerald-500"
-                                )} title="Status SLA" />
-                                {chat.sector && (
-                                    <div
-                                        className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white"
-                                        style={{ backgroundColor: chat.sector.color }}
-                                        title={`Setor: ${chat.sector.name}`}
-                                    />
-                                )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-baseline mb-1">
-                                    <h3 className="font-semibold text-sm text-slate-900 truncate">{chat.name}</h3>
-                                    <span className="text-xs text-slate-500">{chat.messages[chat.messages.length - 1]?.time}</span>
-                                </div>
-                                <p className="text-xs text-slate-500 truncate">
-                                    {chat.messages[chat.messages.length - 1]?.isSystem ?
-                                        (chat.messages[chat.messages.length - 1]?.text === "system:transferred" ? "Conversa transferida" : "Você entrou na conversa")
-                                        : chat.messages[chat.messages.length - 1]?.text}
-                                </p>
-                            </div>
-                            {chat.unread > 0 && (
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
-                                    {chat.unread}
-                                </span>
+                    <div
+                        key={chat.id}
+                        onClick={() => setActiveChatId(chat.id)}
+                        className={`flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-100 transition-colors border-b border-slate-50 ${activeChatId === chat.id ? 'bg-red-50/50 border-l-4 border-l-red-600' : ''}`}
+                    >
+                        <div className="relative">
+                            <Avatar>
+                                <AvatarImage src={chat.avatar} />
+                                <AvatarFallback className="bg-red-100 text-red-600 font-medium">{(chat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            {/* SLA Indicator */}
+                            <div className={cn(
+                                "absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white",
+                                chat.sla === 'danger' ? "bg-red-500" :
+                                    chat.sla === 'warning' ? "bg-yellow-500" : "bg-emerald-500"
+                            )} title="Status SLA" />
+                            {chat.sector && (
+                                <div
+                                    className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white"
+                                    style={{ backgroundColor: chat.sector.color }}
+                                    title={`Setor: ${chat.sector.name}`}
+                                />
                             )}
                         </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-baseline mb-1">
+                                <h3 className="font-semibold text-sm text-slate-900 truncate">{chat?.name || "Sem nome"}</h3>
+                                <span className="text-xs text-slate-500">{chat?.messages?.[(chat?.messages?.length || 0) - 1]?.time || ""}</span>
+                            </div>
+                            <p className="text-xs text-slate-500 truncate">
+                                {chat?.messages?.[(chat?.messages?.length || 0) - 1]?.isSystem ?
+                                    (chat?.messages?.[(chat?.messages?.length || 0) - 1]?.text === "system:transferred" ? "Conversa transferida" : "Você entrou na conversa")
+                                    : (chat?.messages?.[(chat?.messages?.length || 0) - 1]?.text || "Sem mensagens")}
+                            </p>
+                        </div>
+                        {chat.unread > 0 && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                                {chat.unread}
+                            </span>
+                        )}
+                    </div>
                     ))}
                 </div>
             </div>
@@ -354,7 +354,7 @@ export default function InboxPage() {
                                     <AvatarFallback className="bg-red-100 text-red-600">{(activeChat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <h2 className="font-bold text-sm text-slate-900">{activeChat.name}</h2>
+                                    <h2 className="font-bold text-sm text-slate-900">{activeChat?.name || "Sem nome"}</h2>
                                     <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
                                         <span className="block h-2 w-2 rounded-full bg-emerald-500" />
                                         Online
@@ -387,7 +387,7 @@ export default function InboxPage() {
                                 <span className="bg-white/60 px-3 py-1 rounded-full text-xs text-slate-500 font-medium shadow-sm">Hoje</span>
                             </div>
 
-                            {activeChat.messages.map((msg) => {
+                            {(activeChat?.messages || []).map((msg) => {
                                 if (msg.isSystem) {
                                     return (
                                         <div key={msg.id} className="flex justify-center my-4">
@@ -455,10 +455,10 @@ export default function InboxPage() {
                                                 </div>
                                             )}
 
-                                            <p className="whitespace-pre-wrap">{msg.text}</p>
+                                            <p className="whitespace-pre-wrap">{msg?.text || ""}</p>
 
-                                            <div className={`flex items-center gap-1 mt-1 ${msg.fromMe ? 'justify-end' : 'justify-end'}`}>
-                                                <span className={`text-[10px] ${msg.fromMe ? 'text-white/80' : 'text-slate-400'} ${msg.isInternal ? 'text-yellow-700' : ''} ${msg.isScheduled ? 'text-slate-400' : ''}`}>{msg.time}</span>
+                                            <div className={`flex items-center gap-1 mt-1 ${msg?.fromMe ? 'justify-end' : 'justify-end'}`}>
+                                                <span className={`text-[10px] ${msg?.fromMe ? 'text-white/80' : 'text-slate-400'} ${msg?.isInternal ? 'text-yellow-700' : ''} ${msg?.isScheduled ? 'text-slate-400' : ''}`}>{msg?.time || ""}</span>
                                                 {msg.fromMe && !msg.isInternal && !msg.isScheduled && <CheckCheck className="h-3 w-3 text-white/90" />}
                                                 {msg.isScheduled && <span className="text-[10px] text-slate-400">Agendado</span>}
                                             </div>

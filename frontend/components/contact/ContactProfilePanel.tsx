@@ -129,12 +129,12 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                 <div className="p-6 flex flex-col items-center border-b">
                     <Avatar className="h-24 w-24 mb-4">
                         <AvatarFallback className="text-2xl bg-slate-100 text-slate-600 font-medium">
-                            {contact.name?.substring(0, 2).toUpperCase() || "??"}
+                            {(contact?.name || "??").substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                     </Avatar>
-                    <h2 className="text-xl font-bold text-slate-800 text-center">{contact.name}</h2>
+                    <h2 className="text-xl font-bold text-slate-800 text-center">{contact?.name || "Sem nome"}</h2>
                     <p className="text-sm text-slate-500 font-medium tracking-wide mt-1">
-                        {contact.email || "Sem email"}
+                        {contact?.email || "Sem email"}
                     </p>
 
                     <div className="grid grid-cols-2 gap-3 w-full mt-6">
@@ -149,7 +149,7 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Telefone</label>
                             <div className="flex items-center gap-2 text-sm text-slate-700">
                                 <Phone className="h-4 w-4 text-slate-400" />
-                                <span>{contact.phone || "N/A"}</span>
+                                <span>{contact?.phone || "N/A"}</span>
                             </div>
                         </div>
 
@@ -179,7 +179,7 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                             <Tag className="h-3 w-3" /> Etiquetas
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            {contact.tags?.map(tag => (
+                            {(contact?.tags || []).map(tag => (
                                 <Badge
                                     key={tag.id}
                                     className="pl-2 pr-1 py-0.5 text-[10px] font-medium border-0 flex items-center gap-1"
@@ -208,7 +208,7 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                                         <CommandInput placeholder="Procurar tag..." className="h-8 text-xs" />
                                         <CommandEmpty>Nenhuma tag encontrada.</CommandEmpty>
                                         <CommandGroup>
-                                            {availableTags.filter(t => !contact.tags?.some(ct => ct.id === t.id)).map(tag => (
+                                            {(availableTags || []).filter(t => !(contact?.tags || []).some(ct => ct.id === t.id)).map(tag => (
                                                 <CommandItem
                                                     key={tag.id}
                                                     onSelect={() => handleAddTag(tag)}
@@ -231,10 +231,10 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                                 <TrendingUp className="h-3 w-3" />
                                 Histórico de Vendas
                             </label>
-                            <Badge variant="outline" className="text-[10px]">{sales.length}</Badge>
+                            <Badge variant="outline" className="text-[10px]">{(sales || []).length}</Badge>
                         </div>
 
-                        {sales.length === 0 ? (
+                        {(!sales || sales.length === 0) ? (
                             <div className="p-4 bg-slate-50 rounded-lg border border-dashed border-slate-200 text-center">
                                 <p className="text-xs text-slate-400">Nenhuma venda registrada</p>
                             </div>
