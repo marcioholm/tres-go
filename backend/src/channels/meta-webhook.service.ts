@@ -134,7 +134,7 @@ export class MetaWebhookService {
 
                 const fields = channel.type === 'INSTAGRAM' ? 'name,username,profile_pic' : 'name,profile_pic';
                 const profileRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${senderId}?fields=${fields}`,
+                    `https://graph.facebook.com/v21.0/${senderId}?fields=${fields}`,
                     {
                         headers: { 'Authorization': `Bearer ${token}` }
                     }
@@ -154,7 +154,7 @@ export class MetaWebhookService {
         // Buscar ou criar contato (usando o perfil se encontrado)
         console.log(`[Meta Webhook] Identifying contact for Workspace: ${channel.workspaceId}, Identifier: ${senderId}, Name: ${profileName || 'Unknown'}, Handle: ${handle || 'N/A'}`);
         const contact = await this.contactsService.findOrCreate(channel.workspaceId, senderId, profileName, avatarUrl, handle);
-        console.log(`[Meta Webhook] Contact identified: ${contact.id} (${contact.name}) @${contact.handle}`);
+        console.log(`[Meta Webhook] Contact identified: ${contact.id} (${contact.name}) @${(contact as any).handle}`);
 
         // Buscar ou criar conversa
         const conversation = await this.conversationsService.findOrCreate(

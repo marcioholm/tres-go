@@ -81,14 +81,24 @@ export class ConversationsService {
         });
 
         // Map messages and name for frontend compatibility
-        return conversations.map(conv => ({
-            ...conv,
-            name: conv.contact?.name || conv.contact?.phone || 'Sem nome',
-            messages: conv.messages.map(m => ({
-                ...m,
-                text: typeof m.content === 'string' ? m.content : (m.content as any)?.text || (m.content as any)?.body || ''
-            }))
-        }));
+        return conversations.map(conv => {
+            const c = conv.contact as any;
+            return {
+                ...conv,
+                // Show @handle for IG/FB, phone for WhatsApp, then name, then externalId
+                name: c?.handle
+                    ? `@${c.handle}`
+                    : c?.name
+                        ? c.name
+                        : c?.phone
+                            ? c.phone
+                            : c?.externalId || 'Sem nome',
+                messages: conv.messages.map(m => ({
+                    ...m,
+                    text: typeof m.content === 'string' ? m.content : (m.content as any)?.text || (m.content as any)?.body || ''
+                }))
+            };
+        });
     }
 
     async findOne(workspaceId: string, id: string) {
