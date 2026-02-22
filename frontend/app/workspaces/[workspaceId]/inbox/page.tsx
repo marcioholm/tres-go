@@ -141,12 +141,22 @@ export default function InboxPage() {
                         time: data.message.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     }
 
+                    // Update contact info if provided in the socket payload
+                    const contactUpdate = (data as any).contact
+                    const updatedConv = {
+                        ...conv,
+                        ...(contactUpdate ? {
+                            name: contactUpdate.name || conv.name,
+                            contact: { ...conv.contact, ...contactUpdate }
+                        } : {}),
+                        unread: conv.id === activeChatId ? conv.unread : conv.unread + 1,
+                    }
+
                     // Evitar duplicatas (guard against undefined messages array)
                     const currentMessages = Array.isArray(conv.messages) ? conv.messages : []
                     const messageExists = currentMessages.some(m => String(m.id) === String(mappedMessage.id))
                     return {
-                        ...conv,
-                        unread: conv.id === activeChatId ? conv.unread : conv.unread + 1,
+                        ...updatedConv,
                         messages: messageExists ? currentMessages : [...currentMessages, mappedMessage]
                     }
                 }
