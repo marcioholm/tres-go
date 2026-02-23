@@ -13,6 +13,7 @@ import { forwardRef } from '@nestjs/common';
 import { MetaIntegrationController } from './meta-integration.controller';
 import { MetaIntegrationService } from './meta-integration.service';
 import { GatewayModule } from '../gateway/gateway.module';
+import { PerformanceModule } from '../performance/performance.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { GatewayModule } from '../gateway/gateway.module';
     ConversationsModule,
     forwardRef(() => MessagesModule),
     GatewayModule,
+    PerformanceModule,
   ],
   providers: [
     ChannelsService,
@@ -36,4 +38,4 @@ import { GatewayModule } from '../gateway/gateway.module';
   ],
   exports: [ChannelsService, MetaOAuthService],
 })
-export class ChannelsModule {}
+export class ChannelsModule { }
