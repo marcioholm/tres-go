@@ -184,7 +184,7 @@ export default function InboxPage() {
                 const updatedConv: Conversation = {
                     ...conv,
                     // Priority channel identification
-                    channel: data.channelType ? { ...conv.channel, type: data.channelType } : conv.channel,
+                    channel: data.channelType ? { ...conv.channel, type: data.channelType as any, name: conv.channel?.name || 'Canal' } as any : conv.channel,
                     // If this is the open chat, don't increment unread — clear it instead
                     unread: isActiveConv ? 0 : (conv.unread || 0) + 1,
                     messages: messageExists ? currentMessages : [...currentMessages, mappedMessage],
@@ -217,7 +217,7 @@ export default function InboxPage() {
                 const mappedConv: Conversation = {
                     ...conversation,
                     contact: conversation.contact || { id: conversation.contactId, name: 'Novo Contato' },
-                    channel: conversation.channel || { type: 'WHATSAPP' },
+                    channel: conversation.channel || { type: 'WHATSAPP' as const, name: conversation.channel?.name || 'WhatsApp' },
                     messages: conversation.messages || [],
                     unread: (conversation.unread || 0) + 1
                 }
@@ -546,7 +546,9 @@ export default function InboxPage() {
                             switch (channelType) {
                                 case 'INSTAGRAM': return <Instagram className="h-3 w-3 text-pink-500" />
                                 case 'MESSENGER': return <Facebook className="h-3 w-3 text-blue-500" />
-                                default: return <MessageSquare className="h-3 w-3 text-emerald-500" />
+                                case 'WHATSAPP':
+                                case 'ZAPI': return <MessageSquare className="h-3 w-3 text-emerald-500" />
+                                default: return <MessageSquare className="h-3 w-3 text-slate-400" />
                             }
                         }
 
@@ -622,6 +624,7 @@ export default function InboxPage() {
                                         {activeChat?.channel?.type === 'INSTAGRAM' && <Instagram className="h-3 w-3 text-pink-500" />}
                                         {activeChat?.channel?.type === 'MESSENGER' && <Facebook className="h-3 w-3 text-blue-500" />}
                                         {(activeChat?.channel?.type === 'WHATSAPP' || activeChat?.channel?.type === 'ZAPI') && <MessageSquare className="h-3 w-3 text-emerald-500" />}
+                                        {(!activeChat?.channel?.type || (activeChat?.channel?.type !== 'INSTAGRAM' && activeChat?.channel?.type !== 'MESSENGER' && activeChat?.channel?.type !== 'WHATSAPP' && activeChat?.channel?.type !== 'ZAPI')) && <MessageSquare className="h-3 w-3 text-slate-400" />}
 
                                         {activeChat?.contact?.handle && (
                                             <span className="text-[10px] font-normal text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">

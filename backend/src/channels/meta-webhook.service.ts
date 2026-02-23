@@ -150,7 +150,7 @@ export class MetaWebhookService {
 
         const fields =
           channel.type === 'INSTAGRAM'
-            ? 'name,username,profile_pic'
+            ? 'name,username,profile_pic,profile_picture_url'
             : 'name,profile_pic';
         const profileRes = await fetch(
           `https://graph.facebook.com/v21.0/${senderId}?fields=${fields}`,
