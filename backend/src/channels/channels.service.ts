@@ -13,7 +13,7 @@ export class ChannelsService {
   constructor(
     private prisma: PrismaService,
     private billing: BillingService,
-  ) {}
+  ) { }
 
   async create(workspaceId: string, data: any) {
     // Basic validation logic can be added here
@@ -29,6 +29,7 @@ export class ChannelsService {
       data: {
         ...data,
         workspaceId,
+        type: data.type || 'WHATSAPP',
         accessToken: data.accessToken ? encrypt(data.accessToken) : undefined,
         config: data.config || {},
       },

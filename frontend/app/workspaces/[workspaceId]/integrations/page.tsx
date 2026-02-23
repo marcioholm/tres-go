@@ -66,6 +66,8 @@ export default function IntegrationsPage() {
             return
         }
 
+        setError(null)
+
         if (provider === 'whatsapp' && whatsappMode === 'zapi') {
             if (!instanceId || !instanceToken || !clientToken || !channelName) {
                 setError("Por favor, preencha todos os campos da Z-API e o nome do canal.")
@@ -143,7 +145,10 @@ export default function IntegrationsPage() {
                                 <div className="grid grid-cols-3 gap-4">
                                     <div
                                         className={`border-2 rounded-xl p-4 flex flex-col items-center gap-3 cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-md ${provider === 'whatsapp' ? 'border-green-500 bg-green-50/50' : 'border-slate-100 hover:border-slate-200'}`}
-                                        onClick={() => setProvider('whatsapp')}
+                                        onClick={() => {
+                                            setProvider('whatsapp')
+                                            setError(null)
+                                        }}
                                     >
                                         <div className="p-2 bg-green-100 rounded-full">
                                             <MessageCircle className="h-6 w-6 text-green-600" />
