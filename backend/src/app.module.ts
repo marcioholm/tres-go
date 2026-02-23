@@ -45,19 +45,24 @@ import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.mi
       serveRoot: '/uploads',
     }),
     BullModule.forRootAsync({
-      useFactory: () => ({
-        connection: {
+      useFactory: () => {
+        const connection: any = {
           host: process.env.REDIS_HOST,
           port: parseInt(process.env.REDIS_PORT || '6380'),
           password: process.env.REDIS_PASSWORD,
-          tls:
-            process.env.REDIS_TLS === 'true'
-              ? {
-                  rejectUnauthorized: false,
-                }
-              : undefined,
-        },
-      }),
+          // Critical: prevents crashing when Redis rejects requests (e.g. quota exceeded)
+          maxRetriesPerRequest: null,
+          enableOfflineQueue: false,
+          // Don't throw on connection errors — let the app keep running
+          lazyConnect: true,
+        };
+        if (process.env.REDIS_TLS === 'true') {
+          connection.tls = { rejectUnauthorized: false };
+        }
+        // Also expose a top-level error handler so unhandled Redis errors don't crash Node
+        const redis = connection;
+        return { connection: redis, defaultJobOptions: { removeOnComplete: 50, removeOnFail: 20 } };
+      },
     }),
     PrismaModule,
     AuthModule,

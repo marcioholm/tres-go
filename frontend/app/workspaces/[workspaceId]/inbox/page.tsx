@@ -140,49 +140,46 @@ export default function InboxPage() {
 
         socket.on('newMessage', (data: { conversationId: string, message: Message }) => {
             console.log('[Socket] New message received:', data)
-            setConversations(prev => prev.map(conv => {
-                if (String(conv.id) === String(data.conversationId)) {
-                    // Mapear mensagem para garantir que tenha o campo 'text' e 'fromMe'
-                    const mappedMessage: Message = {
-                        ...data.message,
-                        text: data.message.text || (data.message as any).content?.text || (data.message as any).content?.body || (data.message as any).content || '',
-                        fromMe: (data.message as any).fromAgent ?? data.message.fromMe ?? false,
-                        time: data.message.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    }
+            setConversations(prev => {
+                const idx = prev.findIndex(c => String(c.id) === String(data.conversationId))
+                if (idx === -1) return prev
 
-                    // Update contact info if provided in the socket payload
-                    const contactUpdate = (data as any).contact
+                const conv = prev[idx]
 
-                    // CRITICAL FIX: filter out null values from contactUpdate to avoid overriding valid data with null (causing crashes in rendering)
-                    const safeContactUpdate = contactUpdate ? Object.fromEntries(
-                        Object.entries(contactUpdate).filter(([_, v]) => v != null)
-                    ) : null;
+                const mappedMessage: Message = {
+                    ...data.message,
+                    text: data.message.text || (data.message as any).content?.text || (data.message as any).content?.body || (data.message as any).content || '',
+                    fromMe: (data.message as any).fromAgent ?? data.message.fromMe ?? false,
+                    time: data.message.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                }
 
-                    // Building the updated conversation explicitly to satisfy TypeScript
-                    const updatedConv: Conversation = {
-                        ...conv,
-                        unread: String(conv.id) === String(activeChatId) ? conv.unread : conv.unread + 1,
-                    };
+                const contactUpdate = (data as any).contact
+                const safeContactUpdate = contactUpdate ? Object.fromEntries(
+                    Object.entries(contactUpdate).filter(([_, v]) => v != null)
+                ) : null
 
-                    if (safeContactUpdate) {
-                        updatedConv.name = (safeContactUpdate.name as string) || conv.name;
-                        updatedConv.contact = {
+                const isActiveConv = String(conv.id) === String(activeChatId)
+                const currentMessages = Array.isArray(conv.messages) ? conv.messages : []
+                const messageExists = currentMessages.some(m => String(m.id) === String(mappedMessage.id))
+
+                const updatedConv: Conversation = {
+                    ...conv,
+                    // If this is the open chat, don't increment unread — clear it instead
+                    unread: isActiveConv ? 0 : (conv.unread || 0) + 1,
+                    messages: messageExists ? currentMessages : [...currentMessages, mappedMessage],
+                    ...(safeContactUpdate ? {
+                        name: (safeContactUpdate.name as string) || conv.name,
+                        contact: {
                             ...(conv.contact || { id: conv.contactId, name: conv.name || '', phone: '' }),
                             ...safeContactUpdate
-                        } as Contact;
-                    }
-
-                    // Evitar duplicatas (guard against undefined messages array)
-                    const currentMessages = Array.isArray(conv.messages) ? conv.messages : []
-                    const messageExists = currentMessages.some(m => String(m.id) === String(mappedMessage.id))
-
-                    return {
-                        ...updatedConv,
-                        messages: messageExists ? currentMessages : [...currentMessages, mappedMessage]
-                    } as Conversation
+                        } as Contact
+                    } : {})
                 }
-                return conv
-            }))
+
+                // Float updated conversation to the TOP of the list
+                const rest = prev.filter((_, i) => i !== idx)
+                return [updatedConv, ...rest]
+            })
         })
 
         socket.on('conversationTransferred', () => {

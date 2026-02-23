@@ -8,26 +8,14 @@ import { MessagesModule } from '../messages/messages.module';
 
 @Module({
   imports: [
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT) || 6379,
-        // Reduce keepalive / heartbeat to save Upstash free-tier requests
-        enableOfflineQueue: false,
-      },
-      defaultJobOptions: {
-        removeOnComplete: 50,    // keep only last 50 completed jobs
-        removeOnFail: 20,        // keep only last 20 failed jobs
-        attempts: 2,
-      },
-    }),
+    // NOTE: BullModule.forRoot is registered globally in app.module.ts
+    // Do NOT register it here again — it would override TLS/auth settings
     BullModule.registerQueue({
       name: 'scheduled-messages',
-      // Drastically reduce polling frequency – saves ~99% of Redis calls
-      // Default poller is every 1s; 30000ms = 2 polls/min instead of 60/min
       defaultJobOptions: {
-        removeOnComplete: 50,
-        removeOnFail: 20,
+        removeOnComplete: 50, // keep last 50 completed jobs
+        removeOnFail: 20,     // keep last 20 failed jobs
+        attempts: 2,
       },
     }),
     PrismaModule,
