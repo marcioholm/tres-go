@@ -265,7 +265,7 @@ export class BillingService {
       } else if (resource === 'agents') {
         current = await this.prisma.workspaceUser.count({ where: { workspaceId } });
       }
-      const defaultLimit = 10;
+      const defaultLimit = 3;
       return { allowed: current < defaultLimit, current, limit: defaultLimit, upgradeRequired: false };
     }
 
