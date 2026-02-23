@@ -69,44 +69,56 @@ export function MessageNotificationProvider({ children }: { children: React.Reac
         const socket = socketService.getSocket(workspaceId)
 
         const handleNewMessage = (data: any) => {
-            // Don't notify for messages sent by agents
-            if (data.direction === 'outbound' || data.fromMe) return
+            // Backend sends: { conversationId, message: { fromMe, fromAgent, content, ... }, contact }
+            const msg = data.message || data
+            const isFromMe = msg?.fromMe ?? msg?.fromAgent ?? false
+            if (isFromMe) return // Don't notify for outbound messages
+
+            const text = msg?.text
+                || msg?.content?.text
+                || msg?.content?.body
+                || (typeof msg?.content === 'string' ? msg.content : '')
+                || 'Nova mensagem'
+
+            const contactName = data?.contact?.name
+                || data?.contact?.firstName
+                || msg?.contactName
+                || 'Contato'
 
             const notification: Notification = {
                 id: `${Date.now()}-${Math.random()}`,
-                contactName: data.contact?.name || data.contactName || 'Contato',
-                message: data.content?.text || data.body || data.message || 'Nova mensagem',
-                conversationId: data.conversationId,
-                channelType: data.channelType || 'WHATSAPP',
+                contactName,
+                message: text,
+                conversationId: data.conversationId || msg?.conversationId,
+                channelType: data?.channelType || msg?.channelType || 'WHATSAPP',
                 timestamp: Date.now(),
             }
 
-            setNotifications(prev => [...prev.slice(-4), notification]) // Max 5 at once
-            setVisible(true)
+            setNotifications(prev => [...prev.slice(-4), notification])
             playNotificationSound()
 
-            // Browser notification (if permitted)
-            if (Notification.permission === 'granted') {
+            // Browser notification
+            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
                 const n = new Notification(`💬 ${notification.contactName}`, {
                     body: notification.message,
                     icon: '/favicon.ico',
                     tag: notification.id,
-                    silent: true, // We handle sound ourselves
+                    silent: true,
                 })
                 n.onclick = () => {
                     window.focus()
-                    router.push(`/workspaces/${workspaceId}/inbox?conversation=${notification.conversationId}`)
+                    if (notification.conversationId) {
+                        router.push(`/workspaces/${workspaceId}/inbox?conversation=${notification.conversationId}`)
+                    }
                     n.close()
                 }
             }
 
-            // Auto-dismiss after 6 seconds
             setTimeout(() => removeNotification(notification.id), 6000)
         }
 
-        socket.on('new_message', handleNewMessage)
-        socket.on('message', handleNewMessage)
-        socket.on('conversation:new_message', handleNewMessage)
+        // The backend emits 'newMessage' (camelCase) for all channels
+        socket.on('newMessage', handleNewMessage)
 
         // Request browser notification permission
         if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
@@ -114,9 +126,7 @@ export function MessageNotificationProvider({ children }: { children: React.Reac
         }
 
         return () => {
-            socket.off('new_message', handleNewMessage)
-            socket.off('message', handleNewMessage)
-            socket.off('conversation:new_message', handleNewMessage)
+            socket.off('newMessage', handleNewMessage)
         }
     }, [workspaceId, playNotificationSound, removeNotification, router])
 

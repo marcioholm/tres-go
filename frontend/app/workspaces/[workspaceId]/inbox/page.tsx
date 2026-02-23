@@ -1,7 +1,7 @@
 "use client"
 
 import { useLanguage } from "@/lib/language-context"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -130,6 +130,7 @@ export default function InboxPage() {
     })
 
     const [activeChatId, setActiveChatId] = useState<string | null>(null)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
 
     // Socket.io Real-time Updates
     useEffect(() => {
@@ -220,7 +221,11 @@ export default function InboxPage() {
                                 text: m.text || (typeof m.content === 'string' ? m.content : m.content?.text || m.content?.body || ''),
                                 time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                                 fromMe: m.fromAgent
-                            }))
+                            })).sort((a: any, b: any) => {
+                                const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
+                                const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
+                                return ta - tb
+                            })
                         }
                     }
                     return c
@@ -233,6 +238,13 @@ export default function InboxPage() {
     }, [activeChatId, workspaceId])
 
     const activeChat = (conversations || []).find(c => c.id === activeChatId) || null
+
+    // Auto-scroll to bottom when conversation opens or new message arrives
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+        }
+    }, [activeChatId, activeChat?.messages?.length])
 
     const handleAcceptChat = () => {
         if (!activeChatId) return
@@ -693,6 +705,8 @@ export default function InboxPage() {
                                 )
                             })}
                         </div>
+                        {/* Scroll anchor - always keeps to bottom of chat */}
+                        <div ref={messagesEndRef} className="h-0" />
 
                         {/* Input Area */}
                         {activeChat.status === 'pending' ? (
