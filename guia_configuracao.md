@@ -67,15 +67,40 @@ A falha no envio do Instagram ("Meta API Error #200") indica que o App está em 
 ---
 
 ## 3. Acesso Super Admin (Aumentar Limite de Canais)
-Para se tornar Super Admin e aumentar os limites do seu workspace:
-1. No SQL Editor da Supabase, execute (substitua pelo seu e-mail):
+Os acessos padrão de Super Admin configurados no sistema são:
+- **Email:** `admin@northway.com`
+- **Senha:** `admin`
+
+Caso este acesso não funcione (der "Internal Server Error" ou "Credenciais Inválidas"), é porque o usuário ainda não foi criado no banco de produção. 
+
+### SQL para Criar o Usuário Admin
+Execute este comando no SQL Editor da Supabase para criar o usuário e dar a ele o poder de Admin:
+
 ```sql
+-- 1. Criar o usuário (Senha 'admin' criptografada)
+INSERT INTO "User" ("id", "email", "password", "name", "createdAt", "updatedAt")
+VALUES (
+  gen_random_uuid()::text, 
+  'admin@northway.com', 
+  '$2b$10$7R7z4n0zV8G481/Lz0U7u.6U3x.yE8p8Q/m6u2L.7XG7t5O3z.6qy', -- Senha: admin
+  'Super Admin', 
+  NOW(), 
+  NOW()
+) ON CONFLICT ("email") DO UPDATE SET "name" = 'Super Admin';
+
+-- 2. Torná-lo Super Admin
 INSERT INTO "SuperAdmin" ("id", "userId")
-SELECT gen_random_uuid()::text, id FROM "User" WHERE email = 'SEU_EMAIL_AQUI'
+SELECT gen_random_uuid()::text, id FROM "User" WHERE email = 'admin@northway.com'
 ON CONFLICT ("userId") DO NOTHING;
 ```
-2. Após isso, acesse a URL: `https://seu-dominio.com/super-admin`
-3. Vá em **Workspaces** ou **Plans** e aumente o limite de canais.
+
+### Como aumentar o limite:
+1. Acesse a URL: `https://seu-dominio.com/super-admin` (ou `https://tres-go.vercel.app/super-admin`).
+2. Use o e-mail and senha acima.
+3. No menu lateral, vá em **Workspaces** ou **Plans** para gerenciar os limites de canais.
+
+> [!IMPORTANT]
+> **O erro "Internal Server Error" na tela de login continuará acontecendo até que você execute o SQL da Seção 1 deste guia.** O sistema tenta carregar permissões que dependem dessas tabelas novas.
 
 ---
 
