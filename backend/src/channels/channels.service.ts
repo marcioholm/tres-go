@@ -16,8 +16,6 @@ export class ChannelsService {
   ) { }
 
   async create(workspaceId: string, data: any) {
-    // Basic validation logic can be added here
-
     // Check billing limits
     const limitInfo = await this.billing.checkLimit(workspaceId, 'channels');
     if (!limitInfo.allowed) {
@@ -25,13 +23,28 @@ export class ChannelsService {
         `Limite de canais (${limitInfo.limit}) atingido para o seu plano.`,
       );
     }
+
     return this.prisma.channel.create({
       data: {
-        ...data,
         workspaceId,
-        type: data.type || 'WHATSAPP',
+        name: data.name,
+        type: (data.type || 'WHATSAPP') as any,
+        status: (data.status || 'ACTIVE') as any,
+        // Meta fields
+        pageId: data.pageId,
+        pageName: data.pageName,
+        pageAvatar: data.pageAvatar,
         accessToken: data.accessToken ? encrypt(data.accessToken) : undefined,
-        config: data.config || {},
+        igAccountId: data.igAccountId,
+        igUsername: data.igUsername,
+        // WhatsApp fields
+        phoneNumber: data.phoneNumber,
+        phoneNumberId: data.phoneNumberId,
+        wabaId: data.wabaId,
+        displayName: data.displayName,
+        webhookSecret: data.webhookSecret,
+        // Flexible config (Z-API, etc.)
+        config: data.config ?? {},
       },
     });
   }
