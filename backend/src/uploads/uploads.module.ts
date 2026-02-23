@@ -7,14 +7,16 @@ import { extname } from 'path';
 import { AudioConverterService } from './audio-converter.service';
 import { PrismaModule } from '../prisma/prisma.module';
 
-
 @Module({
   imports: [
     MulterModule.register({
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, cb) => {
-          const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
+          const randomName = Array(32)
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join('');
           return cb(null, `${randomName}${extname(file.originalname)}`);
         },
       }),
@@ -23,6 +25,6 @@ import { PrismaModule } from '../prisma/prisma.module';
   ],
   providers: [UploadsService, AudioConverterService],
   controllers: [UploadsController],
-  exports: [UploadsService, AudioConverterService]
+  exports: [UploadsService, AudioConverterService],
 })
-export class UploadsModule { }
+export class UploadsModule {}

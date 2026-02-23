@@ -6,9 +6,9 @@ import { ChannelsModule } from '../channels/channels.module';
 import { GatewayModule } from '../gateway/gateway.module';
 
 @Module({
-    imports: [PrismaModule, forwardRef(() => ChannelsModule), GatewayModule],
-    controllers: [MessagesController],
-    providers: [MessagesService],
-    exports: [MessagesService],
+  imports: [PrismaModule, forwardRef(() => ChannelsModule), GatewayModule],
+  controllers: [MessagesController],
+  providers: [MessagesService],
+  exports: [MessagesService],
 })
-export class MessagesModule { }
+export class MessagesModule {}

@@ -7,9 +7,9 @@ import { BillingModule } from '../billing/billing.module';
 // import { QueueModule } from '../queues/queue.module'; // Will be added later
 
 @Module({
-    imports: [PrismaModule, BillingModule],
-    controllers: [SectorsController],
-    providers: [SectorsService],
-    exports: [SectorsService],
+  imports: [PrismaModule, BillingModule],
+  controllers: [SectorsController],
+  providers: [SectorsService],
+  exports: [SectorsService],
 })
-export class SectorsModule { }
+export class SectorsModule {}

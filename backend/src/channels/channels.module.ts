@@ -15,16 +15,25 @@ import { MetaIntegrationService } from './meta-integration.service';
 import { GatewayModule } from '../gateway/gateway.module';
 
 @Module({
-    imports: [
-        PrismaModule,
-        BillingModule,
-        ContactsModule,
-        ConversationsModule,
-        forwardRef(() => MessagesModule),
-        GatewayModule
-    ],
-    providers: [ChannelsService, MetaOAuthService, MetaWebhookService, MetaIntegrationService],
-    controllers: [ChannelsController, MetaWebhookController, MetaIntegrationController],
-    exports: [ChannelsService, MetaOAuthService],
+  imports: [
+    PrismaModule,
+    BillingModule,
+    ContactsModule,
+    ConversationsModule,
+    forwardRef(() => MessagesModule),
+    GatewayModule,
+  ],
+  providers: [
+    ChannelsService,
+    MetaOAuthService,
+    MetaWebhookService,
+    MetaIntegrationService,
+  ],
+  controllers: [
+    ChannelsController,
+    MetaWebhookController,
+    MetaIntegrationController,
+  ],
+  exports: [ChannelsService, MetaOAuthService],
 })
-export class ChannelsModule { }
+export class ChannelsModule {}

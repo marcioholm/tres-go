@@ -4,14 +4,14 @@ import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-    imports: [
-        PrismaModule,
-        JwtModule.register({
-            secret: process.env.JWT_SECRET || 'secretKey',
-            signOptions: { expiresIn: '1d' },
-        }),
-    ],
-    providers: [AppGateway],
-    exports: [AppGateway],
+  imports: [
+    PrismaModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'secretKey',
+      signOptions: { expiresIn: '1d' },
+    }),
+  ],
+  providers: [AppGateway],
+  exports: [AppGateway],
 })
-export class GatewayModule { }
+export class GatewayModule {}

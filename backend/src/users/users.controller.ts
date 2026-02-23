@@ -5,10 +5,10 @@ import { JwtAuthGuard } from '../auth/jwt.strategy';
 @Controller('workspaces/:workspaceId/users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-    constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
-    @Get()
-    findAll(@Param('workspaceId') workspaceId: string) {
-        return this.usersService.findAll(workspaceId);
-    }
+  @Get()
+  findAll(@Param('workspaceId') workspaceId: string) {
+    return this.usersService.findAll(workspaceId);
+  }
 }

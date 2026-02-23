@@ -24,4 +24,4 @@ import { MessagesModule } from '../messages/messages.module';
   controllers: [ScheduledMessagesController],
   exports: [ScheduledMessagesService], // Export so Campaigns can use it
 })
-export class ScheduledMessagesModule { }
+export class ScheduledMessagesModule {}

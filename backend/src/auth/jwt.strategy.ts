@@ -5,17 +5,17 @@ import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-    constructor() {
-        super({
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-            ignoreExpiration: false,
-            secretOrKey: process.env.JWT_SECRET || 'secretKey',
-        });
-    }
+  constructor() {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: process.env.JWT_SECRET || 'secretKey',
+    });
+  }
 
-    async validate(payload: any) {
-        return { sub: payload.sub, id: payload.sub, email: payload.email };
-    }
+  async validate(payload: any) {
+    return { sub: payload.sub, id: payload.sub, email: payload.email };
+  }
 }
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') { }
+export class JwtAuthGuard extends AuthGuard('jwt') {}

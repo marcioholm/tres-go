@@ -1,4 +1,9 @@
-import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
+import {
+  Module,
+  MiddlewareConsumer,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { HealthController } from './health.controller';
 import { AppService } from './app.service';
@@ -45,11 +50,14 @@ import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.mi
           host: process.env.REDIS_HOST,
           port: parseInt(process.env.REDIS_PORT || '6380'),
           password: process.env.REDIS_PASSWORD,
-          tls: process.env.REDIS_TLS === 'true' ? {
-            rejectUnauthorized: false
-          } : undefined,
-        }
-      })
+          tls:
+            process.env.REDIS_TLS === 'true'
+              ? {
+                  rejectUnauthorized: false,
+                }
+              : undefined,
+        },
+      }),
     }),
     PrismaModule,
     AuthModule,

@@ -10,4 +10,4 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module';
   controllers: [KanbanController],
   providers: [KanbanService, KanbanGateway],
 })
-export class KanbanModule { }
+export class KanbanModule {}

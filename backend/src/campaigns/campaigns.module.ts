@@ -10,17 +10,17 @@ import { MessagesModule } from '../messages/messages.module';
 import { BillingModule } from '../billing/billing.module';
 
 @Module({
-    imports: [
-        PrismaModule,
-        ChannelsModule,
-        ScheduledMessagesModule,
-        MessagesModule,
-        BillingModule,
-        BullModule.registerQueue({
-            name: 'campaign-steps',
-        }),
-    ],
-    controllers: [CampaignsController],
-    providers: [CampaignsService, CampaignsProcessor],
+  imports: [
+    PrismaModule,
+    ChannelsModule,
+    ScheduledMessagesModule,
+    MessagesModule,
+    BillingModule,
+    BullModule.registerQueue({
+      name: 'campaign-steps',
+    }),
+  ],
+  controllers: [CampaignsController],
+  providers: [CampaignsService, CampaignsProcessor],
 })
-export class CampaignsModule { }
+export class CampaignsModule {}

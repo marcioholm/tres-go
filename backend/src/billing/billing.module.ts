@@ -6,9 +6,9 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { GatewayModule } from '../gateway/gateway.module';
 
 @Module({
-    imports: [PrismaModule, GatewayModule],
-    providers: [AsaasService, BillingService],
-    controllers: [BillingWebhookController],
-    exports: [BillingService, AsaasService],
+  imports: [PrismaModule, GatewayModule],
+  providers: [AsaasService, BillingService],
+  controllers: [BillingWebhookController],
+  exports: [BillingService, AsaasService],
 })
-export class BillingModule { }
+export class BillingModule {}

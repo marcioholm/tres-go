@@ -4,16 +4,16 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async findAll(workspaceId: string) {
     return this.prisma.user.findMany({
       where: {
         workspaces: {
           some: {
-            workspaceId
-          }
-        }
+            workspaceId,
+          },
+        },
       },
       select: {
         id: true,
@@ -22,21 +22,21 @@ export class UsersService {
         lastName: true,
         email: true,
         niche: true,
-      }
+      },
     });
   }
 
   async update(id: string, data: any) {
     return this.prisma.user.update({
       where: { id },
-      data
+      data,
     });
   }
 
   async findOne(email: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
-      include: { workspaces: true, superAdmin: true }
+      include: { workspaces: true, superAdmin: true },
     });
     return user;
   }
@@ -44,7 +44,7 @@ export class UsersService {
   async findOneById(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
-      include: { workspaces: true, superAdmin: true }
+      include: { workspaces: true, superAdmin: true },
     });
   }
 

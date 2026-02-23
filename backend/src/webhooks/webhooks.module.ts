@@ -6,8 +6,8 @@ import { ConversationsModule } from '../conversations/conversations.module';
 import { GatewayModule } from '../gateway/gateway.module';
 
 @Module({
-    imports: [PrismaModule, ConversationsModule, GatewayModule],
-    controllers: [WebhooksController],
-    providers: [WebhooksService],
+  imports: [PrismaModule, ConversationsModule, GatewayModule],
+  controllers: [WebhooksController],
+  providers: [WebhooksService],
 })
-export class WebhooksModule { }
+export class WebhooksModule {}

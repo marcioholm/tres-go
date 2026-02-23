@@ -7,9 +7,9 @@ import { GatewayModule } from '../gateway/gateway.module';
 import { BillingModule } from '../billing/billing.module';
 
 @Module({
-    imports: [PrismaModule, SectorsModule, GatewayModule, BillingModule],
-    controllers: [ConversationsController],
-    providers: [ConversationsService],
-    exports: [ConversationsService],
+  imports: [PrismaModule, SectorsModule, GatewayModule, BillingModule],
+  controllers: [ConversationsController],
+  providers: [ConversationsService],
+  exports: [ConversationsService],
 })
-export class ConversationsModule { }
+export class ConversationsModule {}

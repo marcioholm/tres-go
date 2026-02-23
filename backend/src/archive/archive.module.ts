@@ -3,7 +3,7 @@ import { ArchiveService } from './archive.service';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-    imports: [PrismaModule],
-    providers: [ArchiveService],
+  imports: [PrismaModule],
+  providers: [ArchiveService],
 })
-export class ArchiveModule { }
+export class ArchiveModule {}

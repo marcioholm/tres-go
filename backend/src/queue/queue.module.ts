@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { QueueService } from './queue.service';
-// import { MessageWorker } from './message.worker'; 
+// import { MessageWorker } from './message.worker';
 
 @Module({
-    providers: [QueueService],
-    exports: [QueueService],
+  providers: [QueueService],
+  exports: [QueueService],
 })
-export class QueueModule { }
+export class QueueModule {}

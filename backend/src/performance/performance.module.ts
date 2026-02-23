@@ -6,9 +6,9 @@ import { PerformanceController } from './performance.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [PerformanceController],
-    providers: [PerformanceConfigService, SessionService, MetricsService],
-    exports: [PerformanceConfigService, SessionService, MetricsService],
+  imports: [PrismaModule],
+  controllers: [PerformanceController],
+  providers: [PerformanceConfigService, SessionService, MetricsService],
+  exports: [PerformanceConfigService, SessionService, MetricsService],
 })
-export class PerformanceModule { }
+export class PerformanceModule {}

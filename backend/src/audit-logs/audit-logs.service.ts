@@ -27,16 +27,27 @@ export class AuditLogsService {
           actionType: data.actionType,
           entityType: data.entityType,
           entityId: data.entityId,
-          oldValue: data.oldValue ? (data.oldValue as Prisma.InputJsonValue) : null,
-          newValue: data.newValue ? (data.newValue as Prisma.InputJsonValue) : null,
+          oldValue: data.oldValue
+            ? (data.oldValue as Prisma.InputJsonValue)
+            : null,
+          newValue: data.newValue
+            ? (data.newValue as Prisma.InputJsonValue)
+            : null,
         },
       });
     } catch (error) {
-      this.logger.error(`Failed to log audit event: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to log audit event: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
-  async getLogsByEntity(workspaceId: string, entityType: string, entityId: string) {
+  async getLogsByEntity(
+    workspaceId: string,
+    entityType: string,
+    entityId: string,
+  ) {
     return this.prisma.auditLog.findMany({
       where: {
         workspaceId,
@@ -49,8 +60,8 @@ export class AuditLogsService {
             id: true,
             name: true,
             email: true,
-          }
-        }
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',

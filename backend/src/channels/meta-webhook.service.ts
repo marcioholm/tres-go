@@ -11,336 +11,400 @@ import { decrypt } from '../utils/crypto.util';
 
 @Injectable()
 export class MetaWebhookService {
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly contactsService: ContactsService,
-        private readonly conversationsService: ConversationsService,
-        private readonly messagesService: MessagesService,
-        private readonly gateway: AppGateway,
-        private readonly sessionService: SessionService,
-    ) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly contactsService: ContactsService,
+    private readonly conversationsService: ConversationsService,
+    private readonly messagesService: MessagesService,
+    private readonly gateway: AppGateway,
+    private readonly sessionService: SessionService,
+  ) {}
 
-    validateSignature(rawBody: Buffer, signature: string): boolean {
-        if (!signature) return false;
+  validateSignature(rawBody: Buffer, signature: string): boolean {
+    if (!signature) return false;
 
-        const expected = crypto
-            .createHmac('sha256', process.env.META_APP_SECRET || '')
-            .update(rawBody)
-            .digest('hex');
+    const expected = crypto
+      .createHmac('sha256', process.env.META_APP_SECRET || '')
+      .update(rawBody)
+      .digest('hex');
 
-        const actual = signature.startsWith('sha256=') ? signature.split('=')[1] : signature;
+    const actual = signature.startsWith('sha256=')
+      ? signature.split('=')[1]
+      : signature;
 
-        const isValid = crypto.timingSafeEqual(
-            Buffer.from(expected, 'hex'),
-            Buffer.from(actual, 'hex')
-        );
+    const isValid = crypto.timingSafeEqual(
+      Buffer.from(expected, 'hex'),
+      Buffer.from(actual, 'hex'),
+    );
 
-        if (!isValid) {
-            console.error('[Meta Webhook] Signature mismatch!', { expected, actual });
-        }
-
-        return isValid;
+    if (!isValid) {
+      console.error('[Meta Webhook] Signature mismatch!', { expected, actual });
     }
 
-    async processWebhook(body: any) {
-        try {
-            console.log('[Meta Webhook] Incoming body:', JSON.stringify(body));
-            const entries = body.entry || [];
+    return isValid;
+  }
 
-            for (const entry of entries) {
-                const entryId = entry.id;
+  async processWebhook(body: any) {
+    try {
+      console.log('[Meta Webhook] Incoming body:', JSON.stringify(body));
+      const entries = body.entry || [];
 
-                // Processar mensagens (Instagram DM + Messenger compartilham esse formato)
-                const messaging = entry.messaging || entry.changes?.[0]?.value?.messages || [];
+      for (const entry of entries) {
+        const entryId = entry.id;
 
-                for (const event of messaging) {
-                    // 1. Tentar encontrar o canal específico pelo recipient.id (mais preciso para distinguir IG de Messenger)
-                    const recipientId = event.recipient?.id;
-                    let channel = null;
+        // Processar mensagens (Instagram DM + Messenger compartilham esse formato)
+        const messaging =
+          entry.messaging || entry.changes?.[0]?.value?.messages || [];
 
-                    if (recipientId) {
-                        channel = await this.prisma.channel.findFirst({
-                            where: {
-                                OR: [
-                                    { pageId: recipientId, status: 'ACTIVE' },
-                                    { igAccountId: recipientId, status: 'ACTIVE' }
-                                ]
-                            }
-                        });
-                    }
+        for (const event of messaging) {
+          // 1. Tentar encontrar o canal específico pelo recipient.id (mais preciso para distinguir IG de Messenger)
+          const recipientId = event.recipient?.id;
+          let channel = null;
 
-                    // 2. Fallback para o entryId (ID da Página que disparou o webhook)
-                    if (!channel) {
-                        channel = await this.prisma.channel.findFirst({
-                            where: {
-                                OR: [
-                                    { pageId: entryId, status: 'ACTIVE' },
-                                    { igAccountId: entryId, status: 'ACTIVE' },
-                                ],
-                            },
-                        });
-                    }
-
-                    if (!channel) {
-                        console.log(`[Meta Webhook] No active channel found for entry: ${entryId}, recipient: ${recipientId}`);
-                        continue;
-                    }
-
-                    console.log(`[Meta Webhook] Processing event for channel: ${channel.name} (${channel.id})`);
-
-                    if (event.message) {
-                        if (event.message.is_echo) {
-                            // Message sent by the page itself (from phone/desktop IG)
-                            await this.handleEchoMessage(channel, event);
-                        } else {
-                            await this.handleIncomingMessage(channel, event);
-                        }
-                    } else if (event.read) {
-                        await this.handleMessageRead(channel, event);
-                    } else if (event.delivery) {
-                        await this.handleMessageDelivery(channel, event);
-                    }
-                }
-
-                // WhatsApp tem estrutura diferente
-                if (entry.changes) {
-                    for (const change of entry.changes) {
-                        console.log(`[Meta Webhook] Change field: ${change.field}`);
-                        if (change.field === 'messages') {
-                            // Localizar canal WhatsApp
-                            const channel = await this.prisma.channel.findFirst({
-                                where: { pageId: entryId, type: 'WHATSAPP', status: 'ACTIVE' }
-                            });
-                            if (channel) {
-                                await this.handleWhatsAppWebhook(channel, change.value);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (err) {
-            console.error('[Meta Webhook] processing error:', err);
-        }
-    }
-
-    private async handleIncomingMessage(channel: any, event: any) {
-        const senderId = event.sender.id;
-        const text = event.message?.text || '';
-        const attachments = event.message?.attachments || [];
-        const mid = event.message?.mid;
-
-        // Buscar nome do perfil via API da Meta se for Instagram
-        let profileName = undefined;
-        let avatarUrl = undefined;
-        let handle = undefined;
-
-        try {
-            if (channel.type === 'INSTAGRAM' || channel.type === 'MESSENGER') {
-                const encryptedToken = channel.accessToken;
-                const token = encryptedToken ? decrypt(encryptedToken) : process.env.META_SYSTEM_USER_TOKEN;
-
-                const fields = channel.type === 'INSTAGRAM' ? 'name,username,profile_pic' : 'name,profile_pic';
-                const profileRes = await fetch(
-                    `https://graph.facebook.com/v21.0/${senderId}?fields=${fields}`,
-                    {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    }
-                );
-                const profileData = await profileRes.json();
-                console.log('[Meta Webhook] Raw profile data:', JSON.stringify(profileData));
-
-                if (profileData.name) profileName = profileData.name;
-                // Try both profile_pic and profile_picture_url (varies by API version)
-                if (profileData.profile_pic || profileData.profile_picture_url) {
-                    avatarUrl = profileData.profile_pic || profileData.profile_picture_url;
-                }
-                if (profileData.username) handle = profileData.username;
-
-                console.log(`[Meta Webhook] Profile Fetch Result:`, { profileName, avatarUrl, handle });
-            }
-        } catch (error) {
-            console.error('[Meta Webhook] Error in profile fetching flow:', error.message);
-        }
-
-        // Buscar ou criar contato (usando o perfil se encontrado)
-        console.log(`[Meta Webhook] Identifying contact for Workspace: ${channel.workspaceId}, Identifier: ${senderId}, Name: ${profileName || 'Unknown'}, Handle: ${handle || 'N/A'}`);
-        const contact = await this.contactsService.findOrCreate(channel.workspaceId, senderId, profileName, avatarUrl, handle);
-        console.log(`[Meta Webhook] Contact identified: ${contact.id} (${contact.name}) @${(contact as any).handle}`);
-
-        // Buscar ou criar conversa
-        const conversation = await this.conversationsService.findOrCreate(
-            channel.workspaceId,
-            channel.id,
-            contact.id,
-        );
-
-        await this.sessionService.trackClientMessage(conversation.id);
-
-        // Salvar mensagem
-        const messageContent = text; // User requested normalization to string for simple text
-
-        const message = await this.prisma.message.create({
-            data: {
-                conversationId: conversation.id,
-                externalId: mid,
-                fromAgent: false,
-                type: attachments.length > 0 ? 'ATTACHMENT' : 'TEXT',
-                content: attachments.length > 0 ? {
-                    text: text,
-                    attachments: attachments.map((a: any) => ({
-                        type: a.type,
-                        url: a.payload?.url,
-                    })),
-                } : text,
-                status: 'SENT',
-                createdAt: new Date(event.timestamp)
-            }
-        });
-
-        // Emit socket event via Gateway
-        const socketMessage = {
-            ...message,
-            text: typeof message.content === 'string' ? message.content : (message.content as any)?.text || ''
-        };
-
-        this.gateway.emitToWorkspace(channel.workspaceId, 'newMessage', {
-            conversationId: conversation.id,
-            message: socketMessage,
-            contact: {
-                id: contact.id,
-                name: (contact as any).handle ? `@${(contact as any).handle}` : contact.name,
-                avatarUrl: (contact as any).avatarUrl || null,
-                handle: (contact as any).handle || null,
-            }
-        });
-
-        console.log('Mensagem salva e emitida:', message.id);
-    }
-
-    // Mensagem enviada a partir do celular/IG pela própria página: registrar como fromAgent
-    private async handleEchoMessage(channel: any, event: any) {
-        // On echo: sender = page, recipient = user
-        const recipientId = event.recipient?.id;
-        const text = event.message?.text || '';
-        const mid = event.message?.mid;
-
-        if (!recipientId) return;
-
-        console.log(`[Meta Webhook] Echo message detected (sent from phone/page). Recipient: ${recipientId}`);
-
-        // Try to fetch recipient profile too
-        let profileName: string | undefined;
-        let avatarUrl: string | undefined;
-        let handle: string | undefined;
-        try {
-            const encryptedToken = channel.accessToken;
-            const token = encryptedToken ? decrypt(encryptedToken) : process.env.META_SYSTEM_USER_TOKEN;
-            const fields = channel.type === 'INSTAGRAM' ? 'name,username,profile_pic' : 'name,profile_pic';
-            const profileRes = await fetch(
-                `https://graph.facebook.com/v21.0/${recipientId}?fields=${fields}`,
-                { headers: { 'Authorization': `Bearer ${token}` } }
-            );
-            const profileData = await profileRes.json();
-            console.log('[Meta Webhook] Echo recipient profile:', JSON.stringify(profileData));
-            if (profileData.name) profileName = profileData.name;
-            if (profileData.profile_pic || profileData.profile_picture_url) {
-                avatarUrl = profileData.profile_pic || profileData.profile_picture_url;
-            }
-            if (profileData.username) handle = profileData.username;
-        } catch (e) {
-            console.error('[Meta Webhook] Echo profile fetch error:', e.message);
-        }
-
-        // Find or create contact with fetched profile data
-        const contact = await this.contactsService.findOrCreate(channel.workspaceId, recipientId, profileName, avatarUrl, handle);
-
-        // Find or create conversation
-        const conversation = await this.conversationsService.findOrCreate(
-            channel.workspaceId,
-            channel.id,
-            contact.id,
-        );
-
-        // Save message as fromAgent = true (sent by the agent from phone)
-        const message = await this.prisma.message.create({
-            data: {
-                conversationId: conversation.id,
-                externalId: mid,
-                fromAgent: true,
-                senderName: 'Celular',
-                type: 'TEXT',
-                content: text,
-                status: 'DELIVERED',
-                createdAt: new Date(event.timestamp) // timestamp já vem em ms para IG/Messenger
-            }
-        });
-
-        // Emit socket event so the UI updates in real time
-        this.gateway.emitToWorkspace(channel.workspaceId, 'newMessage', {
-            conversationId: conversation.id,
-            message: { ...message, text }
-        });
-
-        console.log('[Meta Webhook] Echo message saved as fromAgent:', message.id);
-    }
-
-    private async handleWhatsAppWebhook(channel: any, value: any) {
-        const messages = value.messages || [];
-        const contacts = value.contacts || [];
-
-        for (const msg of messages) {
-            const phone = msg.from;
-            const waContact = contacts.find((c: any) => c.wa_id === phone);
-            const senderName = waContact?.profile?.name || phone;
-
-            const contact = await this.contactsService.findOrCreate(channel.workspaceId, phone, senderName);
-            const conversation = await this.conversationsService.findOrCreate(
-                channel.workspaceId,
-                channel.id,
-                contact.id
-            );
-
-            await this.sessionService.trackClientMessage(conversation.id);
-
-            const message = await this.prisma.message.create({
-                data: {
-                    conversationId: conversation.id,
-                    externalId: msg.id,
-                    fromAgent: false,
-                    type: (msg.type || 'TEXT').toUpperCase(),
-                    content: msg.text?.body || msg.caption || '',
-                    status: 'SENT',
-                    createdAt: new Date(parseInt(msg.timestamp) * 1000),
-                }
+          if (recipientId) {
+            channel = await this.prisma.channel.findFirst({
+              where: {
+                OR: [
+                  { pageId: recipientId, status: 'ACTIVE' },
+                  { igAccountId: recipientId, status: 'ACTIVE' },
+                ],
+              },
             });
+          }
 
-            this.gateway.emitToWorkspace(channel.workspaceId, 'newMessage', {
-                conversationId: conversation.id,
-                message: {
-                    ...message,
-                    text: typeof message.content === 'string' ? message.content : (message.content as any)?.text || ''
-                }
+          // 2. Fallback para o entryId (ID da Página que disparou o webhook)
+          if (!channel) {
+            channel = await this.prisma.channel.findFirst({
+              where: {
+                OR: [
+                  { pageId: entryId, status: 'ACTIVE' },
+                  { igAccountId: entryId, status: 'ACTIVE' },
+                ],
+              },
             });
+          }
+
+          if (!channel) {
+            console.log(
+              `[Meta Webhook] No active channel found for entry: ${entryId}, recipient: ${recipientId}`,
+            );
+            continue;
+          }
+
+          console.log(
+            `[Meta Webhook] Processing event for channel: ${channel.name} (${channel.id})`,
+          );
+
+          if (event.message) {
+            if (event.message.is_echo) {
+              // Message sent by the page itself (from phone/desktop IG)
+              await this.handleEchoMessage(channel, event);
+            } else {
+              await this.handleIncomingMessage(channel, event);
+            }
+          } else if (event.read) {
+            await this.handleMessageRead(channel, event);
+          } else if (event.delivery) {
+            await this.handleMessageDelivery(channel, event);
+          }
         }
+
+        // WhatsApp tem estrutura diferente
+        if (entry.changes) {
+          for (const change of entry.changes) {
+            console.log(`[Meta Webhook] Change field: ${change.field}`);
+            if (change.field === 'messages') {
+              // Localizar canal WhatsApp
+              const channel = await this.prisma.channel.findFirst({
+                where: { pageId: entryId, type: 'WHATSAPP', status: 'ACTIVE' },
+              });
+              if (channel) {
+                await this.handleWhatsAppWebhook(channel, change.value);
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[Meta Webhook] processing error:', err);
+    }
+  }
+
+  private async handleIncomingMessage(channel: any, event: any) {
+    const senderId = event.sender.id;
+    const text = event.message?.text || '';
+    const attachments = event.message?.attachments || [];
+    const mid = event.message?.mid;
+
+    // Buscar nome do perfil via API da Meta se for Instagram
+    let profileName = undefined;
+    let avatarUrl = undefined;
+    let handle = undefined;
+
+    try {
+      if (channel.type === 'INSTAGRAM' || channel.type === 'MESSENGER') {
+        const encryptedToken = channel.accessToken;
+        const token = encryptedToken
+          ? decrypt(encryptedToken)
+          : process.env.META_SYSTEM_USER_TOKEN;
+
+        const fields =
+          channel.type === 'INSTAGRAM'
+            ? 'name,username,profile_pic'
+            : 'name,profile_pic';
+        const profileRes = await fetch(
+          `https://graph.facebook.com/v21.0/${senderId}?fields=${fields}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        const profileData = await profileRes.json();
+        console.log(
+          '[Meta Webhook] Raw profile data:',
+          JSON.stringify(profileData),
+        );
+
+        if (profileData.name) profileName = profileData.name;
+        // Try both profile_pic and profile_picture_url (varies by API version)
+        if (profileData.profile_pic || profileData.profile_picture_url) {
+          avatarUrl =
+            profileData.profile_pic || profileData.profile_picture_url;
+        }
+        if (profileData.username) handle = profileData.username;
+
+        console.log(`[Meta Webhook] Profile Fetch Result:`, {
+          profileName,
+          avatarUrl,
+          handle,
+        });
+      }
+    } catch (error) {
+      console.error(
+        '[Meta Webhook] Error in profile fetching flow:',
+        error.message,
+      );
     }
 
-    private async handleMessageRead(channel: any, event: any) {
-        await this.prisma.message.updateMany({
-            where: {
-                conversation: { channelId: channel.id },
-                externalId: { in: event.read?.watermark ? [] : [event.read?.mid] },
-            },
-            data: { status: 'READ' },
-        });
+    // Buscar ou criar contato (usando o perfil se encontrado)
+    console.log(
+      `[Meta Webhook] Identifying contact for Workspace: ${channel.workspaceId}, Identifier: ${senderId}, Name: ${profileName || 'Unknown'}, Handle: ${handle || 'N/A'}`,
+    );
+    const contact = await this.contactsService.findOrCreate(
+      channel.workspaceId,
+      senderId,
+      profileName,
+      avatarUrl,
+      handle,
+    );
+    console.log(
+      `[Meta Webhook] Contact identified: ${contact.id} (${contact.name}) @${(contact as any).handle}`,
+    );
+
+    // Buscar ou criar conversa
+    const conversation = await this.conversationsService.findOrCreate(
+      channel.workspaceId,
+      channel.id,
+      contact.id,
+    );
+
+    await this.sessionService.trackClientMessage(conversation.id);
+
+    // Salvar mensagem
+    const messageContent = text; // User requested normalization to string for simple text
+
+    const message = await this.prisma.message.create({
+      data: {
+        conversationId: conversation.id,
+        externalId: mid,
+        fromAgent: false,
+        type: attachments.length > 0 ? 'ATTACHMENT' : 'TEXT',
+        content:
+          attachments.length > 0
+            ? {
+                text: text,
+                attachments: attachments.map((a: any) => ({
+                  type: a.type,
+                  url: a.payload?.url,
+                })),
+              }
+            : text,
+        status: 'SENT',
+        createdAt: new Date(event.timestamp),
+      },
+    });
+
+    // Emit socket event via Gateway
+    const socketMessage = {
+      ...message,
+      text:
+        typeof message.content === 'string'
+          ? message.content
+          : (message.content as any)?.text || '',
+    };
+
+    this.gateway.emitToWorkspace(channel.workspaceId, 'newMessage', {
+      conversationId: conversation.id,
+      message: socketMessage,
+      contact: {
+        id: contact.id,
+        name: (contact as any).handle
+          ? `@${(contact as any).handle}`
+          : contact.name,
+        avatarUrl: (contact as any).avatarUrl || null,
+        handle: (contact as any).handle || null,
+      },
+    });
+
+    console.log('Mensagem salva e emitida:', message.id);
+  }
+
+  // Mensagem enviada a partir do celular/IG pela própria página: registrar como fromAgent
+  private async handleEchoMessage(channel: any, event: any) {
+    // On echo: sender = page, recipient = user
+    const recipientId = event.recipient?.id;
+    const text = event.message?.text || '';
+    const mid = event.message?.mid;
+
+    if (!recipientId) return;
+
+    console.log(
+      `[Meta Webhook] Echo message detected (sent from phone/page). Recipient: ${recipientId}`,
+    );
+
+    // Try to fetch recipient profile too
+    let profileName: string | undefined;
+    let avatarUrl: string | undefined;
+    let handle: string | undefined;
+    try {
+      const encryptedToken = channel.accessToken;
+      const token = encryptedToken
+        ? decrypt(encryptedToken)
+        : process.env.META_SYSTEM_USER_TOKEN;
+      const fields =
+        channel.type === 'INSTAGRAM'
+          ? 'name,username,profile_pic'
+          : 'name,profile_pic';
+      const profileRes = await fetch(
+        `https://graph.facebook.com/v21.0/${recipientId}?fields=${fields}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const profileData = await profileRes.json();
+      console.log(
+        '[Meta Webhook] Echo recipient profile:',
+        JSON.stringify(profileData),
+      );
+      if (profileData.name) profileName = profileData.name;
+      if (profileData.profile_pic || profileData.profile_picture_url) {
+        avatarUrl = profileData.profile_pic || profileData.profile_picture_url;
+      }
+      if (profileData.username) handle = profileData.username;
+    } catch (e) {
+      console.error('[Meta Webhook] Echo profile fetch error:', e.message);
     }
 
-    private async handleMessageDelivery(channel: any, event: any) {
-        await this.prisma.message.updateMany({
-            where: {
-                conversation: { channelId: channel.id },
-                externalId: { in: event.delivery?.mids || [] },
-            },
-            data: { status: 'DELIVERED' },
-        });
+    // Find or create contact with fetched profile data
+    const contact = await this.contactsService.findOrCreate(
+      channel.workspaceId,
+      recipientId,
+      profileName,
+      avatarUrl,
+      handle,
+    );
+
+    // Find or create conversation
+    const conversation = await this.conversationsService.findOrCreate(
+      channel.workspaceId,
+      channel.id,
+      contact.id,
+    );
+
+    // Save message as fromAgent = true (sent by the agent from phone)
+    const message = await this.prisma.message.create({
+      data: {
+        conversationId: conversation.id,
+        externalId: mid,
+        fromAgent: true,
+        senderName: 'Celular',
+        type: 'TEXT',
+        content: text,
+        status: 'DELIVERED',
+        createdAt: new Date(event.timestamp), // timestamp já vem em ms para IG/Messenger
+      },
+    });
+
+    // Emit socket event so the UI updates in real time
+    this.gateway.emitToWorkspace(channel.workspaceId, 'newMessage', {
+      conversationId: conversation.id,
+      message: { ...message, text },
+    });
+
+    console.log('[Meta Webhook] Echo message saved as fromAgent:', message.id);
+  }
+
+  private async handleWhatsAppWebhook(channel: any, value: any) {
+    const messages = value.messages || [];
+    const contacts = value.contacts || [];
+
+    for (const msg of messages) {
+      const phone = msg.from;
+      const waContact = contacts.find((c: any) => c.wa_id === phone);
+      const senderName = waContact?.profile?.name || phone;
+
+      const contact = await this.contactsService.findOrCreate(
+        channel.workspaceId,
+        phone,
+        senderName,
+      );
+      const conversation = await this.conversationsService.findOrCreate(
+        channel.workspaceId,
+        channel.id,
+        contact.id,
+      );
+
+      await this.sessionService.trackClientMessage(conversation.id);
+
+      const message = await this.prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          externalId: msg.id,
+          fromAgent: false,
+          type: (msg.type || 'TEXT').toUpperCase(),
+          content: msg.text?.body || msg.caption || '',
+          status: 'SENT',
+          createdAt: new Date(parseInt(msg.timestamp) * 1000),
+        },
+      });
+
+      this.gateway.emitToWorkspace(channel.workspaceId, 'newMessage', {
+        conversationId: conversation.id,
+        message: {
+          ...message,
+          text:
+            typeof message.content === 'string'
+              ? message.content
+              : (message.content as any)?.text || '',
+        },
+      });
     }
+  }
+
+  private async handleMessageRead(channel: any, event: any) {
+    await this.prisma.message.updateMany({
+      where: {
+        conversation: { channelId: channel.id },
+        externalId: { in: event.read?.watermark ? [] : [event.read?.mid] },
+      },
+      data: { status: 'READ' },
+    });
+  }
+
+  private async handleMessageDelivery(channel: any, event: any) {
+    await this.prisma.message.updateMany({
+      where: {
+        conversation: { channelId: channel.id },
+        externalId: { in: event.delivery?.mids || [] },
+      },
+      data: { status: 'DELIVERED' },
+    });
+  }
 }

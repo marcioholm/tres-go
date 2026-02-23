@@ -9,7 +9,9 @@ describe('ScheduledMessagesController', () => {
       controllers: [ScheduledMessagesController],
     }).compile();
 
-    controller = module.get<ScheduledMessagesController>(ScheduledMessagesController);
+    controller = module.get<ScheduledMessagesController>(
+      ScheduledMessagesController,
+    );
   });
 
   it('should be defined', () => {

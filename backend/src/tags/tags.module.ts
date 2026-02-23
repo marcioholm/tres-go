@@ -4,8 +4,8 @@ import { TagsController } from './tags.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [TagsController],
-    providers: [TagsService],
+  imports: [PrismaModule],
+  controllers: [TagsController],
+  providers: [TagsService],
 })
-export class TagsModule { }
+export class TagsModule {}

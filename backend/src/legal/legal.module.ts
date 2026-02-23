@@ -4,9 +4,9 @@ import { LegalService } from './legal.service';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [LegalController],
-    providers: [LegalService],
-    exports: [LegalService],
+  imports: [PrismaModule],
+  controllers: [LegalController],
+  providers: [LegalService],
+  exports: [LegalService],
 })
-export class LegalModule { }
+export class LegalModule {}

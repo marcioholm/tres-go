@@ -6,9 +6,9 @@ import { SectorsModule } from '../sectors/sectors.module';
 import { BillingModule } from '../billing/billing.module';
 
 @Module({
-    imports: [PrismaModule, SectorsModule, BillingModule],
-    providers: [WorkspacesService],
-    controllers: [WorkspacesController],
-    exports: [WorkspacesService]
+  imports: [PrismaModule, SectorsModule, BillingModule],
+  providers: [WorkspacesService],
+  controllers: [WorkspacesController],
+  exports: [WorkspacesService],
 })
-export class WorkspacesModule { }
+export class WorkspacesModule {}
