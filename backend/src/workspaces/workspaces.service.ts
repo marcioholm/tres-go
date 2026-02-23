@@ -104,10 +104,11 @@ export class WorkspacesService {
   async createQuickReply(
     workspaceId: string,
     command: string,
+    title: string,
     content: string,
   ) {
     return this.prisma.quickReply.create({
-      data: { workspaceId, command, content },
+      data: { workspaceId, command, title, content },
     });
   }
 

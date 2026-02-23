@@ -87,6 +87,7 @@ export class WorkspacesController {
     return this.workspacesService.createQuickReply(
       workspaceId,
       data.command || data.shortcut,
+      data.title || 'Sem título',
       data.content,
     );
   }
