@@ -8,7 +8,7 @@ export class SuperAdminService {
   constructor(
     private prisma: PrismaService,
     private billing: BillingService,
-  ) {}
+  ) { }
 
   // ── Dashboard Metrics ────────────────────────────────────────────────────────
 
@@ -122,13 +122,139 @@ export class SuperAdminService {
 
   async getAllUsers(search?: string) {
     return this.prisma.user.findMany({
-      where: search ? { email: { contains: search, mode: 'insensitive' } } : {},
+      where: search
+        ? {
+          OR: [
+            { email: { contains: search, mode: 'insensitive' } },
+            { name: { contains: search, mode: 'insensitive' } },
+            { firstName: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+        : {},
       include: {
         superAdmin: true,
-        workspaces: { include: { workspace: true } },
+        workspaces: { include: { workspace: { include: { subscription: { include: { plan: true } } } } } },
       },
       take: 50,
+      orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async getUserDetails(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        superAdmin: true,
+        workspaces: {
+          include: {
+            workspace: {
+              include: {
+                subscription: { include: { plan: true } },
+                sectors: { select: { id: true } },
+                channels: { select: { id: true, type: true, status: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+    return user;
+  }
+
+  async updateUser(
+    userId: string,
+    data: {
+      name?: string;
+      workspacePlanSlug?: string;
+      overrides?: {
+        maxAgents?: number;
+        maxChannels?: number;
+        maxSectors?: number;
+        maxCampaigns?: number;
+        hasKanban?: boolean;
+        hasChatbot?: boolean;
+        hasAI?: boolean;
+        hasReports?: boolean;
+        hasAPI?: boolean;
+        hasScheduledMessages?: boolean;
+        hasCampaigns?: boolean;
+        hasSalesHistory?: boolean;
+      };
+    },
+    adminId: string,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { workspaces: { include: { workspace: { include: { subscription: { include: { plan: true } } } } } } },
+    });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+
+    const updates: any[] = [];
+
+    // 1. Update user name if provided
+    if (data.name) {
+      updates.push(
+        this.prisma.user.update({ where: { id: userId }, data: { name: data.name } }),
+      );
+    }
+
+    // 2. For each workspace the user owns (ADMIN role), update plan + overrides
+    const adminWorkspaces = user.workspaces.filter((wu) => wu.role === 'ADMIN');
+    for (const wu of adminWorkspaces) {
+      const workspace = wu.workspace;
+
+      // 2a. Change plan if requested
+      if (data.workspacePlanSlug && workspace.subscription) {
+        try {
+          await this.billing.changePlan(workspace.id, data.workspacePlanSlug);
+        } catch (e) {
+          console.error(`Failed to change plan for workspace ${workspace.id}:`, e.message);
+        }
+      }
+
+      // 2b. Apply limit overrides by updating the Plan record for this workspace's current plan
+      if (data.overrides && workspace.subscription?.planId) {
+        const overrideData: any = {};
+        const o = data.overrides;
+        if (o.maxAgents !== undefined) overrideData.maxAgents = o.maxAgents;
+        if (o.maxChannels !== undefined) overrideData.maxChannels = o.maxChannels;
+        if (o.maxSectors !== undefined) overrideData.maxSectors = o.maxSectors;
+        if (o.maxCampaigns !== undefined) overrideData.maxCampaigns = o.maxCampaigns;
+        if (o.hasKanban !== undefined) overrideData.hasKanban = o.hasKanban;
+        if (o.hasChatbot !== undefined) overrideData.hasChatbot = o.hasChatbot;
+        if (o.hasAI !== undefined) overrideData.hasAI = o.hasAI;
+        if (o.hasReports !== undefined) overrideData.hasReports = o.hasReports;
+        if (o.hasAPI !== undefined) overrideData.hasAPI = o.hasAPI;
+        if (o.hasScheduledMessages !== undefined) overrideData.hasScheduledMessages = o.hasScheduledMessages;
+        if (o.hasCampaigns !== undefined) overrideData.hasCampaigns = o.hasCampaigns;
+        if (o.hasSalesHistory !== undefined) overrideData.hasSalesHistory = o.hasSalesHistory;
+
+        if (Object.keys(overrideData).length > 0) {
+          updates.push(
+            this.prisma.plan.update({
+              where: { id: workspace.subscription.planId },
+              data: overrideData,
+            }),
+          );
+        }
+      }
+    }
+
+    await Promise.all(updates);
+
+    // Log audit
+    await this.prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        actionType: 'user.updated',
+        entityType: 'User',
+        entityId: userId,
+        metadata: { changes: data },
+      },
+    });
+
+    return this.getUserDetails(userId);
   }
 
   // ── Admins Management ────────────────────────────────────────────────────────

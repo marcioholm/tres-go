@@ -18,7 +18,7 @@ import { SuperAdminGuard } from '../common/guards/super-admin.guard';
 @Controller('super-admin')
 @UseGuards(JwtAuthGuard, SuperAdminGuard)
 export class SuperAdminController {
-  constructor(private superAdminService: SuperAdminService) {}
+  constructor(private superAdminService: SuperAdminService) { }
 
   @Get('dashboard')
   async getDashboard() {
@@ -88,6 +88,37 @@ export class SuperAdminController {
   @Get('users')
   async getAllUsers(@Query('search') search: string) {
     return this.superAdminService.getAllUsers(search);
+  }
+
+  @Get('users/:userId')
+  async getUserDetails(@Param('userId') userId: string) {
+    return this.superAdminService.getUserDetails(userId);
+  }
+
+  @Put('users/:userId')
+  async updateUser(
+    @Param('userId') userId: string,
+    @Body() data: {
+      name?: string;
+      workspacePlanSlug?: string;
+      overrides?: {
+        maxAgents?: number;
+        maxChannels?: number;
+        maxSectors?: number;
+        maxCampaigns?: number;
+        hasKanban?: boolean;
+        hasChatbot?: boolean;
+        hasAI?: boolean;
+        hasReports?: boolean;
+        hasAPI?: boolean;
+        hasScheduledMessages?: boolean;
+        hasCampaigns?: boolean;
+        hasSalesHistory?: boolean;
+      };
+    },
+    @Request() req: any,
+  ) {
+    return this.superAdminService.updateUser(userId, data, req.user.sub);
   }
 
   @Get('health')
