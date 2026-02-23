@@ -101,6 +101,8 @@ export class MessagesService {
       },
     });
 
+    this.logger.log(`Mensagem salva no DB: ${message.id} (Status: ${message.status})`);
+
     // 2. Emit to Gateway (TODO)
     // 3. Send to Channel (WA/Insta) via ChannelsService (Mocking execution)
 
@@ -109,6 +111,8 @@ export class MessagesService {
       where: { id: data.conversationId },
       include: { contact: true, channel: true },
     });
+
+    this.logger.log(`Enviando mensagem para conversa ${data.conversationId}. Canal habilitado: ${!!conversation?.channel}`);
 
     if (conversation && conversation.channel) {
       try {
@@ -123,6 +127,9 @@ export class MessagesService {
         ) {
           channelProvider = 'ZAPI';
         }
+
+        this.logger.log(`[MessagesService] Context: ${channelProvider}, Channel ID: ${conversation.channel.id}, Type: ${conversation.channel.type}`);
+        this.logger.log(`[MessagesService] Contact Info: Name: ${conversation.contact.firstName}, Phone: ${conversation.contact.phone}, ExtID: ${conversation.contact.externalId}`);
 
         if (channelProvider === 'WHATSAPP') {
           // Official Meta WhatsApp

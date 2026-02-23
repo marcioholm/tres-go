@@ -75,13 +75,19 @@ export default function ChannelsPage() {
         if (!confirm('Tem certeza que deseja desconectar este canal?')) return;
         try {
             const token = localStorage.getItem('token');
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/workspaces/${workspaceId}/channels/${id}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/workspaces/${workspaceId}/channels/${id}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             });
-            fetchChannels();
+            if (res.ok) {
+                toast.success('Canal removido com sucesso!');
+                fetchChannels();
+            } else {
+                toast.error('Falha ao remover canal');
+            }
         } catch (err) {
             console.error('Error deleting channel:', err);
+            toast.error('Erro ao conectar com o servidor');
         }
     };
 

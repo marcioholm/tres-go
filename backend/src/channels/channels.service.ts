@@ -56,6 +56,26 @@ export class ChannelsService {
   }
 
   async remove(id: string, workspaceId: string) {
+    // 1. Delete dependent data that might block channel deletion
+    await this.prisma.scheduledMessage.deleteMany({ where: { channelId: id } });
+    
+    // 2. Clear messages for all conversations of this channel
+    const conversations = await this.prisma.conversation.findMany({
+      where: { channelId: id },
+      select: { id: true }
+    });
+    const conversationIds = conversations.map(c => c.id);
+    
+    await this.prisma.message.deleteMany({ where: { conversationId: { in: conversationIds } } });
+    await this.prisma.archivedMessage.deleteMany({ where: { conversationId: { in: conversationIds } } });
+    await this.prisma.conversationTransfer.deleteMany({ where: { conversationId: { in: conversationIds } } });
+    await this.prisma.conversationSession.deleteMany({ where: { conversationId: { in: conversationIds } } });
+    await this.prisma.conversationConversion.deleteMany({ where: { conversationId: { in: conversationIds } } });
+    
+    // 3. Delete conversations
+    await this.prisma.conversation.deleteMany({ where: { channelId: id } });
+
+    // 4. Finally delete the channel
     return this.prisma.channel.delete({
       where: { id, workspaceId },
     });

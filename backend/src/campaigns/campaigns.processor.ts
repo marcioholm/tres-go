@@ -3,7 +3,11 @@ import { Job } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { MessagesService } from '../messages/messages.service';
 
-@Processor('campaign-steps')
+@Processor('campaign-steps', {
+  stalledInterval: 300_000,
+  lockDuration: 30_000,
+  concurrency: 2,
+})
 export class CampaignsProcessor extends WorkerHost {
   constructor(
     private readonly prisma: PrismaService,
