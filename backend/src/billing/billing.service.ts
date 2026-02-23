@@ -25,7 +25,7 @@ export class BillingService {
           priceYearly: 890,
           trialDays: 7,
           maxAgents: 3,
-          maxChannels: 2,
+          maxChannels: 10,
           maxConversationsPerMonth: 1000,
           maxSectors: 3,
           maxCampaigns: 5,
@@ -265,7 +265,7 @@ export class BillingService {
       } else if (resource === 'agents') {
         current = await this.prisma.workspaceUser.count({ where: { workspaceId } });
       }
-      const defaultLimit = 3;
+      const defaultLimit = 10;
       return { allowed: current < defaultLimit, current, limit: defaultLimit, upgradeRequired: false };
     }
 

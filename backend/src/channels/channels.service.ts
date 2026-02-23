@@ -19,7 +19,7 @@ export class ChannelsService {
     // Check billing limits
     const limitInfo = await this.billing.checkLimit(workspaceId, 'channels');
     if (!limitInfo.allowed) {
-      throw new Error(
+      throw new BadRequestException(
         `Limite de canais (${limitInfo.limit}) atingido para o seu plano.`,
       );
     }
