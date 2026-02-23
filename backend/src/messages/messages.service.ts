@@ -11,7 +11,7 @@ export class MessagesService {
   constructor(
     private prisma: PrismaService,
     private sessionService: SessionService,
-  ) {}
+  ) { }
 
   async findAll(workspaceId: string, conversationId: string, cursor?: string) {
     let messages = [];
@@ -113,10 +113,21 @@ export class MessagesService {
     if (conversation && conversation.channel) {
       try {
         // If Channel config is 'ZAPI' vs 'META_CLOUD'
-        const channelProvider = conversation.channel.type || 'META_CLOUD';
+        let channelProvider: string = conversation.channel.type;
+        const config = (conversation.channel.config as any) || {};
+        if (config.instanceId) {
+          channelProvider = 'ZAPI';
+        }
 
         if (channelProvider === 'WHATSAPP') {
           await this.sendViaWhatsappOfficial(
+            conversation.channel,
+            conversation.contact.phone || '',
+            data,
+            dbContent,
+          );
+        } else if (channelProvider === 'ZAPI') {
+          await this.sendViaZapi(
             conversation.channel,
             conversation.contact.phone || '',
             data,

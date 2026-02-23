@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConversationsService } from '../conversations/conversations.service';
+import { ContactsService } from '../contacts/contacts.service';
+import { SessionService } from '../performance/session.service';
 import { AppGateway } from '../gateway/app.gateway';
 
 @Injectable()
@@ -8,8 +10,10 @@ export class WebhooksService {
   constructor(
     private prisma: PrismaService,
     private conversationsService: ConversationsService,
+    private contactsService: ContactsService,
+    private sessionService: SessionService,
     private gateway: AppGateway,
-  ) {}
+  ) { }
 
   verifyWhatsapp(mode: string, token: string): boolean {
     // Simplified check. Real world: fetch config from DB.
@@ -137,26 +141,20 @@ export class WebhooksService {
     // 2. Extract Data
     const senderPhone = body.phone;
     const senderName = body.senderName || senderPhone;
+    const avatarUrl = body.photo;
     const messageBody =
       body.text?.message || body.message || 'Media/Unsupported Type';
     const externalId = body.zaapId || body.messageId;
 
     if (!senderPhone || !messageBody) return;
 
-    // 3. Find or Create Contact
-    let dbContact = await this.prisma.contact.findFirst({
-      where: { workspaceId, phone: senderPhone },
-    });
-
-    if (!dbContact) {
-      dbContact = await this.prisma.contact.create({
-        data: {
-          workspaceId,
-          name: senderName,
-          phone: senderPhone,
-        },
-      });
-    }
+    // 3. Find or Create Contact via ContactsService to handle avatar and names
+    const dbContact = await this.contactsService.findOrCreate(
+      workspaceId,
+      senderPhone,
+      senderName,
+      avatarUrl,
+    );
 
     // 4. Find/Create Conversation
     let conversation = await this.prisma.conversation.findFirst({
@@ -165,6 +163,7 @@ export class WebhooksService {
         contactId: dbContact.id,
         status: 'OPEN',
       },
+      include: { contact: true, sector: true },
     });
 
     if (!conversation) {
@@ -175,6 +174,9 @@ export class WebhooksService {
         contactPhone: senderPhone,
       });
     }
+
+    // Session tracking
+    await this.sessionService.trackClientMessage(conversation.id);
 
     // 5. Create Message
     const newMessage = await this.prisma.message.create({

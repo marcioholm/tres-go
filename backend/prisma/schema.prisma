@@ -91,6 +91,7 @@ enum ChannelType {
   INSTAGRAM
   MESSENGER
   WHATSAPP
+  ZAPI
 }
 
 enum ChannelStatus {

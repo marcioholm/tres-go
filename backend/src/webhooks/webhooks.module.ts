@@ -3,11 +3,19 @@ import { WebhooksService } from './webhooks.service';
 import { WebhooksController } from './webhooks.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ConversationsModule } from '../conversations/conversations.module';
+import { ContactsModule } from '../contacts/contacts.module';
+import { PerformanceModule } from '../performance/performance.module';
 import { GatewayModule } from '../gateway/gateway.module';
 
 @Module({
-  imports: [PrismaModule, ConversationsModule, GatewayModule],
+  imports: [
+    PrismaModule,
+    ConversationsModule,
+    ContactsModule,
+    PerformanceModule,
+    GatewayModule,
+  ],
   controllers: [WebhooksController],
   providers: [WebhooksService],
 })
-export class WebhooksModule {}
+export class WebhooksModule { }
