@@ -138,8 +138,27 @@ export default function InboxPage() {
 
         const socket = socketService.getSocket(workspaceId)
 
-        socket.on('newMessage', (data: { conversationId: string, message: Message }) => {
+        socket.on('newMessage', (data: { conversationId: string, channelType?: string, message: Message, contact?: any }) => {
             console.log('[Socket] New message received:', data)
+
+            // Notification logic (sound/beep)
+            const isFromMe = (data.message as any).fromAgent ?? data.message.fromMe ?? false;
+            if (!isFromMe) {
+                try {
+                    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.frequency.value = 880;
+                    gain.gain.setValueAtTime(0, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+                    osc.start(ctx.currentTime);
+                    osc.stop(ctx.currentTime + 0.2);
+                } catch (e) { console.warn("Audio error", e); }
+            }
+
             setConversations(prev => {
                 const idx = prev.findIndex(c => String(c.id) === String(data.conversationId))
                 if (idx === -1) return prev
@@ -149,11 +168,11 @@ export default function InboxPage() {
                 const mappedMessage: Message = {
                     ...data.message,
                     text: data.message.text || (data.message as any).content?.text || (data.message as any).content?.body || (data.message as any).content || '',
-                    fromMe: (data.message as any).fromAgent ?? data.message.fromMe ?? false,
+                    fromMe: isFromMe,
                     time: data.message.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 }
 
-                const contactUpdate = (data as any).contact
+                const contactUpdate = data.contact
                 const safeContactUpdate = contactUpdate ? Object.fromEntries(
                     Object.entries(contactUpdate).filter(([_, v]) => v != null)
                 ) : null
@@ -164,6 +183,8 @@ export default function InboxPage() {
 
                 const updatedConv: Conversation = {
                     ...conv,
+                    // Priority channel identification
+                    channel: data.channelType ? { ...conv.channel, type: data.channelType } : conv.channel,
                     // If this is the open chat, don't increment unread — clear it instead
                     unread: isActiveConv ? 0 : (conv.unread || 0) + 1,
                     messages: messageExists ? currentMessages : [...currentMessages, mappedMessage],
@@ -186,12 +207,38 @@ export default function InboxPage() {
             fetchConversations() // Recarrega para atualizar status e setores
         })
 
-        socket.on('new_conversation', (conversation: Conversation) => {
+        socket.on('new_conversation', (conversation: any) => {
             console.log('[Socket] New conversation received:', conversation)
             setConversations(prev => {
                 // Evitar duplicatas
                 if (prev.some(c => c.id === conversation.id)) return prev
-                return [conversation, ...prev]
+
+                // Map the incoming raw conversation to our UI structure if needed
+                const mappedConv: Conversation = {
+                    ...conversation,
+                    contact: conversation.contact || { id: conversation.contactId, name: 'Novo Contato' },
+                    channel: conversation.channel || { type: 'WHATSAPP' },
+                    messages: conversation.messages || [],
+                    unread: (conversation.unread || 0) + 1
+                }
+
+                // Play notification sound for new conversation too
+                try {
+                    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.frequency.setValueAtTime(440, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                    osc.start(ctx.currentTime);
+                    osc.stop(ctx.currentTime + 0.5);
+                } catch (e) { }
+
+                return [mappedConv, ...prev]
             })
         })
 

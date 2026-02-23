@@ -57,7 +57,7 @@ export class ConversationsService {
         kanbanColumn: kanbanColumnId, // Use ID relationship ideally, but schema uses String?
         status: 'OPEN',
       },
-      include: { sector: true, contact: true },
+      include: { sector: true, contact: true, channel: true },
     });
 
     console.log('Emitindo new_conversation para workspace:', workspaceId);

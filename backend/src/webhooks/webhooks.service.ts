@@ -106,12 +106,14 @@ export class WebhooksService {
         'newMessage',
         {
           conversationId: conversation.id,
+          channelType: 'WHATSAPP',
           message: socketMessage,
         },
       );
     } else {
       this.gateway.emitToWorkspace(workspaceId, 'newMessage', {
         conversationId: conversation.id,
+        channelType: 'WHATSAPP',
         message: socketMessage,
       });
     }
@@ -206,12 +208,14 @@ export class WebhooksService {
         'newMessage',
         {
           conversationId: conversation.id,
+          channelType: 'WHATSAPP',
           message: socketMessage,
         },
       );
     } else {
       this.gateway.emitToWorkspace(workspaceId, 'newMessage', {
         conversationId: conversation.id,
+        channelType: 'WHATSAPP',
         message: socketMessage,
       });
     }

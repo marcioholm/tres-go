@@ -18,7 +18,7 @@ export class MetaWebhookService {
     private readonly messagesService: MessagesService,
     private readonly gateway: AppGateway,
     private readonly sessionService: SessionService,
-  ) {}
+  ) { }
 
   validateSignature(rawBody: Buffer, signature: string): boolean {
     if (!signature) return false;
@@ -221,12 +221,12 @@ export class MetaWebhookService {
         content:
           attachments.length > 0
             ? {
-                text: text,
-                attachments: attachments.map((a: any) => ({
-                  type: a.type,
-                  url: a.payload?.url,
-                })),
-              }
+              text: text,
+              attachments: attachments.map((a: any) => ({
+                type: a.type,
+                url: a.payload?.url,
+              })),
+            }
             : text,
         status: 'SENT',
         createdAt: new Date(event.timestamp),
@@ -244,6 +244,7 @@ export class MetaWebhookService {
 
     this.gateway.emitToWorkspace(channel.workspaceId, 'newMessage', {
       conversationId: conversation.id,
+      channelType: channel.type, // 'INSTAGRAM' | 'MESSENGER' | 'WHATSAPP'
       message: socketMessage,
       contact: {
         id: contact.id,
