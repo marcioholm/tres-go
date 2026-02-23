@@ -225,6 +225,11 @@ export default function IntegrationsPage() {
                                                         A integração via Z-API/QR Code não é oficial da Meta. O uso intenso pode violar os Termos de Serviço e resultar no banimento irreversível do número.
                                                     </AlertDescription>
                                                 </Alert>
+                                                {error && (
+                                                    <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs font-semibold flex items-center gap-2 border border-red-100">
+                                                        <AlertTriangle size={14} /> {error}
+                                                    </div>
+                                                )}
                                                 <div className="p-4 border rounded-lg bg-slate-50/50 space-y-4">
                                                     <div className="space-y-2">
                                                         <Label>Nome do Canal</Label>

@@ -9,7 +9,7 @@ export class BillingService {
     private prisma: PrismaService,
     private asaas: AsaasService,
     private gateway: AppGateway,
-  ) {}
+  ) { }
 
   // ── Ativar trial ────────────────────────────────────────────────────────────
 
@@ -257,8 +257,17 @@ export class BillingService {
       include: { plan: true },
     });
 
-    if (!sub || !sub.plan)
-      return { allowed: false, current: 0, limit: 0, upgradeRequired: true };
+    // If no subscription/plan found, allow with a generous fallback (e.g. newly created workspace)
+    if (!sub || !sub.plan) {
+      let current = 0;
+      if (resource === 'channels') {
+        current = await this.prisma.channel.count({ where: { workspaceId, status: 'ACTIVE' } });
+      } else if (resource === 'agents') {
+        current = await this.prisma.workspaceUser.count({ where: { workspaceId } });
+      }
+      const defaultLimit = 10;
+      return { allowed: current < defaultLimit, current, limit: defaultLimit, upgradeRequired: false };
+    }
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
