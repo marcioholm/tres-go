@@ -5,9 +5,10 @@ import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Search, MoreVertical, Phone, Video, CheckCheck, Paperclip, Mic, Send, ArrowRightLeft, Clock, MessageSquare } from "lucide-react"
+import { Plus, Search, MoreVertical, Phone, Video, CheckCheck, Check, Paperclip, Mic, Send, ArrowRightLeft, Clock, MessageSquare, Instagram, Facebook, AlertCircle } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { NewConversationDialog } from "@/components/chat/NewConversationDialog"
 
 import { Composer } from "@/components/chat/Composer"
 import { ContactProfilePanel } from "@/components/contact/ContactProfilePanel"
@@ -33,6 +34,7 @@ interface Message {
     duration?: number
     waveform?: number[]
     senderName?: string
+    status?: string // 'PENDING', 'SENT', 'DELIVERED', 'FAILED'
 }
 
 interface Sector {
@@ -61,6 +63,10 @@ interface Conversation {
     sector?: Sector
     contactId: string
     contact?: Contact
+    channel?: {
+        type: 'WHATSAPP' | 'INSTAGRAM' | 'MESSENGER' | 'ZAPI'
+        name: string
+    }
 }
 
 export default function InboxPage() {
@@ -70,6 +76,7 @@ export default function InboxPage() {
     const [isTransferOpen, setIsTransferOpen] = useState(false)
     const [sectors, setSectors] = useState<Sector[]>([])
     const [selectedSector, setSelectedSector] = useState<string | null>(null)
+    const [isNewChatOpen, setIsNewChatOpen] = useState(false)
 
     // Fetch Sectors
     useEffect(() => {
@@ -418,6 +425,7 @@ export default function InboxPage() {
                     <div className="flex items-center justify-between">
                         <h2 className="font-bold text-lg text-slate-800">{t("inbox")}</h2>
                         <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsNewChatOpen(true)}><Plus className="h-5 w-5 text-red-600" /></Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
                         </div>
                     </div>
@@ -476,51 +484,66 @@ export default function InboxPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
-                    {filteredConversations.map((chat) => (
-                        <div
-                            key={chat.id}
-                            onClick={() => setActiveChatId(chat.id)}
-                            className={`flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-100 transition-colors border-b border-slate-50 ${activeChatId === chat.id ? 'bg-red-50/50 border-l-4 border-l-red-600' : ''}`}
-                        >
-                            <div className="relative">
-                                <Avatar>
-                                    <AvatarImage src={chat.contact?.avatarUrl || chat.avatar} />
-                                    <AvatarFallback className="bg-red-100 text-red-600 font-medium">{(chat.contact?.name || chat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                                {/* SLA Indicator */}
-                                <div className={cn(
-                                    "absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white",
-                                    chat.sla === 'danger' ? "bg-red-500" :
-                                        chat.sla === 'warning' ? "bg-yellow-500" : "bg-emerald-500"
-                                )} title="Status SLA" />
-                                {chat.sector && (
-                                    <div
-                                        className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white"
-                                        style={{ backgroundColor: chat.sector.color }}
-                                        title={`Setor: ${chat.sector.name}`}
-                                    />
+                    {filteredConversations.map((chat) => {
+                        const channelType = chat.channel?.type || 'WHATSAPP'
+                        const getIcon = () => {
+                            switch (channelType) {
+                                case 'INSTAGRAM': return <Instagram className="h-3 w-3 text-pink-500" />
+                                case 'MESSENGER': return <Facebook className="h-3 w-3 text-blue-500" />
+                                default: return <MessageSquare className="h-3 w-3 text-emerald-500" />
+                            }
+                        }
+
+                        return (
+                            <div
+                                key={chat.id}
+                                onClick={() => setActiveChatId(chat.id)}
+                                className={`flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-100 transition-colors border-b border-slate-50 ${activeChatId === chat.id ? 'bg-red-50/50 border-l-4 border-l-red-600' : ''}`}
+                            >
+                                <div className="relative">
+                                    <Avatar>
+                                        <AvatarImage src={chat.contact?.avatarUrl || chat.avatar} />
+                                        <AvatarFallback className="bg-red-100 text-red-600 font-medium">{(chat.contact?.name || chat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
+                                    </Avatar>
+                                    {/* Channel Icon Overlay */}
+                                    <div className="absolute -bottom-1 -left-1 bg-white rounded-full p-0.5 shadow-sm border border-slate-100">
+                                        {getIcon()}
+                                    </div>
+                                    {/* SLA Indicator */}
+                                    <div className={cn(
+                                        "absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white",
+                                        chat.sla === 'danger' ? "bg-red-500" :
+                                            chat.sla === 'warning' ? "bg-yellow-500" : "bg-emerald-500"
+                                    )} title="Status SLA" />
+                                    {chat.sector && (
+                                        <div
+                                            className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white"
+                                            style={{ backgroundColor: chat.sector.color }}
+                                            title={`Setor: ${chat.sector.name}`}
+                                        />
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-baseline mb-1">
+                                        <h3 className="font-semibold text-sm text-slate-900 truncate">
+                                            {chat.contact?.handle ? `@${chat.contact.handle}` : (chat.contact?.name || chat?.contact?.phone || chat?.name || "Sem nome")}
+                                        </h3>
+                                        <span className="text-xs text-slate-500">{chat?.messages?.[(chat?.messages?.length || 0) - 1]?.time || ""}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 truncate">
+                                        {chat?.messages?.[(chat?.messages?.length || 0) - 1]?.isSystem ?
+                                            (chat?.messages?.[(chat?.messages?.length || 0) - 1]?.text === "system:transferred" ? "Conversa transferida" : "Você entrou na conversa")
+                                            : (chat?.messages?.[(chat?.messages?.length || 0) - 1]?.text || "Sem mensagens")}
+                                    </p>
+                                </div>
+                                {chat.unread > 0 && (
+                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                                        {chat.unread}
+                                    </span>
                                 )}
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-baseline mb-1">
-                                    <h3 className="font-semibold text-sm text-slate-900 truncate">
-                                        {chat.contact?.handle ? `@${chat.contact.handle}` : (chat.contact?.name || chat?.contact?.phone || chat?.name || "Sem nome")}
-                                    </h3>
-                                    <span className="text-xs text-slate-500">{chat?.messages?.[(chat?.messages?.length || 0) - 1]?.time || ""}</span>
-                                </div>
-                                <p className="text-xs text-slate-500 truncate">
-                                    {chat?.messages?.[(chat?.messages?.length || 0) - 1]?.isSystem ?
-                                        (chat?.messages?.[(chat?.messages?.length || 0) - 1]?.text === "system:transferred" ? "Conversa transferida" : "Você entrou na conversa")
-                                        : (chat?.messages?.[(chat?.messages?.length || 0) - 1]?.text || "Sem mensagens")}
-                                </p>
-                            </div>
-                            {chat.unread > 0 && (
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
-                                    {chat.unread}
-                                </span>
-                            )}
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             </div>
 
@@ -540,6 +563,10 @@ export default function InboxPage() {
                                 <div>
                                     <h2 className="font-bold text-sm text-slate-900 group flex items-center gap-2">
                                         {activeChat?.contact?.name || activeChat?.contact?.phone || activeChat?.name || "Sem nome"}
+                                        {activeChat?.channel?.type === 'INSTAGRAM' && <Instagram className="h-3 w-3 text-pink-500" />}
+                                        {activeChat?.channel?.type === 'MESSENGER' && <Facebook className="h-3 w-3 text-blue-500" />}
+                                        {(activeChat?.channel?.type === 'WHATSAPP' || activeChat?.channel?.type === 'ZAPI') && <MessageSquare className="h-3 w-3 text-emerald-500" />}
+
                                         {activeChat?.contact?.handle && (
                                             <span className="text-[10px] font-normal text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
                                                 @{activeChat.contact.handle}
@@ -650,7 +677,15 @@ export default function InboxPage() {
                                                 <span className={`text-[10px] ${msg?.fromMe ? 'text-white/80' : 'text-slate-400'} ${msg?.isInternal ? 'text-yellow-700' : ''}`}>
                                                     {msg?.time || ""}
                                                 </span>
-                                                {msg.fromMe && !msg.isInternal && !msg.isScheduled && <CheckCheck className="h-3 w-3 text-white/90" />}
+                                                {msg.fromMe && !msg.isInternal && !msg.isScheduled && (
+                                                    <>
+                                                        {msg.status === 'DELIVERED' && <CheckCheck className="h-3 w-3 text-white/90" />}
+                                                        {msg.status === 'SENT' && <Check className="h-3 w-3 text-white/90" />}
+                                                        {msg.status === 'PENDING' && <Clock className="h-3 w-3 text-white/60 animate-pulse" />}
+                                                        {msg.status === 'FAILED' && <AlertCircle className="h-3 w-3 text-white" />}
+                                                        {!msg.status && <CheckCheck className="h-3 w-3 text-white/90" />}
+                                                    </>
+                                                )}
                                                 {msg.isScheduled && <span className="text-[10px] text-slate-400">Agendado</span>}
                                             </div>
                                         </div>
@@ -699,6 +734,15 @@ export default function InboxPage() {
                 open={isTransferOpen}
                 onOpenChange={setIsTransferOpen}
                 onTransfer={handleTransfer}
+            />
+
+            <NewConversationDialog
+                open={isNewChatOpen}
+                onOpenChange={setIsNewChatOpen}
+                onConversationCreated={(id) => {
+                    setActiveChatId(id)
+                    fetchConversations()
+                }}
             />
         </div>
     )

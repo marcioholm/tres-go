@@ -112,14 +112,20 @@ export class MessagesService {
 
     if (conversation && conversation.channel) {
       try {
-        // If Channel config is 'ZAPI' vs 'META_CLOUD'
+        // Detect provider: Meta (Official) vs Z-API
         let channelProvider: string = conversation.channel.type;
         const config = (conversation.channel.config as any) || {};
-        if (config.instanceId) {
+
+        // Only use Z-API if it's a WHATSAPP channel with Z-API config OR if type is explicitly ZAPI
+        if (
+          (conversation.channel.type === 'WHATSAPP' && config.instanceId) ||
+          (conversation.channel.type as string) === 'ZAPI'
+        ) {
           channelProvider = 'ZAPI';
         }
 
         if (channelProvider === 'WHATSAPP') {
+          // Official Meta WhatsApp
           await this.sendViaWhatsappOfficial(
             conversation.channel,
             conversation.contact.phone || '',
@@ -127,6 +133,7 @@ export class MessagesService {
             dbContent,
           );
         } else if (channelProvider === 'ZAPI') {
+          // Z-API WhatsApp
           await this.sendViaZapi(
             conversation.channel,
             conversation.contact.phone || '',
@@ -137,6 +144,7 @@ export class MessagesService {
           channelProvider === 'INSTAGRAM' ||
           channelProvider === 'MESSENGER'
         ) {
+          // Meta Messenger/Instagram (always official for now)
           await this.sendViaMetaMessenger(
             conversation.channel,
             conversation.contact.externalId || '',

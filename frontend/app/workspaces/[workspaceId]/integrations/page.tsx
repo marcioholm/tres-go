@@ -34,6 +34,11 @@ export default function IntegrationsPage() {
     const [error, setError] = useState<string | null>(null)
     const [channels, setChannels] = useState<any[]>([])
 
+    // Z-API Fields
+    const [instanceId, setInstanceId] = useState("")
+    const [instanceToken, setInstanceToken] = useState("")
+    const [clientToken, setClientToken] = useState("")
+
     useEffect(() => {
         const fetchChannels = async () => {
             setLoading(true)
@@ -55,14 +60,43 @@ export default function IntegrationsPage() {
         window.location.href = `${backendUrl}/auth/meta/login?workspaceId=${workspaceId}`;
     }
 
-    const handleConnect = () => {
+    const handleConnect = async () => {
         if (provider === 'instagram' || provider === 'messenger') {
             handleStartMetaOAuth(provider === 'instagram' ? 'INSTAGRAM' : 'MESSENGER')
             return
         }
 
+        if (provider === 'whatsapp' && whatsappMode === 'zapi') {
+            if (!instanceId || !instanceToken || !clientToken || !channelName) {
+                setError("Por favor, preencha todos os campos da Z-API e o nome do canal.")
+                return
+            }
+
+            setLoading(true)
+            try {
+                const res = await api.post(`/workspaces/${workspaceId}/channels`, {
+                    name: channelName,
+                    type: 'WHATSAPP', // Or 'ZAPI' if we want to be explicit, but WHATSAPP + config works
+                    status: 'ACTIVE',
+                    config: {
+                        instanceId,
+                        instanceToken,
+                        clientToken
+                    }
+                })
+                setChannels(prev => [...prev, res.data])
+                setStep(2)
+            } catch (err: any) {
+                console.error("Failed to connect Z-API:", err)
+                setError(err.response?.data?.message || "Falha ao conectar Z-API")
+            } finally {
+                setLoading(false)
+            }
+            return
+        }
+
+        // Official WhatsApp logic (placeholder for now as it uses Graph API request_code in backend)
         setLoading(true)
-        // Simulate connection delay for WhatsApp (can be improved later)
         setTimeout(() => {
             setStep(2)
             setLoading(false)
@@ -161,6 +195,10 @@ export default function IntegrationsPage() {
                                         {whatsappMode === 'official' ? (
                                             <div className="space-y-4 p-4 border rounded-lg bg-slate-50/50">
                                                 <div className="space-y-2">
+                                                    <Label>Nome do Canal</Label>
+                                                    <Input placeholder="Ex: WhatsApp Suporte" value={channelName} onChange={e => setChannelName(e.target.value)} className="bg-white" />
+                                                </div>
+                                                <div className="space-y-2">
                                                     <Label>Phone Number ID</Label>
                                                     <Input placeholder="Ex: 10593..." className="bg-white" />
                                                 </div>
@@ -184,16 +222,20 @@ export default function IntegrationsPage() {
                                                 </Alert>
                                                 <div className="p-4 border rounded-lg bg-slate-50/50 space-y-4">
                                                     <div className="space-y-2">
+                                                        <Label>Nome do Canal</Label>
+                                                        <Input placeholder="Ex: WhatsApp Vendas" value={channelName} onChange={e => setChannelName(e.target.value)} className="bg-white" />
+                                                    </div>
+                                                    <div className="space-y-2">
                                                         <Label>Instance ID</Label>
-                                                        <Input placeholder="Ex: 3A2B1C..." className="bg-white" />
+                                                        <Input placeholder="Ex: 3A2B1C..." value={instanceId} onChange={e => setInstanceId(e.target.value)} className="bg-white" />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label>Instance Token</Label>
-                                                        <Input type="password" placeholder="Ex: 5F3G2H..." className="bg-white" />
+                                                        <Input type="password" placeholder="Ex: 5F3G2H..." value={instanceToken} onChange={e => setInstanceToken(e.target.value)} className="bg-white" />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label>Client Token</Label>
-                                                        <Input type="password" placeholder="Ex: 8J9K0L..." className="bg-white" />
+                                                        <Input type="password" placeholder="Ex: 8J9K0L..." value={clientToken} onChange={e => setClientToken(e.target.value)} className="bg-white" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -290,7 +332,8 @@ export default function IntegrationsPage() {
                             <div className="flex items-center justify-between text-sm">
                                 <span className="text-slate-500">Provedor:</span>
                                 <span className="font-semibold text-slate-700 flex items-center gap-1">
-                                    <Check className="h-3 w-3 text-blue-500" /> Oficial
+                                    <Check className="h-3 w-3 text-blue-500" />
+                                    {(channel.config as any)?.instanceId ? 'Z-API' : 'Oficial'}
                                 </span>
                             </div>
                         </CardContent>

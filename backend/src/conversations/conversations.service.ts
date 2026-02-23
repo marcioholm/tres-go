@@ -13,7 +13,7 @@ export class ConversationsService {
     private gateway: AppGateway,
     private billing: BillingService,
     private sessionService: SessionService,
-  ) {}
+  ) { }
 
   async create(workspaceId: string, data: any) {
     // Check billing limits (Conversations per month)
@@ -85,6 +85,7 @@ export class ConversationsService {
     const conversations = await this.prisma.conversation.findMany({
       where,
       include: {
+        channel: true,
         contact: true,
         ConversationToTag: { include: { Tag: true } },
         sector: true,
@@ -123,6 +124,7 @@ export class ConversationsService {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id },
       include: {
+        channel: true,
         contact: true,
         messages: { take: 50, orderBy: { createdAt: 'desc' } },
       },
