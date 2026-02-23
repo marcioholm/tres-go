@@ -4,6 +4,7 @@ import { ConversationsService } from '../conversations/conversations.service';
 import { ContactsService } from '../contacts/contacts.service';
 import { SessionService } from '../performance/session.service';
 import { AppGateway } from '../gateway/app.gateway';
+import { KeywordDetectorService } from '../pipelines/keyword-detector.service';
 
 @Injectable()
 export class WebhooksService {
@@ -13,6 +14,7 @@ export class WebhooksService {
     private contactsService: ContactsService,
     private sessionService: SessionService,
     private gateway: AppGateway,
+    private keywordDetector: KeywordDetectorService,
   ) { }
 
   verifyWhatsapp(mode: string, token: string): boolean {
@@ -191,6 +193,14 @@ export class WebhooksService {
         externalId,
       },
     });
+
+    // Detect keywords for automatic pipeline movement
+    await this.keywordDetector.detect(
+      messageBody,
+      conversation.id,
+      workspaceId,
+      conversation.sectorId,
+    );
 
     const socketMessage = {
       ...newMessage,

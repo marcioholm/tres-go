@@ -37,6 +37,7 @@ model Workspace {
   usage             WorkspaceUsage[]
   performanceConfig WorkspacePerformanceConfig?
   conversions       ConversationConversion[]
+  pipelines         Pipeline[]
 }
 
 model Channel {
@@ -183,6 +184,8 @@ model Conversation {
   archivedMessages  ArchivedMessage[]
   sessions          ConversationSession[]
   conversion        ConversationConversion?
+  pipelineStages    ConversationPipelineStage[]
+  convertedAt       DateTime?
 }
 
 // ── Message: adicionar nota interna
@@ -350,13 +353,20 @@ model BusinessHours {
 }
 
 model QuickReply {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   workspaceId String
-  shortcut    String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  command     String
+  title       String
   content     String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  category    String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([workspaceId, command])
+  @@index([workspaceId])
 }
 
 model KnowledgeBase {
@@ -622,6 +632,7 @@ model Sector {
   autoRules     SectorAutoRule[]
   transfersFrom ConversationTransfer[] @relation("TransfersFrom")
   transfersTo   ConversationTransfer[] @relation("TransfersTo")
+  pipeline      Pipeline?
 
   @@unique([workspaceId, name])
   @@index([workspaceId, isActive])
@@ -976,4 +987,84 @@ model AuditLog {
   @@index([workspaceId, actionType])
   @@index([createdAt])
   @@index([userId, createdAt])
+}
+
+// ── Funis de Vendas (Pipelines) ──────────────────────────────────────────
+
+model Pipeline {
+  id           String      @id @default(cuid())
+  workspaceId  String
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sectorId     String?     @unique
+  sector       Sector?     @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
+  name         String
+  description  String?
+  isDefault    Boolean     @default(false)
+  stages       PipelineStage[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([workspaceId, sectorId])
+  @@index([workspaceId])
+}
+
+model PipelineStage {
+  id           String   @id @default(cuid())
+  pipelineId   String
+  pipeline     Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+
+  name         String
+  color        String   @default("#6366f1")
+  order        Int
+  isConversion Boolean  @default(false)
+
+  keywords     PipelineKeyword[]
+  conversations ConversationPipelineStage[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([pipelineId])
+}
+
+model PipelineKeyword {
+  id        String        @id @default(cuid())
+  stageId   String
+  stage     PipelineStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  phrase    String
+  matchType KeywordMatchType @default(CONTAINS)
+
+  createdAt DateTime @default(now())
+
+  @@index([stageId])
+}
+
+enum KeywordMatchType {
+  CONTAINS
+  EXACT
+  STARTS_WITH
+}
+
+model ConversationPipelineStage {
+  id             String        @id @default(cuid())
+  conversationId String
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  stageId        String
+  stage          PipelineStage @relation(fields: [stageId], references: [id])
+
+  movedBy        MovedBy
+  triggeredBy    String?
+  movedById      String?
+
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId])
+}
+
+enum MovedBy {
+  AUTOMATIC
+  MANUAL
 }

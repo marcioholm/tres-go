@@ -5,7 +5,8 @@ import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Plus, Search, MoreVertical, Phone, Video, CheckCheck, Check, Paperclip, Mic, Send, ArrowRightLeft, Clock, MessageSquare, Instagram, Facebook, AlertCircle } from "lucide-react"
+import { ArrowRightLeft, Check, CheckCheck, Instagram, Facebook, MessageSquare, Phone, Video, Plus, MoreVertical, Search, Paperclip, Clock, AlertCircle } from "lucide-react"
+import { toast } from "sonner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { NewConversationDialog } from "@/components/chat/NewConversationDialog"
@@ -51,6 +52,12 @@ interface Contact {
     handle?: string
 }
 
+interface PipelineStage {
+    id: string
+    name: string
+    color: string
+}
+
 interface Conversation {
     id: string
     name?: string
@@ -67,6 +74,7 @@ interface Conversation {
         type: 'WHATSAPP' | 'INSTAGRAM' | 'MESSENGER' | 'ZAPI'
         name: string
     }
+    currentStage?: PipelineStage
 }
 
 export default function InboxPage() {
@@ -77,6 +85,7 @@ export default function InboxPage() {
     const [sectors, setSectors] = useState<Sector[]>([])
     const [selectedSector, setSelectedSector] = useState<string | null>(null)
     const [isNewChatOpen, setIsNewChatOpen] = useState(false)
+    const [availableStages, setAvailableStages] = useState<PipelineStage[]>([])
 
     // Fetch Sectors
     useEffect(() => {
@@ -242,6 +251,22 @@ export default function InboxPage() {
             })
         })
 
+        socket.on('conversation_stage_changed', (data: { conversationId: string, stage: PipelineStage, triggeredBy?: string, automatic: boolean }) => {
+            console.log('[Socket] Conversation stage changed:', data)
+            setConversations(prev => prev.map(c => {
+                if (c.id === data.conversationId) {
+                    return { ...c, currentStage: data.stage }
+                }
+                return c
+            }))
+
+            if (data.automatic) {
+                toast.info(`Conversa movida automaticamente para ${data.stage.name} (Gatilho: ${data.triggeredBy})`, {
+                    duration: 5000,
+                })
+            }
+        })
+
         return () => {
             socket.off('newMessage')
             socket.off('conversationTransferred')
@@ -280,6 +305,44 @@ export default function InboxPage() {
         }
         loadHistory()
     }, [activeChatId, workspaceId])
+
+    // Carregar estágios do funil quando a conversa ativa mudar
+    useEffect(() => {
+        if (!activeChatId || !workspaceId) return
+        const fetchPipeline = async () => {
+            try {
+                const conv = conversations.find(c => c.id === activeChatId)
+                const { data } = await api.get(`/workspaces/${workspaceId}/pipelines/by-sector${conv?.sectorId ? `?sectorId=${conv.sectorId}` : ''}`)
+                setAvailableStages(data?.stages || [])
+            } catch (error) {
+                console.error("Erro ao carregar estágios do funil", error)
+            }
+        }
+        fetchPipeline()
+    }, [activeChatId, workspaceId])
+
+    const handleStageChange = async (stageId: string) => {
+        if (!activeChatId || !workspaceId) return
+        try {
+            const { data } = await api.post(`/workspaces/${workspaceId}/pipelines/move`, {
+                conversationId: activeChatId,
+                stageId
+            })
+
+            // Atualizar localmente
+            setConversations(prev => prev.map(c => {
+                if (c.id === activeChatId) {
+                    return { ...c, currentStage: data }
+                }
+                return c
+            }))
+
+            toast.success(`Conversa movida para: ${data.name}`)
+        } catch (error) {
+            console.error("Erro ao mover estágio", error)
+            toast.error("Erro ao mover estágio da conversa")
+        }
+    }
 
     const activeChat = (conversations || []).find(c => c.id === activeChatId) || null
 
@@ -556,8 +619,18 @@ export default function InboxPage() {
                             <div
                                 key={chat.id}
                                 onClick={() => setActiveChatId(chat.id)}
-                                className={`flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-100 transition-colors border-b border-slate-50 ${activeChatId === chat.id ? 'bg-red-50/50 border-l-4 border-l-red-600' : ''}`}
+                                className={cn(
+                                    "flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-100 transition-colors border-b border-slate-50 relative",
+                                    activeChatId === chat.id ? 'bg-red-50/50 border-l-4 border-l-red-600' : ''
+                                )}
                             >
+                                {chat.currentStage && (
+                                    <div
+                                        className="absolute right-0 top-0 bottom-0 w-1.5"
+                                        style={{ backgroundColor: chat.currentStage.color }}
+                                        title={`Estágio: ${chat.currentStage.name}`}
+                                    />
+                                )}
                                 <div className="relative">
                                     <Avatar>
                                         <AvatarImage src={chat.contact?.avatarUrl || chat.avatar} />
@@ -638,6 +711,31 @@ export default function InboxPage() {
                                     </p>
                                 </div>
                             </div>
+
+                            {/* Pipeline Stages Switcher */}
+                            <div className="flex-1 max-w-sm px-4">
+                                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-1">
+                                    {availableStages.map((stage) => (
+                                        <button
+                                            key={stage.id}
+                                            onClick={() => handleStageChange(stage.id)}
+                                            className={cn(
+                                                "px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border-2",
+                                                activeChat?.currentStage?.id === stage.id
+                                                    ? "bg-white shadow-sm scale-105"
+                                                    : "bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100"
+                                            )}
+                                            style={{
+                                                borderColor: activeChat?.currentStage?.id === stage.id ? stage.color : 'transparent',
+                                                color: activeChat?.currentStage?.id === stage.id ? stage.color : undefined
+                                            }}
+                                        >
+                                            {stage.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div className="flex items-center gap-2 text-slate-500">
                                 <Button variant="ghost" size="icon"><Phone className="h-5 w-5" /></Button>
                                 <Button variant="ghost" size="icon"><Video className="h-5 w-5" /></Button>

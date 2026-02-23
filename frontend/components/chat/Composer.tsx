@@ -29,6 +29,12 @@ export function Composer({ onSendMessage, onScheduleMessage }: ComposerProps) {
     const [scheduleTime, setScheduleTime] = useState("09:00")
     const [isScheduleOpen, setIsScheduleOpen] = useState(false)
 
+    // Quick Replies (Atalhos)
+    const [quickReplies, setQuickReplies] = useState<any[]>([])
+    const [filteredSuggestions, setFilteredSuggestions] = useState<any[]>([])
+    const [showSuggestions, setShowSuggestions] = useState(false)
+    const [selectedIndex, setSelectedIndex] = useState(0)
+
     const fileInputRef = useRef<HTMLInputElement>(null)
     const mediaRecorderRef = useRef<MediaRecorder | null>(null)
     const audioChunksRef = useRef<Blob[]>([])
@@ -36,6 +42,55 @@ export function Composer({ onSendMessage, onScheduleMessage }: ComposerProps) {
     const handleEmojiClick = (emojiData: EmojiClickData) => {
         setMessage((prev) => prev + emojiData.emoji)
     }
+
+    // Carregar atalhos do workspace
+    useEffect(() => {
+        const fetchQuickReplies = async () => {
+            try {
+                const workspaceId = window.location.pathname.split('/')[2];
+                const token = localStorage.getItem('token');
+                const { data } = await api.get(`/workspaces/${workspaceId}/pipelines/quick-replies`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setQuickReplies(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error("Erro ao carregar atalhos", error);
+            }
+        };
+        fetchQuickReplies();
+    }, []);
+
+    const handleMessageChange = (val: string) => {
+        setMessage(val);
+
+        // Lógica de Autocomplete do comando /
+        const lastSlashIndex = val.lastIndexOf('/');
+        if (lastSlashIndex !== -1) {
+            const query = val.slice(lastSlashIndex + 1).toLowerCase().split(' ')[0];
+            const filtered = quickReplies.filter(r =>
+                r.command.slice(1).toLowerCase().startsWith(query)
+            );
+
+            if (filtered.length > 0) {
+                setFilteredSuggestions(filtered);
+                setShowSuggestions(true);
+                setSelectedIndex(0);
+            } else {
+                setShowSuggestions(false);
+            }
+        } else {
+            setShowSuggestions(false);
+        }
+    };
+
+    const selectReply = (reply: any) => {
+        const lastSlashIndex = message.lastIndexOf('/');
+        const beforeSlash = message.slice(0, lastSlashIndex);
+        const afterQuery = message.slice(lastSlashIndex + 1).split(' ').slice(1).join(' ');
+
+        setMessage(beforeSlash + reply.content + (afterQuery ? ' ' + afterQuery : ''));
+        setShowSuggestions(false);
+    };
 
     const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -357,18 +412,74 @@ export function Composer({ onSendMessage, onScheduleMessage }: ComposerProps) {
                             <canvas ref={canvasRef} width={150} height={30} className="ml-4" />
                         </div>
                     ) : (
-                        <textarea
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault()
-                                    handleSend()
-                                }
-                            }}
-                            placeholder={isInternal ? "Adicionar nota interna (visível apenas para a equipe)..." : "Escreva sua mensagem..."}
-                            className="w-full bg-transparent border-none focus:ring-0 text-sm resize-none min-h-[40px] max-h-[120px] outline-none p-2"
-                        />
+                        <div className="relative w-full">
+                            {showSuggestions && (
+                                <div className="absolute bottom-full left-0 mb-2 w-72 bg-white border rounded-xl shadow-xl z-50 overflow-hidden divide-y">
+                                    <div className="p-2 bg-muted/30 text-[10px] uppercase font-bold text-muted-foreground flex items-center justify-between">
+                                        <span>Atalhos Disponíveis</span>
+                                        <span className="flex gap-1">
+                                            <kbd className="px-1 border rounded bg-white">↑↓</kbd>
+                                            <kbd className="px-1 border rounded bg-white">Enter</kbd>
+                                        </span>
+                                    </div>
+                                    <div className="max-h-48 overflow-y-auto">
+                                        {filteredSuggestions.map((reply, idx) => (
+                                            <button
+                                                key={reply.id}
+                                                onClick={() => selectReply(reply)}
+                                                className={cn(
+                                                    "w-full text-left p-3 hover:bg-slate-50 flex flex-col gap-0.5 transition-colors",
+                                                    idx === selectedIndex ? "bg-red-50" : ""
+                                                )}
+                                                onMouseEnter={() => setSelectedIndex(idx)}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-bold text-xs text-primary font-mono">{reply.command}</span>
+                                                    <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">{reply.title}</span>
+                                                </div>
+                                                <p className="text-[11px] text-slate-500 truncate">{reply.content}</p>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <textarea
+                                value={message}
+                                onChange={(e) => handleMessageChange(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (showSuggestions) {
+                                        if (e.key === 'ArrowDown') {
+                                            e.preventDefault();
+                                            setSelectedIndex((prev) => (prev + 1) % filteredSuggestions.length);
+                                            return;
+                                        }
+                                        if (e.key === 'ArrowUp') {
+                                            e.preventDefault();
+                                            setSelectedIndex((prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length);
+                                            return;
+                                        }
+                                        if (e.key === 'Enter' || e.key === 'Tab') {
+                                            e.preventDefault();
+                                            selectReply(filteredSuggestions[selectedIndex]);
+                                            return;
+                                        }
+                                        if (e.key === 'Escape') {
+                                            e.preventDefault();
+                                            setShowSuggestions(false);
+                                            return;
+                                        }
+                                    }
+
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault()
+                                        handleSend()
+                                    }
+                                }}
+                                placeholder={isInternal ? "Adicionar nota interna (visível apenas para a equipe)..." : "Escreva sua mensagem... (pressione / para atalhos)"}
+                                className="w-full bg-transparent border-none focus:ring-0 text-sm resize-none min-h-[40px] max-h-[120px] outline-none p-2"
+                            />
+                        </div>
                     )}
 
                     <div className="flex items-center gap-2 mt-2 p-2">
