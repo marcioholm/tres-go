@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '../auth/jwt.strategy';
 @Controller('workspaces/:workspaceId')
 @UseGuards(JwtAuthGuard)
 export class WorkspacesController {
-  constructor(private readonly workspacesService: WorkspacesService) {}
+  constructor(private readonly workspacesService: WorkspacesService) { }
 
   @Get()
   findOne(@Param('workspaceId') workspaceId: string) {
@@ -86,7 +86,7 @@ export class WorkspacesController {
   ) {
     return this.workspacesService.createQuickReply(
       workspaceId,
-      data.shortcut,
+      data.command || data.shortcut,
       data.content,
     );
   }

@@ -9,7 +9,7 @@ export class WorkspacesService {
     private prisma: PrismaService,
     private sectorsService: SectorsService,
     private billingService: BillingService,
-  ) {}
+  ) { }
 
   async findOne(workspaceId: string) {
     return this.prisma.workspace.findUnique({ where: { id: workspaceId } });
@@ -103,11 +103,11 @@ export class WorkspacesService {
 
   async createQuickReply(
     workspaceId: string,
-    shortcut: string,
+    command: string,
     content: string,
   ) {
     return this.prisma.quickReply.create({
-      data: { workspaceId, shortcut, content },
+      data: { workspaceId, command, content },
     });
   }
 
