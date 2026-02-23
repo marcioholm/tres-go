@@ -9,11 +9,35 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2, CheckCircle, ArrowRight, Save, Layout } from 'lucide-react';
 
+interface Pipeline {
+  id: string;
+  name: string;
+  workspaceId: string;
+  sectorId?: string;
+  isDefault: boolean;
+  stages: Stage[];
+  sector?: { name: string };
+}
+
+interface Stage {
+  id: string;
+  name: string;
+  color: string;
+  order: number;
+  isConversion: boolean;
+  keywords: Keyword[];
+}
+
+interface Keyword {
+  id: string;
+  phrase: string;
+}
+
 export default function PipelineConfigPage() {
   const { workspaceId } = useParams();
-  const [pipelines, setPipelines] = useState([]);
-  const [sectors, setSectors] = useState([]);
-  const [selected, setSelected] = useState(null);
+  const [pipelines, setPipelines] = useState<Pipeline[]>([]);
+  const [sectors, setSectors] = useState<any[]>([]);
+  const [selected, setSelected] = useState<Pipeline | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,8 +70,9 @@ export default function PipelineConfigPage() {
     }
   };
 
-  const addStage = (pipelineId) => {
-    const newStage = {
+  const addStage = (pipelineId: string) => {
+    if (!selected) return;
+    const newStage: Stage = {
       id: `temp-${Date.now()}`,
       name: 'Nova Etapa',
       color: '#6366f1',
@@ -61,14 +86,16 @@ export default function PipelineConfigPage() {
     });
   };
 
-  const updateStage = (stageId, data) => {
+  const updateStage = (stageId: string, data: Partial<Stage>) => {
+    if (!selected) return;
     const updatedStages = selected.stages.map(s =>
       s.id === stageId ? { ...s, ...data } : s
     );
     setSelected({ ...selected, stages: updatedStages });
   };
 
-  const addKeyword = (stageId, phrase) => {
+  const addKeyword = (stageId: string, phrase: string) => {
+    if (!selected) return;
     const updatedStages = selected.stages.map(s => {
       if (s.id === stageId) {
         return {
@@ -81,7 +108,8 @@ export default function PipelineConfigPage() {
     setSelected({ ...selected, stages: updatedStages });
   };
 
-  const removeKeyword = (stageId, keywordId) => {
+  const removeKeyword = (stageId: string, keywordId: string) => {
+    if (!selected) return;
     const updatedStages = selected.stages.map(s => {
       if (s.id === stageId) {
         return {
@@ -94,7 +122,8 @@ export default function PipelineConfigPage() {
     setSelected({ ...selected, stages: updatedStages });
   };
 
-  const deleteStage = (stageId) => {
+  const deleteStage = (stageId: string) => {
+    if (!selected) return;
     setSelected({
       ...selected,
       stages: selected.stages.filter(s => s.id !== stageId)
@@ -102,6 +131,7 @@ export default function PipelineConfigPage() {
   };
 
   const savePipeline = async () => {
+    if (!selected) return;
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/workspaces/${workspaceId}/pipelines/${selected.id}`, {
@@ -148,8 +178,8 @@ export default function PipelineConfigPage() {
             key={p.id}
             onClick={() => setSelected(p)}
             className={`px-4 py-2 whitespace-nowrap rounded-t-lg transition-all ${selected?.id === p.id
-                ? 'bg-primary text-primary-foreground font-medium shadow-sm'
-                : 'hover:bg-muted text-muted-foreground'
+              ? 'bg-primary text-primary-foreground font-medium shadow-sm'
+              : 'hover:bg-muted text-muted-foreground'
               }`}
           >
             {p.sector?.name || 'Padrão'}
@@ -165,7 +195,7 @@ export default function PipelineConfigPage() {
               <CardHeader className="border-b bg-muted/10">
                 <CardTitle className="flex items-center gap-2">
                   <Layout className="w-5 h-5 text-primary" />
-                  Editor de Funil: {selected.name}
+                  Editor de Funil: {selected?.name}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6 pt-6">
@@ -173,8 +203,8 @@ export default function PipelineConfigPage() {
                   <div className="space-y-2">
                     <Label className="text-sm font-semibold">Nome do Funil</Label>
                     <Input
-                      value={selected.name}
-                      onChange={e => setSelected({ ...selected, name: e.target.value })}
+                      value={selected?.name || ''}
+                      onChange={e => selected && setSelected({ ...selected, name: e.target.value })}
                       className="bg-muted/30 focus-visible:ring-primary"
                     />
                   </div>
@@ -301,7 +331,7 @@ export default function PipelineConfigPage() {
                           </div>
                         )}
                       </div>
-                      {index < selected.stages.length - 1 && (
+                      {index < (selected?.stages.length || 0) - 1 && (
                         <div className="my-1 flex flex-col items-center opacity-20">
                           <ArrowRight className="w-4 h-4 rotate-90" />
                         </div>
@@ -333,7 +363,7 @@ export default function PipelineConfigPage() {
           <p className="text-muted-foreground max-w-sm mb-8">
             Você ainda não criou um funil de vendas. Crie etapas e palavras-chave para automatizar seus processos.
           </p>
-          <Button variant="outline" size="lg" className="px-10 border-primary text-primary hover:bg-primary/5">
+          <Button variant="outline" size="lg" className="px-10 border-primary text-primary hover:bg-primary/5" onClick={() => {/* Lógica para novo funil */ }}>
             Começar Agora
           </Button>
         </div>

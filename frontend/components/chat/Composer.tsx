@@ -20,6 +20,14 @@ interface ComposerProps {
     isInternalNoteMode?: boolean
 }
 
+interface QuickReply {
+    id: string;
+    command: string;
+    title: string;
+    content: string;
+    category?: string;
+}
+
 export function Composer({ onSendMessage, onScheduleMessage }: ComposerProps) {
     const [message, setMessage] = useState("")
     const [isInternal, setIsInternal] = useState(false)
@@ -30,8 +38,8 @@ export function Composer({ onSendMessage, onScheduleMessage }: ComposerProps) {
     const [isScheduleOpen, setIsScheduleOpen] = useState(false)
 
     // Quick Replies (Atalhos)
-    const [quickReplies, setQuickReplies] = useState<any[]>([])
-    const [filteredSuggestions, setFilteredSuggestions] = useState<any[]>([])
+    const [quickReplies, setQuickReplies] = useState<QuickReply[]>([])
+    const [filteredSuggestions, setFilteredSuggestions] = useState<QuickReply[]>([])
     const [showSuggestions, setShowSuggestions] = useState(false)
     const [selectedIndex, setSelectedIndex] = useState(0)
 
@@ -83,7 +91,7 @@ export function Composer({ onSendMessage, onScheduleMessage }: ComposerProps) {
         }
     };
 
-    const selectReply = (reply: any) => {
+    const selectReply = (reply: QuickReply) => {
         const lastSlashIndex = message.lastIndexOf('/');
         const beforeSlash = message.slice(0, lastSlashIndex);
         const afterQuery = message.slice(lastSlashIndex + 1).split(' ').slice(1).join(' ');

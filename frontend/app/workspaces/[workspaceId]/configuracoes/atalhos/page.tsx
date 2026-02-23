@@ -20,9 +20,17 @@ import {
     Copy
 } from 'lucide-react';
 
+interface QuickReply {
+    id: string;
+    command: string;
+    title: string;
+    content: string;
+    category?: string;
+}
+
 export default function QuickRepliesPage() {
     const { workspaceId } = useParams();
-    const [replies, setReplies] = useState([]);
+    const [replies, setReplies] = useState<QuickReply[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -103,9 +111,9 @@ export default function QuickRepliesPage() {
         }
     };
 
-    const filteredReplies = replies.filter(r =>
+    const filteredReplies = replies.filter((r: QuickReply) =>
         r.command.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (r.title && r.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
         r.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
