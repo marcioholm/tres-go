@@ -6,6 +6,7 @@ import { ConversationsModule } from '../conversations/conversations.module';
 import { ContactsModule } from '../contacts/contacts.module';
 import { PerformanceModule } from '../performance/performance.module';
 import { GatewayModule } from '../gateway/gateway.module';
+import { PipelinesModule } from '../pipelines/pipelines.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { GatewayModule } from '../gateway/gateway.module';
     ContactsModule,
     PerformanceModule,
     GatewayModule,
+    PipelinesModule,
   ],
   controllers: [WebhooksController],
   providers: [WebhooksService],

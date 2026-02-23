@@ -100,6 +100,14 @@ export class WebhooksService {
           : (newMessage.content as any)?.text || '',
     };
 
+    // Detect keywords for automatic pipeline movement
+    await this.keywordDetector.detect(
+      messageBody,
+      conversation.id,
+      workspaceId,
+      conversation.sectorId,
+    );
+
     // Emit socket event via Gateway
     if (conversation.sectorId) {
       this.gateway.emitToSector(
