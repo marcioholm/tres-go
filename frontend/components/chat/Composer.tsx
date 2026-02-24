@@ -117,10 +117,18 @@ export function Composer({ onSendMessage, onScheduleMessage }: ComposerProps) {
         const formData = new FormData()
         formData.append('file', file)
 
-        // Hardcode a workspaceId and uploadedBy just for testing, 
-        // in a real app this would come from an auth context or workspace context
+        // Get user ID from localStorage
+        let userId = 'unknown';
+        try {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                const parsed = JSON.parse(storedUser);
+                userId = parsed.id || parsed.sub || 'unknown';
+            }
+        } catch (e) { console.error("Error getting user ID for upload", e); }
+
         formData.append('workspaceId', window.location.pathname.split('/')[2] || '')
-        formData.append('uploadedBy', 'user_id_here')
+        formData.append('uploadedBy', userId)
 
         if (isPtt) {
             formData.append('isPtt', 'true')

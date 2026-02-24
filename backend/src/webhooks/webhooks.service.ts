@@ -194,25 +194,24 @@ export class WebhooksService {
       const externalId = body.zaapId || body.messageId;
 
       // Map Z-API media fields
-      let messageBody = body.text?.message || body.message || body.caption || '';
+      let messageBody = body.text?.message || body.message || body.caption || (typeof body.text === 'string' ? body.text : '') || '';
 
-      // Detect media type based on present fields
-      let mediaType = 'text';
-      let mediaUrl = '';
+      // Detect media type and URL with broad fallbacks
+      let mediaUrl = body.audio || body.image || body.video || body.document ||
+        body.sticker || body.thumbnailUrl || body.url || body.link || body.file;
 
-      if (body.audio) { mediaUrl = body.audio; mediaType = 'audio'; }
-      else if (body.image) { mediaUrl = body.image; mediaType = 'image'; }
-      else if (body.video) { mediaUrl = body.video; mediaType = 'video'; }
-      else if (body.sticker) { mediaUrl = body.sticker; mediaType = 'sticker'; }
-      else if (body.document) { mediaUrl = body.document; mediaType = 'document'; }
-      else if (body.file) { mediaUrl = body.file; mediaType = 'file'; }
-      else if (body.location) { mediaType = 'location'; }
-      else if (body.contact) { mediaType = 'contact'; }
-      else if (body.type) {
-        const t = body.type.toLowerCase();
-        if (!['received', 'sent', 'message'].includes(t)) {
-          mediaType = t;
-        }
+      let mediaType = (body.type || 'text').toLowerCase();
+
+      // Normalize mediaType if it's one of the event types
+      if (['received', 'sent', 'message'].includes(mediaType)) {
+        if (body.audio) mediaType = 'audio';
+        else if (body.image) mediaType = 'image';
+        else if (body.video) mediaType = 'video';
+        else if (body.sticker) mediaType = 'sticker';
+        else if (body.document || body.file) mediaType = 'document';
+        else if (body.location) mediaType = 'location';
+        else if (body.contact) mediaType = 'contact';
+        else mediaType = 'text';
       }
 
       // Use descriptive placeholder if body is empty (non-text messages)
@@ -228,6 +227,7 @@ export class WebhooksService {
         else messageBody = 'Mensagem';
       }
 
+      console.log(`[Z-API Webhook] DEBUG Full Body: ${JSON.stringify(body)}`);
       console.log(`[Z-API Webhook] Event Data: RawPhone=${rawPhone}, CleanPhone=${senderPhone}, EventType=${eventType}, BodyType=${mediaType}, HasMedia=${!!mediaUrl}, Body=${messageBody.substring(0, 50)}`);
 
       if (!senderPhone || (!messageBody && !body.type)) {
