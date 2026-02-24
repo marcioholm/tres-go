@@ -556,14 +556,29 @@ export default function InboxPage() {
                             ? "Aguardando novas mensagens dos seus canais conectados."
                             : "Conecte um canal para começar a receber mensagens."}
                     </p>
-                    {!hasChannels && (
-                        <Button asChild className="mt-4 bg-red-600 hover:bg-red-700 font-bold">
-                            <Link href={`/workspaces/${workspaceId}/integrations`}>
-                                CONECTAR CANAL
-                            </Link>
+                    <div className="mt-6 flex flex-col items-center gap-3">
+                        <Button onClick={() => setIsNewChatOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 font-bold px-8">
+                            <Plus className="mr-2 h-5 w-5" />
+                            INICIAR CONVERSA
                         </Button>
-                    )}
+                        {!hasChannels && (
+                            <Button asChild className="bg-red-600 hover:bg-red-700 font-bold">
+                                <Link href={`/workspaces/${workspaceId}/integrations`}>
+                                    CONECTAR CANAL
+                                </Link>
+                            </Button>
+                        )}
+                    </div>
                 </div>
+
+                <NewConversationDialog
+                    open={isNewChatOpen}
+                    onOpenChange={setIsNewChatOpen}
+                    onConversationCreated={(id) => {
+                        setActiveChatId(id)
+                        fetchConversations()
+                    }}
+                />
             </div>
         )
     }
