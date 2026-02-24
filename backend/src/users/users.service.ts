@@ -4,24 +4,21 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(workspaceId: string) {
-    return this.prisma.user.findMany({
+    return this.prisma.workspaceUser.findMany({
       where: {
-        workspaces: {
-          some: {
-            workspaceId,
+        workspaceId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
-      },
-      select: {
-        id: true,
-        name: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        niche: true,
       },
     });
   }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useLanguage } from "@/lib/language-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,7 +33,8 @@ const COLORS = [
     "#64748b", // slate-500
 ]
 
-export default function TagsSettingsPage({ params }: { params: { workspaceId: string } }) {
+export default function TagsSettingsPage({ params: paramsPromise }: { params: Promise<{ workspaceId: string }> }) {
+    const params = React.use(paramsPromise)
     const { t } = useLanguage()
     const router = useRouter()
     const [tags, setTags] = useState<Tag[]>([])

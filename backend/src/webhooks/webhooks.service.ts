@@ -5,6 +5,9 @@ import { ContactsService } from '../contacts/contacts.service';
 import { SessionService } from '../performance/session.service';
 import { AppGateway } from '../gateway/app.gateway';
 import { KeywordDetectorService } from '../pipelines/keyword-detector.service';
+import { UploadsService } from '../uploads/uploads.service';
+import axios from 'axios';
+
 
 @Injectable()
 export class WebhooksService {
@@ -15,6 +18,7 @@ export class WebhooksService {
     private sessionService: SessionService,
     private gateway: AppGateway,
     private keywordDetector: KeywordDetectorService,
+    private uploadsService: UploadsService,
   ) { }
 
   verifyWhatsapp(mode: string, token: string): boolean {
@@ -136,112 +140,161 @@ export class WebhooksService {
   }
 
   async processZapiMessage(instanceId: string, body: any) {
-    // Z-API payload has 'phone', 'text.message', 'connectedPhone' etc.
-    // Documentation: https://developer.z-api.io/webhooks/whatsapp/received
+    try {
+      console.log(`[Z-API Webhook] START processing for instance ${instanceId}`);
 
-    // 1. Find Workspace by Instance ID
-    const channel = await this.prisma.channel.findFirst({
-      where: {
-        config: {
-          path: ['instanceId'],
-          equals: instanceId,
-        },
-      },
-    });
-
-    if (!channel) {
-      console.error(`No channel found for Z-API instance ${instanceId}`);
-      return;
-    }
-
-    const workspaceId = channel.workspaceId;
-
-    // 2. Extract Data
-    const senderPhone = body.phone;
-    const senderName = body.senderName || senderPhone;
-    const avatarUrl = body.photo;
-    const messageBody =
-      body.text?.message || body.message || 'Media/Unsupported Type';
-    const externalId = body.zaapId || body.messageId;
-
-    if (!senderPhone || !messageBody) return;
-
-    // 3. Find or Create Contact via ContactsService to handle avatar and names
-    const dbContact = await this.contactsService.findOrCreate(
-      workspaceId,
-      senderPhone,
-      senderName,
-      avatarUrl,
-    );
-
-    // 4. Find/Create Conversation
-    let conversation = await this.prisma.conversation.findFirst({
-      where: {
-        workspaceId,
-        contactId: dbContact.id,
-        status: 'OPEN',
-      },
-      include: { contact: true, sector: true },
-    });
-
-    if (!conversation) {
-      conversation = await this.conversationsService.create(workspaceId, {
-        contactId: dbContact.id,
-        channelId: channel.id,
-        messageBody,
-        contactPhone: senderPhone,
+      // 1. Find Workspace by Instance ID
+      const channels = await this.prisma.channel.findMany({
+        where: { type: 'WHATSAPP' },
       });
-    }
 
-    // Session tracking
-    await this.sessionService.trackClientMessage(conversation.id);
+      console.log(`[Z-API Webhook] Found ${channels.length} WHATSAPP channels in DB`);
 
-    // 5. Create Message
-    const newMessage = await this.prisma.message.create({
-      data: {
-        conversationId: conversation.id,
-        content: messageBody,
-        type: (body.type || 'text').toUpperCase(),
-        status: 'RECEIVED',
-        fromAgent: false,
-        externalId,
-      },
-    });
+      const channel = channels.find((c: any) => {
+        const config = c.config as any;
+        // Support both string and object if necessary
+        const cInstanceId = typeof config === 'string' ? JSON.parse(config).instanceId : config?.instanceId;
+        return cInstanceId === instanceId;
+      });
 
-    // Detect keywords for automatic pipeline movement
-    await this.keywordDetector.detect(
-      messageBody,
-      conversation.id,
-      workspaceId,
-      conversation.sectorId,
-    );
+      if (!channel) {
+        console.error(`[Z-API Webhook] ERROR: No channel found for instanceId: ${instanceId}`);
+        // Log available instanceIds for debugging
+        channels.forEach(ch => {
+          const cfg = ch.config as any;
+          console.log(`- Available ID: ${ch.id}, InstanceId: ${cfg?.instanceId}`);
+        });
+        return;
+      }
 
-    const socketMessage = {
-      ...newMessage,
-      text:
-        typeof newMessage.content === 'string'
-          ? newMessage.content
-          : (newMessage.content as any)?.text || '',
-    };
+      const workspaceId = channel.workspaceId;
+      console.log(`[Z-API Webhook] Matched Workspace: ${workspaceId}`);
 
-    // 6. Emit socket event
-    if (conversation.sectorId) {
-      this.gateway.emitToSector(
+      // 2. Extract Data
+      const isFromMe = body.fromMe === true;
+      const senderPhone = body.phone;
+      const senderName = body.senderName || senderPhone;
+      let avatarUrl = body.photo;
+      const messageBody =
+        body.text?.message || body.message || body.caption || 'Media/Unsupported Type';
+      const externalId = body.zaapId || body.messageId;
+
+      console.log(`[Z-API Webhook] Event Data: FromMe=${isFromMe}, Phone=${senderPhone}, Body=${messageBody.substring(0, 50)}`);
+
+      if (!senderPhone || (!messageBody && !body.type)) {
+        console.warn('[Z-API Webhook] WARNING: Missing phone or message content, skipping.');
+        return;
+      }
+
+      // 2.1 Persist profile photo if provided (URLs expire)
+      if (avatarUrl && avatarUrl.startsWith('http')) {
+        try {
+          const response = await axios.get(avatarUrl, { responseType: 'arraybuffer', timeout: 5000 });
+          const buffer = Buffer.from(response.data, 'binary');
+          const mimeType = response.headers['content-type'] || 'image/jpeg';
+
+          const uploadResult = await this.uploadsService.uploadFromBuffer(
+            buffer,
+            `avatar-${senderPhone}.jpg`,
+            mimeType,
+            workspaceId,
+            'SYSTEM',
+          );
+          avatarUrl = uploadResult.url;
+          console.log(`[Z-API Webhook] Avatar persisted: ${avatarUrl}`);
+        } catch (err) {
+          console.error('[Z-API Webhook] Photo persistence failed:', err.message);
+        }
+      }
+
+      // 3. Find or Create Contact
+      const dbContact = await this.contactsService.findOrCreate(
+        workspaceId,
+        senderPhone,
+        senderName,
+        avatarUrl,
+      );
+      console.log(`[Z-API Webhook] Contact: ${dbContact.id} (${dbContact.name})`);
+
+      // 4. Find/Create Conversation
+      let conversation = await this.prisma.conversation.findFirst({
+        where: {
+          workspaceId,
+          contactId: dbContact.id,
+          status: 'OPEN',
+        },
+        include: { contact: true, sector: true },
+      });
+
+      if (!conversation) {
+        console.log(`[Z-API Webhook] Creating new conversation for ${senderPhone}`);
+        conversation = await this.conversationsService.create(workspaceId, {
+          contactId: dbContact.id,
+          channelId: channel.id,
+          messageBody,
+          contactPhone: senderPhone,
+        });
+      }
+
+      // Session tracking
+      await this.sessionService.trackClientMessage(conversation.id);
+
+      // 5. Create Message
+      const newMessage = await this.prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          content: messageBody,
+          type: (body.type || 'text').toUpperCase(),
+          status: isFromMe ? 'SENT' : 'RECEIVED',
+          fromAgent: isFromMe,
+          externalId,
+        },
+      });
+
+      console.log(`[Z-API Webhook] SUCCESS: Message ${newMessage.id} stored (FromMe=${isFromMe})`);
+
+      // Detect keywords
+      await this.keywordDetector.detect(
+        messageBody,
+        conversation.id,
         workspaceId,
         conversation.sectorId,
-        'newMessage',
-        {
-          conversationId: conversation.id,
-          channelType: 'WHATSAPP',
-          message: socketMessage,
-        },
-      );
-    } else {
-      this.gateway.emitToWorkspace(workspaceId, 'newMessage', {
-        conversationId: conversation.id,
-        channelType: 'WHATSAPP',
-        message: socketMessage,
-      });
+      ).catch(e => console.error(`[Z-API Webhook] Keyword detection failed:`, e.message));
+
+      const socketMessage = {
+        ...newMessage,
+        text: typeof newMessage.content === 'string'
+          ? newMessage.content
+          : (newMessage.content as any)?.text || '',
+      };
+
+      // 6. Emit socket event
+      try {
+        if (conversation.sectorId) {
+          this.gateway.emitToSector(
+            workspaceId,
+            conversation.sectorId,
+            'newMessage',
+            {
+              conversationId: conversation.id,
+              channelType: 'WHATSAPP',
+              message: socketMessage,
+            },
+          );
+        } else {
+          this.gateway.emitToWorkspace(workspaceId, 'newMessage', {
+            conversationId: conversation.id,
+            channelType: 'WHATSAPP',
+            message: socketMessage,
+          });
+        }
+        console.log(`[Z-API Webhook] Socket emitted for workspace ${workspaceId}`);
+      } catch (socketErr) {
+        console.error(`[Z-API Webhook] Socket emission failed:`, socketErr.message);
+      }
+
+    } catch (error) {
+      console.error(`[Z-API Webhook] CRITICAL ERROR for instance ${instanceId}:`, error);
     }
   }
 }

@@ -44,13 +44,16 @@ export default function SettingsPage({ params }: { params: { workspaceId: string
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => {
+                    const wsId = params?.workspaceId;
+                    if (wsId && wsId !== 'undefined') window.location.href = `/workspaces/${wsId}/settings/team`;
+                }}>
                     <CardHeader>
                         <CardTitle>Membros da Equipe</CardTitle>
                         <CardDescription>Gerencie quem tem acesso a este workspace.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button variant="outline">Gerenciar Equipe</Button>
+                        <Button variant="secondary" className="w-full">Gerenciar Equipe</Button>
                     </CardContent>
                 </Card>
 

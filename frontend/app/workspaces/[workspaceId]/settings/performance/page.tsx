@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useLanguage } from "@/lib/language-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,10 +11,13 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
-import { Loader2, Save, Target, Timer, UserCheck, BarChart3 } from "lucide-react"
+import { Loader2, Save, Target, Timer, UserCheck, BarChart3, ArrowLeft } from "lucide-react"
+import { useRouter } from "next/navigation"
 
-export default function PerformanceSettingsPage({ params }: { params: { workspaceId: string } }) {
+export default function PerformanceSettingsPage({ params: paramsPromise }: { params: Promise<{ workspaceId: string }> }) {
+    const params = React.use(paramsPromise)
     const { workspaceId } = params
+    const router = useRouter()
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [config, setConfig] = useState<any>(null)
@@ -49,7 +52,7 @@ export default function PerformanceSettingsPage({ params }: { params: { workspac
 
     if (loading) {
         return (
-            <div className="flex h-full items-center justify-center">
+            <div className="flex h-full items-center justify-center min-h-[400px]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         )
@@ -57,7 +60,7 @@ export default function PerformanceSettingsPage({ params }: { params: { workspac
 
     if (!config) {
         return (
-            <div className="flex h-full items-center justify-center text-slate-500">
+            <div className="flex h-full items-center justify-center text-slate-500 min-h-[400px]">
                 Não foi possível carregar as configurações.
             </div>
         )
@@ -65,19 +68,24 @@ export default function PerformanceSettingsPage({ params }: { params: { workspac
 
     return (
         <div className="p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-800">Performance e Métricas</h1>
-                    <p className="text-slate-500 mt-2">Configure regras de negócio, metas de atendimento e visibilidade de relatórios.</p>
-                </div>
-                <Button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
-                >
-                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Salvar Configurações
+            <div>
+                <Button variant="ghost" className="mb-4 pl-0 hover:pl-0 hover:bg-transparent text-slate-500 hover:text-slate-900" onClick={() => router.back()}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
                 </Button>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-slate-800">Performance e Métricas</h1>
+                        <p className="text-slate-500 mt-2">Configure regras de negócio, metas de atendimento e visibilidade de relatórios.</p>
+                    </div>
+                    <Button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+                    >
+                        {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Salvar Configurações
+                    </Button>
+                </div>
             </div>
 
             <Separator />
@@ -98,165 +106,154 @@ export default function PerformanceSettingsPage({ params }: { params: { workspac
                         <div className="space-y-2">
                             <Label>Regra de Atribuição Principal</Label>
                             <Select
-                                value={config.saleAttribution}
-                                onValueChange={(v) => setConfig({ ...config, saleAttribution: v })}
+                                value={config.salesAssignmentRule}
+                                onValueChange={(v) => setConfig({ ...config, salesAssignmentRule: v })}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Selecione a regra" />
+                                    <SelectValue placeholder="Selecione uma regra" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="LAST_AGENT">Último Agente (Quem resolveu)</SelectItem>
-                                    <SelectItem value="FIRST_AGENT">Primeiro Agente (Quem iniciou)</SelectItem>
-                                    <SelectItem value="EQUAL_SPLIT">Divisão Igualitária</SelectItem>
-                                    <SelectItem value="MANUAL">Manual (Escolha no ato da venda)</SelectItem>
+                                    <SelectItem value="LAST_INTERACTION">Última Interação (Padrão)</SelectItem>
+                                    <SelectItem value="FIRST_INTERACTION">Primeira Interação</SelectItem>
+                                    <SelectItem value="LINEAR">Linear (Dividir crédito)</SelectItem>
+                                    <SelectItem value="MANUAL">Atribuição Manual</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <p className="text-xs text-slate-400">Esta regra será aplicada automaticamente ao registrar uma conversão.</p>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
+                        <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
-                                <Label className="text-base">Permitir Ajuste Manual</Label>
-                                <p className="text-sm text-slate-500">Agentes podem alterar a atribuição ao marcar como vendido.</p>
+                                <Label>Auto-atribuição de novos leads</Label>
+                                <p className="text-xs text-slate-500">Atribuir lead automaticamente ao primeiro a responder.</p>
                             </div>
                             <Switch
-                                checked={config.manualAttribution}
-                                onCheckedChange={(v) => setConfig({ ...config, manualAttribution: v })}
+                                checked={config.autoAssignLeads}
+                                onCheckedChange={(v) => setConfig({ ...config, autoAssignLeads: v })}
                             />
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Cálculo de Tempo */}
+                {/* SLAs de Atendimento */}
                 <Card className="border-none shadow-md bg-white/50 backdrop-blur-sm">
                     <CardHeader>
                         <div className="flex items-center gap-2 mb-2">
                             <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
                                 <Timer className="h-5 w-5" />
                             </div>
-                            <CardTitle>Cálculo de Tempo útil</CardTitle>
+                            <CardTitle>SLAs de Atendimento</CardTitle>
                         </div>
-                        <CardDescription>Configure como o Tempo Médio de Atendimento (TMA) é calculado.</CardDescription>
+                        <CardDescription>Configure limites de tempo para garantir respostas rápidas aos clientes.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="space-y-2">
-                            <Label>Método de Cálculo</Label>
+                            <Label>Tempo Limite de Primeira Resposta (SLA)</Label>
                             <Select
-                                value={config.timeCalculation}
-                                onValueChange={(v) => setConfig({ ...config, timeCalculation: v })}
+                                value={config.firstResponseSlaMinutes?.toString()}
+                                onValueChange={(v) => setConfig({ ...config, firstResponseSlaMinutes: parseInt(v) })}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Selecione o método" />
+                                    <SelectValue placeholder="Selecione o tempo" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="TOTAL">Tempo Total (Início ao Fim)</SelectItem>
-                                    <SelectItem value="ACTIVE_ONLY">Apenas Atendimento Ativo</SelectItem>
+                                    <SelectItem value="5">5 Minutos</SelectItem>
+                                    <SelectItem value="15">15 Minutos</SelectItem>
+                                    <SelectItem value="30">30 Minutos</SelectItem>
+                                    <SelectItem value="60">1 Hora</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
                         <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                                <Label>Limite de Inatividade (minutos)</Label>
-                                <span className="text-sm font-medium text-amber-600">{config.inactivityThreshold} min</span>
-                            </div>
+                            <Label>Alerta de conversa ociosa após (minutos)</Label>
                             <Input
                                 type="number"
-                                value={config.inactivityThreshold}
-                                onChange={(e) => setConfig({ ...config, inactivityThreshold: parseInt(e.target.value) })}
+                                value={config.idleConversationAlertMinutes}
+                                onChange={(e) => setConfig({ ...config, idleConversationAlertMinutes: parseInt(e.target.value) })}
                             />
-                            <p className="text-xs text-slate-400">Tempo máximo de silêncio para considerar a sessão como "inativa" no cálculo de TMA.</p>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Metas de Equipe */}
-                <Card className="border-none shadow-md bg-white/50 backdrop-blur-sm md:col-span-2">
+                {/* Metas da Equipe */}
+                <Card className="border-none shadow-md bg-white/50 backdrop-blur-sm">
                     <CardHeader>
                         <div className="flex items-center gap-2 mb-2">
                             <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
                                 <Target className="h-5 w-5" />
                             </div>
-                            <CardTitle>Metas de Atendimento e Conversão</CardTitle>
+                            <CardTitle>Metas Globais</CardTitle>
                         </div>
-                        <CardDescription>Defina os KPIs esperados para sinalização nos relatórios de performance.</CardDescription>
+                        <CardDescription>Defina os KPIs alvo que toda a equipe deve buscar atingir.</CardDescription>
                     </CardHeader>
-                    <CardContent className="grid gap-6 md:grid-cols-3">
+                    <CardContent className="space-y-6">
                         <div className="space-y-2">
-                            <Label>Primeira Resposta (min)</Label>
+                            <Label>Meta de Taxa de Conversão (%)</Label>
                             <Input
                                 type="number"
-                                value={config.firstResponseGoal}
-                                onChange={(e) => setConfig({ ...config, firstResponseGoal: parseInt(e.target.value) })}
-                                className="border-emerald-100 focus:border-emerald-300"
+                                value={config.targetConversionRate}
+                                onChange={(e) => setConfig({ ...config, targetConversionRate: parseFloat(e.target.value) })}
                             />
-                            <p className="text-xs text-slate-400">Abaixo disso = Acima da média.</p>
                         </div>
                         <div className="space-y-2">
-                            <Label>Tempo de Resolução (min)</Label>
+                            <Label>Meta de CSAT (Satisfação)</Label>
                             <Input
                                 type="number"
-                                value={config.resolutionGoal}
-                                onChange={(e) => setConfig({ ...config, resolutionGoal: parseInt(e.target.value) })}
-                                className="border-emerald-100 focus:border-emerald-300"
+                                step="0.1"
+                                value={config.targetCsat}
+                                onChange={(e) => setConfig({ ...config, targetCsat: parseFloat(e.target.value) })}
                             />
-                            <p className="text-xs text-slate-400">Ex: 1440 min = 24 horas.</p>
                         </div>
                         <div className="space-y-2">
-                            <Label>Taxa de Conversão (%)</Label>
+                            <Label>Volume Alvo de Atendimentos Mensais</Label>
                             <Input
                                 type="number"
-                                value={config.conversionRateGoal}
-                                onChange={(e) => setConfig({ ...config, conversionRateGoal: parseFloat(e.target.value) })}
-                                className="border-emerald-100 focus:border-emerald-300"
+                                value={config.targetMonthlyVolume}
+                                onChange={(e) => setConfig({ ...config, targetMonthlyVolume: parseInt(e.target.value) })}
                             />
-                            <p className="text-xs text-slate-400">Meta de vendas por atendimentos.</p>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Visibilidade e Relatórios */}
-                <Card className="border-none shadow-md bg-white/50 backdrop-blur-sm md:col-span-2">
+                <Card className="border-none shadow-md bg-white/50 backdrop-blur-sm">
                     <CardHeader>
                         <div className="flex items-center gap-2 mb-2">
                             <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
                                 <BarChart3 className="h-5 w-5" />
                             </div>
-                            <CardTitle>Visibilidade e Relatórios</CardTitle>
+                            <CardTitle>Visibilidade e Dashboards</CardTitle>
                         </div>
-                        <CardDescription>Controle quem pode acessar as métricas de performance da equipe.</CardDescription>
+                        <CardDescription>Controle como os dados são exibidos para os diferentes níveis de acesso.</CardDescription>
                     </CardHeader>
-                    <CardContent className="grid gap-6 md:grid-cols-2">
+                    <CardContent className="space-y-6">
                         <div className="space-y-2">
-                            <Label>Quem pode ver o Dashboard de Performance?</Label>
+                            <Label>Período Padrão de Visualização</Label>
                             <Select
-                                value={config.reportVisibility}
-                                onValueChange={(v) => setConfig({ ...config, reportVisibility: v })}
+                                value={config.defaultViewPeriod}
+                                onValueChange={(v) => setConfig({ ...config, defaultViewPeriod: v })}
                             >
                                 <SelectTrigger>
-                                    <SelectValue />
+                                    <SelectValue placeholder="Selecione o período" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="ADMIN_ONLY">Apenas Administradores</SelectItem>
-                                    <SelectItem value="ALL_AGENTS">Todos os Agentes</SelectItem>
+                                    <SelectItem value="TODAY">Hoje</SelectItem>
+                                    <SelectItem value="LAST_7_DAYS">Últimos 7 Dias</SelectItem>
+                                    <SelectItem value="LAST_30_DAYS">Últimos 30 Dias</SelectItem>
+                                    <SelectItem value="THIS_MONTH">Mês Atual</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
-                            <Label>Período Padrão de Análise</Label>
-                            <Select
-                                value={config.defaultReportPeriod}
-                                onValueChange={(v) => setConfig({ ...config, defaultReportPeriod: v })}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="WEEKLY">Semanal</SelectItem>
-                                    <SelectItem value="MONTHLY">Mensal</SelectItem>
-                                    <SelectItem value="CUSTOM">Personalizado</SelectItem>
-                                </SelectContent>
-                            </Select>
+
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <Label>Exibir faturamento para agentes</Label>
+                                <p className="text-xs text-slate-500">Permitir que agentes vejam valores monetários nos dashboards.</p>
+                            </div>
+                            <Switch
+                                checked={config.showRevenueToAgents}
+                                onCheckedChange={(v) => setConfig({ ...config, showRevenueToAgents: v })}
+                            />
                         </div>
                     </CardContent>
                 </Card>
