@@ -19,6 +19,7 @@ import { useParams } from "next/navigation"
 import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { socketService } from "@/lib/socket-service"
+import Link from "next/link"
 
 interface Message {
     id: string | number
@@ -108,7 +109,9 @@ export default function InboxPage() {
     // Mock Data State
     // Real Conversations State
     const [conversations, setConversations] = useState<Conversation[]>([])
+    const [channels, setChannels] = useState<any[]>([])
     const [loadingConversations, setLoadingConversations] = useState(true)
+    const [loadingChannels, setLoadingChannels] = useState(true)
 
     // Fetch Conversations
     const fetchConversations = async () => {
@@ -123,8 +126,23 @@ export default function InboxPage() {
         }
     }
 
+    const fetchChannels = async () => {
+        setLoadingChannels(true)
+        try {
+            const { data } = await api.get(`/workspaces/${workspaceId}/channels`)
+            setChannels(Array.isArray(data) ? data : [])
+        } catch (error) {
+            console.error("Failed to fetch channels", error)
+        } finally {
+            setLoadingChannels(false)
+        }
+    }
+
     useEffect(() => {
-        if (workspaceId) fetchConversations()
+        if (workspaceId) {
+            fetchConversations()
+            fetchChannels()
+        }
     }, [workspaceId])
 
 
@@ -525,12 +543,26 @@ export default function InboxPage() {
     }
 
     if (!conversations || conversations.length === 0) {
+        const hasChannels = channels && channels.length > 0
         return (
             <div className="flex h-[calc(100vh-theme(spacing.4))] items-center justify-center bg-white border rounded-xl shadow-sm m-2 text-slate-500">
                 <div className="text-center">
                     <MessageSquare className="h-12 w-12 mx-auto mb-4 text-slate-200" />
-                    <p className="font-medium text-lg text-slate-400">Nenhuma conversa encontrada</p>
-                    <p className="text-sm">Conecte um canal para começar a receber mensagens.</p>
+                    <p className="font-medium text-lg text-slate-400">
+                        {hasChannels ? "Nenhuma conversa ativa" : "Nenhuma conversa encontrada"}
+                    </p>
+                    <p className="text-sm">
+                        {hasChannels
+                            ? "Aguardando novas mensagens dos seus canais conectados."
+                            : "Conecte um canal para começar a receber mensagens."}
+                    </p>
+                    {!hasChannels && (
+                        <Button asChild className="mt-4 bg-red-600 hover:bg-red-700 font-bold">
+                            <Link href={`/workspaces/${workspaceId}/integrations`}>
+                                CONECTAR CANAL
+                            </Link>
+                        </Button>
+                    )}
                 </div>
             </div>
         )
