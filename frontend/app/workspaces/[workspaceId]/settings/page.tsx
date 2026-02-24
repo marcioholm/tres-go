@@ -54,7 +54,10 @@ export default function SettingsPage({ params }: { params: { workspaceId: string
                     </CardContent>
                 </Card>
 
-                <Card className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => window.location.href = `/workspaces/${params.workspaceId}/settings/sectors`}>
+                <Card className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => {
+                    const wsId = params?.workspaceId;
+                    if (wsId) window.location.href = `/workspaces/${wsId}/settings/sectors`;
+                }}>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             Setores (Departamentos)
@@ -66,7 +69,10 @@ export default function SettingsPage({ params }: { params: { workspaceId: string
                     </CardContent>
                 </Card>
 
-                <Card className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => window.location.href = `/workspaces/${params.workspaceId}/settings/performance`}>
+                <Card className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => {
+                    const wsId = params?.workspaceId;
+                    if (wsId) window.location.href = `/workspaces/${wsId}/settings/performance`;
+                }}>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-indigo-600">
                             <BarChart3 className="h-5 w-5" />
@@ -79,7 +85,10 @@ export default function SettingsPage({ params }: { params: { workspaceId: string
                     </CardContent>
                 </Card>
 
-                <Card className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => window.location.href = `/workspaces/${params.workspaceId}/settings/tags`}>
+                <Card className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => {
+                    const wsId = params?.workspaceId;
+                    if (wsId) window.location.href = `/workspaces/${wsId}/settings/tags`;
+                }}>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             Etiquetas (Tags)

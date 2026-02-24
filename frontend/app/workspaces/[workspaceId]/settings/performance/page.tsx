@@ -55,6 +55,14 @@ export default function PerformanceSettingsPage({ params }: { params: { workspac
         )
     }
 
+    if (!config) {
+        return (
+            <div className="flex h-full items-center justify-center text-slate-500">
+                Não foi possível carregar as configurações.
+            </div>
+        )
+    }
+
     return (
         <div className="p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">

@@ -115,7 +115,7 @@ export default function DashboardLayout({
     }, [workspaceId, router]);
 
     // List of all navigation routes
-    const allRoutes = [
+    const allRoutes = workspaceId ? [
         { name: "Dashboard", id: "dashboard", href: `/workspaces/${workspaceId}`, icon: LayoutGrid },
         { name: "Inbox", id: "inbox", href: `/workspaces/${workspaceId}/inbox`, icon: MessageSquare },
         { name: "Campanhas", id: "campaigns", href: `/workspaces/${workspaceId}/campaigns`, icon: Megaphone },
@@ -125,7 +125,7 @@ export default function DashboardLayout({
         { name: "Relatórios", id: "reports", href: `/workspaces/${workspaceId}/reports`, icon: BarChart3 },
         { name: "Performance", id: "performance", href: `/workspaces/${workspaceId}/reports/performance`, icon: Award },
         { name: "Settings", id: "settings", href: `/workspaces/${workspaceId}/settings`, icon: Settings },
-    ]
+    ] : []
 
     // Estado reativo do usuário para filtragem de rotas
     const [user, setUser] = useState<any>(null)
