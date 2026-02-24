@@ -165,8 +165,9 @@ export class MessagesService {
           where: { id: message.id },
           data: { status: 'DELIVERED' },
         });
-      } catch (error) {
-        this.logger.error(`Error sending message down channel`, error);
+      } catch (error: any) {
+        const errorDetails = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+        this.logger.error(`Error sending message down channel: ${errorDetails}`);
         await this.prisma.message.update({
           where: { id: message.id },
           data: { status: 'FAILED' },
@@ -174,9 +175,6 @@ export class MessagesService {
       }
     }
 
-    if (conversation && conversation.channel) {
-      // ... (keep existing code)
-    }
 
     // Track session metrics
     if (agentId) {
@@ -211,7 +209,7 @@ export class MessagesService {
 
     const body: any = {
       messaging_product: 'whatsapp',
-      to,
+      to: to.replace(/\D/g, ''),
       recipient_type: 'individual',
     };
 
@@ -243,8 +241,7 @@ export class MessagesService {
       return res.data?.messages?.[0]?.id;
     } catch (error) {
       this.logger.error(
-        `Failed to send message via Meta API`,
-        error.response?.data || error.message,
+        `Failed to send message via Meta Meta WhatsApp API: ${error.response?.data ? JSON.stringify(error.response.data) : error.message}`,
       );
       throw error;
     }
@@ -282,16 +279,14 @@ export class MessagesService {
       // Auto-detect token type and use correct endpoint:
       // EAA (Page/System User token) → Messenger Platform → /{pageId}/messages
       // IGAAX (Instagram User token) → Instagram Business API → /{igAccountId}/messages
-      const isPageToken = token.startsWith('EAA');
-      const igAccountId = channel.igAccountId;
-      const pageId = channel.pageId;
-      const endpointId = isPageToken
-        ? pageId || igAccountId || 'me'
-        : igAccountId || pageId || 'me';
+      const isInstagram = channel.type === 'INSTAGRAM';
+      const endpointId = isInstagram
+        ? channel.igAccountId || channel.pageId || 'me'
+        : channel.pageId || 'me';
       const url = `https://graph.facebook.com/v21.0/${endpointId}/messages`;
 
       console.log(
-        `[Messages Service] Token type: ${isPageToken ? 'EAA/Page' : 'IGAAX/IG'}, Endpoint: ${endpointId}`,
+        `[Messages Service] Token type: ${token.startsWith('EAA') ? 'EAA/Page' : 'IGAAX/IG'}, Endpoint: ${endpointId}`,
       );
       console.log(`[Messages Service] URL: ${url}`);
 
