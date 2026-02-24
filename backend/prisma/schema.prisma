@@ -172,7 +172,6 @@ model Conversation {
   kanbanColumn      String?
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
-  convertedAt       DateTime?           // Adicionado para rastrear conversão direta
   channel           Channel             @relation(fields: [channelId], references: [id])
   contact           Contact             @relation(fields: [contactId], references: [id])
   workspace         Workspace           @relation(fields: [workspaceId], references: [id])
