@@ -175,11 +175,23 @@ export class WebhooksService {
       const senderPhone = body.phone;
       const senderName = body.senderName || senderPhone;
       let avatarUrl = body.photo;
-      const messageBody =
-        body.text?.message || body.message || body.caption || 'Media/Unsupported Type';
       const externalId = body.zaapId || body.messageId;
 
-      console.log(`[Z-API Webhook] Event Data: FromMe=${isFromMe}, Phone=${senderPhone}, Body=${messageBody.substring(0, 50)}`);
+      // Map Z-API media fields
+      let messageBody = body.text?.message || body.message || body.caption || '';
+      const mediaType = (body.type || 'text').toLowerCase();
+      let mediaUrl = body.audio || body.image || body.video || body.document || body.thumbnailUrl;
+
+      // Use descriptive placeholder if body is empty (non-text messages)
+      if (!messageBody) {
+        if (mediaType === 'audio' || mediaType === 'ptt') messageBody = 'Áudio';
+        else if (mediaType === 'image') messageBody = 'Imagem';
+        else if (mediaType === 'video') messageBody = 'Vídeo';
+        else if (mediaType === 'document') messageBody = body.fileName || 'Arquivo';
+        else messageBody = 'Media/Unsupported Type';
+      }
+
+      console.log(`[Z-API Webhook] Event Data: FromMe=${isFromMe}, Phone=${senderPhone}, Type=${mediaType}, Body=${messageBody.substring(0, 50)}`);
 
       if (!senderPhone || (!messageBody && !body.type)) {
         console.warn('[Z-API Webhook] WARNING: Missing phone or message content, skipping.');
@@ -241,7 +253,7 @@ export class WebhooksService {
       // Session tracking
       await this.sessionService.trackClientMessage(conversation.id).catch(e => console.error(`[Z-API Webhook] Session track failed for "${messageBody.substring(0, 20)}":`, e.message));
 
-      // 5. Create Message (with duplicate protection)
+      // 5. Create Message (with duplicate protection and media support)
       let newMessage;
       const existingMessage = externalId ? await this.prisma.message.findFirst({ where: { externalId } }) : null;
 
@@ -249,11 +261,19 @@ export class WebhooksService {
         console.warn(`[Z-API Webhook] Message ${externalId} already exists, skipping creation for "${messageBody.substring(0, 20)}"`);
         newMessage = existingMessage;
       } else {
+        const messageContent: any = { text: messageBody };
+        if (mediaUrl) {
+          messageContent.mediaUrl = mediaUrl;
+          messageContent.mediaType = mediaType === 'ptt' ? 'audio' : mediaType;
+          if (mediaType === 'ptt') messageContent.isPtt = true;
+          if (body.duration) messageContent.duration = body.duration;
+        }
+
         newMessage = await this.prisma.message.create({
           data: {
             conversationId: conversation.id,
-            content: messageBody,
-            type: (body.type || 'text').toUpperCase(),
+            content: messageContent,
+            type: mediaType.toUpperCase(),
             status: isFromMe ? 'SENT' : 'RECEIVED',
             fromAgent: isFromMe,
             externalId,
@@ -272,9 +292,11 @@ export class WebhooksService {
 
       const socketMessage = {
         ...newMessage,
-        text: typeof newMessage.content === 'string'
-          ? newMessage.content
-          : (newMessage.content as any)?.text || '',
+        text: messageBody,
+        mediaUrl: (newMessage.content as any).mediaUrl,
+        mediaType: (newMessage.content as any).mediaType,
+        isPtt: (newMessage.content as any).isPtt,
+        duration: (newMessage.content as any).duration,
       };
 
       // 6. Emit socket event
