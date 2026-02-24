@@ -78,10 +78,12 @@ export function NewConversationDialog({ open, onOpenChange, onConversationCreate
         setCreating(true)
         try {
             // 1. Find or create conversation
+            console.log(`[NewConversationDialog] Starting handleCreate. WS=${workspaceId}, Contact=${selectedContactId}, Channel=${selectedChannelId}`);
             const { data: conversation } = await api.post(`/workspaces/${workspaceId}/conversations/find-or-create`, {
                 contactId: selectedContactId,
                 channelId: selectedChannelId
             })
+            console.log(`[NewConversationDialog] Conversation found/created:`, conversation);
 
             // 2. Send initial message
             let currentUserName = "Agente";
