@@ -31,6 +31,7 @@ export default function IntegrationsPage() {
     const [loading, setLoading] = useState(false)
     const [whatsappMode, setWhatsappMode] = useState("official") // 'official' | 'zapi'
     const [channelName, setChannelName] = useState("")
+    const [phoneNumber, setPhoneNumber] = useState("")
     const [error, setError] = useState<string | null>(null)
     const [channels, setChannels] = useState<any[]>([])
 
@@ -74,8 +75,8 @@ export default function IntegrationsPage() {
         setError(null)
 
         if (provider === 'whatsapp' && whatsappMode === 'zapi') {
-            if (!instanceId || !instanceToken || !clientToken || !channelName) {
-                setError("Por favor, preencha todos os campos da Z-API e o nome do canal.")
+            if (!instanceId || !instanceToken || !clientToken || !channelName || !phoneNumber) {
+                setError("Por favor, preencha todos os campos da Z-API, o nome do canal e o número.")
                 return
             }
 
@@ -83,6 +84,7 @@ export default function IntegrationsPage() {
             try {
                 const res = await api.post(`/workspaces/${workspaceId}/channels`, {
                     name: channelName,
+                    phoneNumber,
                     type: 'WHATSAPP', // Or 'ZAPI' if we want to be explicit, but WHATSAPP + config works
                     status: 'ACTIVE',
                     config: {
@@ -104,7 +106,7 @@ export default function IntegrationsPage() {
 
         // Official WhatsApp logic
         if (provider === 'whatsapp' && whatsappMode === 'official') {
-            if (!phoneNumberId || !wabaId || !accessToken || !channelName) {
+            if (!phoneNumberId || !wabaId || !accessToken || !channelName || !phoneNumber) {
                 setError("Por favor, preencha todos os campos obrigatórios.")
                 return
             }
@@ -113,6 +115,7 @@ export default function IntegrationsPage() {
             try {
                 const res = await api.post(`/workspaces/${workspaceId}/channels`, {
                     name: channelName,
+                    phoneNumber,
                     type: 'WHATSAPP',
                     status: 'ACTIVE',
                     phoneNumberId,
@@ -138,6 +141,7 @@ export default function IntegrationsPage() {
             setProvider("")
             setWhatsappMode("official")
             setChannelName("")
+            setPhoneNumber("")
             setError(null)
         }, 300)
     }
@@ -230,6 +234,10 @@ export default function IntegrationsPage() {
                                                     <Input placeholder="Ex: WhatsApp Suporte" value={channelName} onChange={e => setChannelName(e.target.value)} className="bg-white" />
                                                 </div>
                                                 <div className="space-y-2">
+                                                    <Label>Número do WhatsApp</Label>
+                                                    <Input placeholder="Ex: 5511999999999" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="bg-white" />
+                                                </div>
+                                                <div className="space-y-2">
                                                     <Label>Phone Number ID</Label>
                                                     <Input placeholder="Ex: 10593..." value={phoneNumberId} onChange={e => setPhoneNumberId(e.target.value)} className="bg-white" />
                                                 </div>
@@ -260,6 +268,10 @@ export default function IntegrationsPage() {
                                                     <div className="space-y-2">
                                                         <Label>Nome do Canal</Label>
                                                         <Input placeholder="Ex: WhatsApp Vendas" value={channelName} onChange={e => setChannelName(e.target.value)} className="bg-white" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>Número do WhatsApp</Label>
+                                                        <Input placeholder="Ex: 5511999999999" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="bg-white" />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label>Instance ID</Label>
