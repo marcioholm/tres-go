@@ -39,6 +39,11 @@ export default function IntegrationsPage() {
     const [instanceToken, setInstanceToken] = useState("")
     const [clientToken, setClientToken] = useState("")
 
+    // Meta Fields
+    const [phoneNumberId, setPhoneNumberId] = useState("")
+    const [wabaId, setWabaId] = useState("")
+    const [accessToken, setAccessToken] = useState("")
+
     useEffect(() => {
         const fetchChannels = async () => {
             setLoading(true)
@@ -97,12 +102,33 @@ export default function IntegrationsPage() {
             return
         }
 
-        // Official WhatsApp logic (placeholder for now as it uses Graph API request_code in backend)
-        setLoading(true)
-        setTimeout(() => {
-            setStep(2)
-            setLoading(false)
-        }, 2000)
+        // Official WhatsApp logic
+        if (provider === 'whatsapp' && whatsappMode === 'official') {
+            if (!phoneNumberId || !wabaId || !accessToken || !channelName) {
+                setError("Por favor, preencha todos os campos obrigatórios.")
+                return
+            }
+
+            setLoading(true)
+            try {
+                const res = await api.post(`/workspaces/${workspaceId}/channels`, {
+                    name: channelName,
+                    type: 'WHATSAPP',
+                    status: 'ACTIVE',
+                    phoneNumberId,
+                    wabaId,
+                    accessToken,
+                })
+                setChannels(prev => [...prev, res.data])
+                setStep(2)
+            } catch (err: any) {
+                console.error("Failed to connect Meta WhatsApp:", err)
+                setError(err.response?.data?.message || "Falha ao conectar via Meta")
+            } finally {
+                setLoading(false)
+            }
+            return
+        }
     }
 
     const handleClose = () => {
@@ -205,15 +231,15 @@ export default function IntegrationsPage() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label>Phone Number ID</Label>
-                                                    <Input placeholder="Ex: 10593..." className="bg-white" />
+                                                    <Input placeholder="Ex: 10593..." value={phoneNumberId} onChange={e => setPhoneNumberId(e.target.value)} className="bg-white" />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label>WABA ID (WhatsApp Business Account)</Label>
-                                                    <Input placeholder="Ex: 10293..." className="bg-white" />
+                                                    <Input placeholder="Ex: 10293..." value={wabaId} onChange={e => setWabaId(e.target.value)} className="bg-white" />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label>Access Token (Permanente)</Label>
-                                                    <Input type="password" placeholder="EAAG..." className="bg-white" />
+                                                    <Input type="password" placeholder="EAAG..." value={accessToken} onChange={e => setAccessToken(e.target.value)} className="bg-white" />
                                                 </div>
                                             </div>
                                         ) : (
