@@ -14,21 +14,30 @@ export function normalizeMessageContent(content: any): any {
             text: content,
             type: 'TEXT',
             kind: 'text',
-            body: content, // Backward compatibility for some frontend fields
+            body: content, // Backward compatibility
         };
     }
 
     // Handle object content
     if (typeof content === 'object') {
-        const text = content.text || content.body || content.caption || '';
-        const type = content.type || (content.mediaUrl ? 'MEDIA' : 'TEXT');
-        const kind = (content.kind || content.mediaType || content.type || 'text').toLowerCase();
+        const text = content.text || content.body || content.caption || (content.kind === 'text' ? '' : null);
+
+        // Determine type (TEXT, MEDIA, SYSTEM, etc.)
+        let type = content.type || (content.mediaUrl || content.url ? 'MEDIA' : 'TEXT');
+
+        // Determine kind (lowercase: text, image, audio, video, sticker, document, location, contact, etc.)
+        let kind = (content.kind || content.mediaType || content.type || 'text').toLowerCase();
+
+        // Fallback if kind is invalid or too generic
+        if (['received', 'sent', 'message', 'attachment'].includes(kind)) {
+            kind = content.mediaType || (content.mediaUrl ? 'media' : 'text');
+        }
 
         return {
             ...content,
-            text,
-            body: text, // Normalized field for text
-            type: type.toUpperCase(),
+            text: text || '',
+            body: text || '',
+            type: String(type).toUpperCase(),
             kind: kind,
             mediaUrl: content.mediaUrl || content.url || null,
             mimeType: content.mimeType || content.mimetype || null,

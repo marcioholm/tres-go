@@ -10,6 +10,7 @@ import { SessionService } from '../performance/session.service';
 import { decrypt } from '../utils/crypto.util';
 import { UploadsService } from '../uploads/uploads.service';
 import axios from 'axios';
+import { normalizeMessageContent } from '../messages/utils/message-utils';
 
 @Injectable()
 export class MetaWebhookService {
@@ -221,7 +222,7 @@ export class MetaWebhookService {
         externalId: mid,
         fromAgent: false,
         type: attachments.length > 0 ? 'ATTACHMENT' : 'TEXT',
-        content:
+        content: normalizeMessageContent(
           attachments.length > 0
             ? {
               text: text,
@@ -230,11 +231,13 @@ export class MetaWebhookService {
                 url: a.payload?.url,
               })),
             }
-            : text,
+            : text
+        ),
         status: 'SENT',
         createdAt: new Date(event.timestamp),
       },
     });
+    console.log(`[Meta Webhook] SUCCESS: Message created. ID=${message.id}, ExtID=${mid}, Workspace=${channel.workspaceId}, Contact=${contact.id}, Provider=${channel.type}`);
 
     // 5. Persistir mídia se houver anexos
     if (attachments.length > 0) {
@@ -337,7 +340,7 @@ export class MetaWebhookService {
         fromAgent: true,
         senderName: 'Celular',
         type: 'TEXT',
-        content: text,
+        content: normalizeMessageContent(text),
         status: 'DELIVERED',
         createdAt: new Date(event.timestamp), // timestamp já vem em ms para IG/Messenger
       },
@@ -380,7 +383,10 @@ export class MetaWebhookService {
           externalId: msg.id,
           fromAgent: false,
           type: (msg.type || 'TEXT').toUpperCase(),
-          content: msg.text?.body || msg.caption || '',
+          content: normalizeMessageContent({
+            text: msg.text?.body || msg.caption || '',
+            mediaType: msg.type
+          }),
           status: 'SENT',
           createdAt: new Date(parseInt(msg.timestamp) * 1000),
         },
@@ -439,32 +445,41 @@ export class MetaWebhookService {
       if (!attachment.payload?.url) continue;
 
       try {
+        console.log(`[Meta Webhook] Persisting Meta media for msg ${messageId}: ${attachment.payload.url}`);
         const response = await axios.get(attachment.payload.url, {
           responseType: 'arraybuffer',
           headers: { Authorization: `Bearer ${token}` }
         });
 
         const buffer = Buffer.from(response.data, 'binary');
-        const filename = `attachment-${Date.now()}`;
+        const mimeType = response.headers['content-type'] || 'application/octet-stream';
+        const filename = `meta-${Date.now()}`;
+
         const upload = await this.uploadsService.uploadFromBuffer(
           buffer,
           filename,
-          response.headers['content-type'] || 'application/octet-stream',
+          mimeType,
           channel.workspaceId,
           'SYSTEM'
         );
 
+        const currentMsg = await this.prisma.message.findUnique({ where: { id: messageId } });
+        if (!currentMsg) continue;
+
+        const currentContent = typeof currentMsg.content === 'object' ? currentMsg.content as any : { text: String(currentMsg.content) };
+
         await this.prisma.message.update({
           where: { id: messageId },
           data: {
-            content: {
-              ...(typeof (await this.prisma.message.findUnique({ where: { id: messageId } })).content === 'object'
-                ? (await this.prisma.message.findUnique({ where: { id: messageId } })).content as any
-                : { text: '' }),
-              mediaUrl: upload.url
-            }
+            content: normalizeMessageContent({
+              ...currentContent,
+              mediaUrl: upload.url,
+              mimeType: mimeType,
+              kind: attachment.type || currentContent.kind
+            })
           }
         });
+        console.log(`[Meta Webhook] Meta media persisted successfuly: ${upload.url}`);
       } catch (e) {
         console.error(`[Meta Webhook] Failed to persist attachment:`, e.message);
       }
@@ -478,12 +493,17 @@ export class MetaWebhookService {
     try {
       // 1. Get media URL
       const metaUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
+      console.log(`[Meta Webhook] Fetching WA media metadata: ${metaUrl}`);
       const metadataRes = await axios.get(metaUrl, { headers: { Authorization: `Bearer ${token}` } });
       const downloadUrl = metadataRes.data.url;
 
-      if (!downloadUrl) return;
+      if (!downloadUrl) {
+        console.warn(`[Meta Webhook] No download URL found for WA media ${mediaId}`);
+        return;
+      }
 
       // 2. Download content
+      console.log(`[Meta Webhook] Downloading WA media from: ${downloadUrl}`);
       const mediaRes = await axios.get(downloadUrl, {
         responseType: 'arraybuffer',
         headers: { Authorization: `Bearer ${token}` }
@@ -491,27 +511,35 @@ export class MetaWebhookService {
 
       // 3. Save to local storage
       const buffer = Buffer.from(mediaRes.data, 'binary');
+      const mimeType = mediaRes.headers['content-type'] || 'image/jpeg';
       const filename = `wa-${type.toLowerCase()}-${Date.now()}`;
       const upload = await this.uploadsService.uploadFromBuffer(
         buffer,
         filename,
-        mediaRes.headers['content-type'] || 'image/jpeg',
+        mimeType,
         channel.workspaceId,
         'SYSTEM',
         { asPtt: type === 'AUDIO' }
       );
 
       // 4. Update message content
+      const currentMsg = await this.prisma.message.findUnique({ where: { id: messageId } });
+      if (!currentMsg) return;
+
+      const currentContent = typeof currentMsg.content === 'object' ? currentMsg.content as any : { text: String(currentMsg.content) };
+
       await this.prisma.message.update({
         where: { id: messageId },
         data: {
-          content: {
-            body: (await this.prisma.message.findUnique({ where: { id: messageId } })).content as string || '',
+          content: normalizeMessageContent({
+            ...currentContent,
             mediaUrl: upload.url,
-            mediaType: type.toLowerCase()
-          }
+            mediaType: type.toLowerCase(),
+            mimeType: mimeType
+          })
         }
       });
+      console.log(`[Meta Webhook] WA media persisted successfuly: ${upload.url}`);
     } catch (e) {
       console.error(`[Meta Webhook] Failed to persist WA media ${mediaId}:`, e.message);
     }

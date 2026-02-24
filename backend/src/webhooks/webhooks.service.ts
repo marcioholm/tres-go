@@ -151,14 +151,7 @@ export class WebhooksService {
     try {
       // 0. Filter non-message events
       const eventType = (body.type || '').toLowerCase();
-      const ignoredTypes = ['messagestatuscallback', 'messagestatusreceived', 'disconnected', 'connected', 'status-instance'];
-
-      if (ignoredTypes.includes(eventType)) {
-        console.log(`[Z-API Webhook] Skipping non-message event type: ${eventType}`);
-        return;
-      }
-
-      console.log(`[Z-API Webhook] START processing for instance ${instanceId} (Type: ${eventType})`);
+      console.log(`[Z-API Webhook] Incoming event: Provider=Z-API, Instance=${instanceId}, Type=${eventType}, Payload=${JSON.stringify(body)}`);
 
       // 1. Find Workspace by Instance ID
       const channels = await this.prisma.channel.findMany({
@@ -330,6 +323,33 @@ export class WebhooksService {
           }
         });
       } else {
+        if (mediaUrl) {
+          try {
+            console.log(`[Z-API Webhook] Persisting media for msg ${externalId}: ${mediaUrl}`);
+            const response = await axios.get(mediaUrl, {
+              responseType: 'arraybuffer',
+              timeout: 10000
+            });
+            const buffer = Buffer.from(response.data, 'binary');
+            const mimeType = response.headers['content-type'] || (mediaType === 'audio' ? 'audio/ogg' : 'application/octet-stream');
+
+            const upload = await this.uploadsService.uploadFromBuffer(
+              buffer,
+              body.fileName || `zapi-${mediaType}-${Date.now()}`,
+              mimeType,
+              workspaceId,
+              'SYSTEM',
+              { asPtt: mediaType === 'audio' || body.isPtt }
+            );
+
+            mediaUrl = upload.url;
+            console.log(`[Z-API Webhook] Media persisted successfully: ${mediaUrl}`);
+          } catch (err) {
+            console.error(`[Z-API Webhook] Media persistence failed for ${mediaUrl}:`, err.message);
+            // We keep the original URL if persistence fails
+          }
+        }
+
         const rawContent: any = { text: messageBody };
         if (mediaUrl) {
           rawContent.mediaUrl = mediaUrl;
@@ -350,7 +370,7 @@ export class WebhooksService {
             externalId,
           },
         });
-        console.log(`[Z-API Webhook] SUCCESS: Message ${newMessage.id} stored for "${messageBody.substring(0, 20)}"`);
+        console.log(`[Z-API Webhook] SUCCESS: Message created. ID=${newMessage.id}, ExtID=${externalId}, Workspace=${workspaceId}, Contact=${dbContact.id}, Type=${messageContent.type}`);
       }
 
       // Detect keywords
