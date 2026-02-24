@@ -28,7 +28,7 @@ interface Message {
     fromMe: boolean
     isSystem?: boolean
     mediaUrl?: string
-    mediaType?: 'image' | 'video' | 'audio' | 'document'
+    mediaType?: 'image' | 'video' | 'audio' | 'document' | 'sticker'
     isInternal?: boolean
     isScheduled?: boolean
     scheduledTo?: Date
@@ -37,6 +37,7 @@ interface Message {
     waveform?: number[]
     senderName?: string
     status?: string // 'PENDING', 'SENT', 'DELIVERED', 'FAILED'
+    content?: any // Raw content from API
 }
 
 interface Sector {
