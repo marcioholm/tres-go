@@ -1,6 +1,6 @@
 export class SendMessageDto {
   conversationId: string;
-  type: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT';
+  type: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT' | 'STICKER';
   text?: string;
   mediaUrl?: string;
   caption?: string;

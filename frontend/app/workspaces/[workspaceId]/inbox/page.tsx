@@ -192,9 +192,19 @@ export default function InboxPage() {
 
                 const conv = prev[idx]
 
+                let content: any = {};
+                try {
+                    content = typeof data.message.content === 'string' ? JSON.parse(data.message.content) : data.message.content || {};
+                } catch (e) { console.error("Error parsing message content", e); }
+
                 const mappedMessage: Message = {
                     ...data.message,
-                    text: data.message.text || (data.message as any).content?.text || (data.message as any).content?.body || (data.message as any).content || '',
+                    text: data.message.text || content.text || content.body || '',
+                    mediaUrl: data.message.mediaUrl || content.mediaUrl,
+                    mediaType: (data.message.mediaType || content.mediaType || '').toLowerCase() as any,
+                    isPtt: data.message.isPtt || content.isPtt,
+                    duration: data.message.duration || content.duration,
+                    waveform: data.message.waveform || content.waveform,
                     fromMe: isFromMe,
                     time: data.message.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 }
@@ -303,12 +313,24 @@ export default function InboxPage() {
                     if (c.id === activeChatId) {
                         return {
                             ...c,
-                            messages: (data.messages || []).map((m: any) => ({
-                                ...m,
-                                text: m.text || (typeof m.content === 'string' ? m.content : m.content?.text || m.content?.body || ''),
-                                time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                                fromMe: m.fromAgent
-                            })).sort((a: any, b: any) => {
+                            messages: (data.messages || []).map((m: any) => {
+                                let content: any = {};
+                                try {
+                                    content = typeof m.content === 'string' ? JSON.parse(m.content) : m.content || {};
+                                } catch (e) { console.error("Error parsing history content", e); }
+
+                                return {
+                                    ...m,
+                                    text: m.text || content.text || content.body || '',
+                                    mediaUrl: m.mediaUrl || content.mediaUrl,
+                                    mediaType: (m.mediaType || content.mediaType || '').toLowerCase(),
+                                    isPtt: m.isPtt || content.isPtt,
+                                    duration: m.duration || content.duration,
+                                    waveform: m.waveform || content.waveform,
+                                    time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                    fromMe: m.fromAgent
+                                };
+                            }).sort((a: any, b: any) => {
                                 const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
                                 const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
                                 return ta - tb
@@ -850,6 +872,9 @@ export default function InboxPage() {
                                                 <div className="mb-2 rounded-lg overflow-hidden">
                                                     {msg.mediaType === 'image' && (
                                                         <img src={msg.mediaUrl} alt="Attachment" className="max-w-full h-auto object-cover max-h-[300px]" />
+                                                    )}
+                                                    {msg.mediaType === 'sticker' && (
+                                                        <img src={msg.mediaUrl} alt="Sticker" className="max-w-[150px] h-[150px] object-contain" />
                                                     )}
                                                     {msg.mediaType === 'video' && (
                                                         <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px]" />

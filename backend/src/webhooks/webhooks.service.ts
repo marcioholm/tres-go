@@ -197,21 +197,22 @@ export class WebhooksService {
       let messageBody = body.text?.message || body.message || body.caption || '';
       const mediaType = (body.type || 'text').toLowerCase();
       // Expanded media mapping
-      let mediaUrl = body.audio || body.image || body.video || body.document || body.thumbnailUrl || body.url || body.link;
+      let mediaUrl = body.audio || body.image || body.video || body.document ||
+        body.sticker || body.thumbnailUrl || body.url || body.link || body.file;
 
       // Use descriptive placeholder if body is empty (non-text messages)
       if (!messageBody) {
         if (mediaType === 'audio' || mediaType === 'ptt') messageBody = 'Áudio';
         else if (mediaType === 'image') messageBody = 'Imagem';
         else if (mediaType === 'video') messageBody = 'Vídeo';
-        else if (mediaType === 'document') messageBody = body.fileName || 'Arquivo';
+        else if (mediaType === 'sticker') messageBody = 'Figurinha';
+        else if (mediaType === 'document' || mediaType === 'file') messageBody = body.fileName || 'Arquivo';
         else if (mediaType === 'location') messageBody = 'Localização';
         else if (mediaType === 'contact') messageBody = 'Contato';
-        else if (mediaType === 'sticker') messageBody = 'Figurinha';
         else messageBody = 'Media/Unsupported Type';
       }
 
-      console.log(`[Z-API Webhook] Event Data: RawPhone=${rawPhone}, CleanPhone=${senderPhone}, Type=${mediaType}, Body=${messageBody.substring(0, 50)}`);
+      console.log(`[Z-API Webhook] Event Data: RawPhone=${rawPhone}, CleanPhone=${senderPhone}, EventType=${eventType}, BodyType=${mediaType}, HasMedia=${!!mediaUrl}, Body=${messageBody.substring(0, 50)}`);
 
       if (!senderPhone || (!messageBody && !body.type)) {
         console.warn('[Z-API Webhook] WARNING: Missing phone or message content, skipping.');

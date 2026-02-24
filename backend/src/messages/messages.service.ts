@@ -92,7 +92,7 @@ export class MessagesService {
           (dbContent.mediaUrl
             ? dbContent.isPtt
               ? 'AUDIO'
-              : 'DOCUMENT'
+              : (data.type || 'DOCUMENT')
             : 'TEXT'),
         content: dbContent,
         fromAgent: true,
@@ -377,6 +377,9 @@ export class MessagesService {
     } else if (dto.type === 'VIDEO') {
       endpoint = '/send-video';
       body.video = dbContent.mediaUrl;
+    } else if (dto.type === 'STICKER') {
+      endpoint = '/send-sticker';
+      body.sticker = dbContent.mediaUrl;
     } else if (dto.type === 'DOCUMENT') {
       endpoint = '/send-document';
       body.document = dbContent.mediaUrl;
