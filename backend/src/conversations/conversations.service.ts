@@ -18,7 +18,8 @@ export class ConversationsService {
 
   async create(workspaceId: string, data: any) {
     try {
-      this.logger.log(`[ConversationsService] Creating conversation for WS: ${workspaceId}, contact: ${data.contactId}. Body: ${data.messageBody?.substring(0, 20)}`);
+      const { messageBody, contactPhone, ...prismaData } = data;
+      this.logger.log(`[ConversationsService] Creating conversation for WS: ${workspaceId}, contact: ${data.contactId}. Body: ${messageBody?.substring(0, 20)}`);
 
       // Check billing limits (Conversations per month)
       const limitInfo = await this.billing.checkLimit(
@@ -30,17 +31,17 @@ export class ConversationsService {
       });
 
       // Auto-detect sector if not provided
-      let sectorId = data.sectorId;
-      if (!sectorId && data.messageBody) {
+      let sectorId = prismaData.sectorId;
+      if (!sectorId && messageBody) {
         sectorId = await this.sectorsService.findMatchingSector(
           workspaceId,
-          data.messageBody,
-          data.contactPhone,
+          messageBody,
+          contactPhone,
         );
       }
 
       // Default to "Novo Lead" column (order 0) in the sector's board
-      let kanbanColumnId = data.kanbanColumnId;
+      let kanbanColumnId = prismaData.kanbanColumnId;
       if (!kanbanColumnId && sectorId) {
         const board = await this.prisma.kanbanBoard.findFirst({
           where: { sectorId },
@@ -53,7 +54,7 @@ export class ConversationsService {
 
       const conversation = await this.prisma.conversation.create({
         data: {
-          ...data,
+          ...prismaData,
           workspaceId,
           sectorId,
           kanbanColumn: kanbanColumnId,
