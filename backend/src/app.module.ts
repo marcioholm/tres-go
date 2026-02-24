@@ -36,6 +36,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { SuperAdminModule } from './super-admin/super-admin.module';
 import { LegalModule } from './legal/legal.module';
 import { PerformanceModule } from './performance/performance.module';
+import { PipelinesModule } from './pipelines/pipelines.module';
 import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.middleware';
 
 @Module({
@@ -102,6 +103,7 @@ import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.mi
     ScheduleModule.forRoot(),
     ArchiveModule,
     LegalModule,
+    PipelinesModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

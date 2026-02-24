@@ -195,8 +195,15 @@ export default function InboxPage() {
 
                 let content: any = {};
                 try {
-                    content = typeof data.message.content === 'string' ? JSON.parse(data.message.content) : data.message.content || {};
-                } catch (e) { console.error("Error parsing message content", e); }
+                    if (typeof data.message.content === 'string') {
+                        content = JSON.parse(data.message.content);
+                    } else if (typeof data.message.content === 'object' && data.message.content !== null) {
+                        content = data.message.content;
+                    }
+                } catch (e) {
+                    console.warn("Resilient parser: content is not JSON, treating as text", e);
+                    content = { text: String(data.message.content) };
+                }
 
                 const mappedMessage: Message = {
                     ...data.message,
@@ -320,8 +327,15 @@ export default function InboxPage() {
                             messages: (data.messages || []).map((m: any) => {
                                 let content: any = {};
                                 try {
-                                    content = typeof m.content === 'string' ? JSON.parse(m.content) : m.content || {};
-                                } catch (e) { console.error("Error parsing history content", e); }
+                                    if (typeof m.content === 'string') {
+                                        content = JSON.parse(m.content);
+                                    } else if (typeof m.content === 'object' && m.content !== null) {
+                                        content = m.content;
+                                    }
+                                } catch (e) {
+                                    console.warn("Resilient parser: content is not JSON, treating as text", e);
+                                    content = { text: String(m.content) };
+                                }
 
                                 return {
                                     ...m,
@@ -900,6 +914,12 @@ export default function InboxPage() {
                                                         <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
                                                             <Paperclip className="h-5 w-5" />
                                                             <span className="underline">Ver Documento</span>
+                                                        </a>
+                                                    )}
+                                                    {msg.mediaUrl && !['image', 'sticker', 'video', 'audio', 'document'].includes(msg.mediaType || '') && (
+                                                        <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
+                                                            <Paperclip className="h-5 w-5" />
+                                                            <span className="underline">Baixar Arquivo</span>
                                                         </a>
                                                     )}
                                                 </div>

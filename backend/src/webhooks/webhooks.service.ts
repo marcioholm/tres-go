@@ -9,6 +9,8 @@ import { UploadsService } from '../uploads/uploads.service';
 import axios from 'axios';
 
 
+import { normalizeMessageContent } from '../messages/utils/message-utils';
+
 @Injectable()
 export class WebhooksService {
   constructor(
@@ -322,23 +324,27 @@ export class WebhooksService {
           where: { id: existingMessage.id },
           data: {
             externalId: externalId || existingMessage.externalId,
-            status: 'SENT'
+            status: 'SENT',
+            // Also ensure content is normalized if it was a legacy string
+            content: normalizeMessageContent(existingMessage.content)
           }
         });
       } else {
-        const messageContent: any = { text: messageBody };
+        const rawContent: any = { text: messageBody };
         if (mediaUrl) {
-          messageContent.mediaUrl = mediaUrl;
-          messageContent.mediaType = mediaType === 'ptt' ? 'audio' : mediaType;
-          if (mediaType === 'ptt') messageContent.isPtt = true;
-          if (body.duration) messageContent.duration = body.duration;
+          rawContent.mediaUrl = mediaUrl;
+          rawContent.mediaType = mediaType === 'ptt' ? 'audio' : mediaType;
+          if (mediaType === 'ptt') rawContent.isPtt = true;
+          if (body.duration) rawContent.duration = body.duration;
         }
+
+        const messageContent = normalizeMessageContent(rawContent);
 
         newMessage = await this.prisma.message.create({
           data: {
             conversationId: conversation.id,
             content: messageContent,
-            type: mediaType.toUpperCase(),
+            type: (messageContent.type || mediaType).toUpperCase(),
             status: isFromMe ? 'SENT' : 'RECEIVED',
             fromAgent: isFromMe,
             externalId,

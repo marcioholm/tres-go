@@ -4,6 +4,7 @@ import { SectorsService } from '../sectors/sectors.service';
 import { AppGateway } from '../gateway/app.gateway';
 import { BillingService } from '../billing/billing.service';
 import { SessionService } from '../performance/session.service';
+import { normalizeMessageContent } from '../messages/utils/message-utils';
 
 @Injectable()
 export class ConversationsService {
@@ -116,13 +117,14 @@ export class ConversationsService {
             : c?.phone
               ? c.phone
               : c?.externalId || 'Sem nome',
-        messages: conv.messages.map((m) => ({
-          ...m,
-          text:
-            typeof m.content === 'string'
-              ? m.content
-              : (m.content as any)?.text || (m.content as any)?.body || '',
-        })),
+        messages: conv.messages.map((m) => {
+          const normalizedContent = normalizeMessageContent(m.content);
+          return {
+            ...m,
+            content: normalizedContent,
+            text: normalizedContent.text,
+          };
+        }),
       };
     });
   }
@@ -144,13 +146,14 @@ export class ConversationsService {
       name:
         conversation.contact?.name || conversation.contact?.phone || 'Sem nome',
       messages: conversation.messages
-        .map((m) => ({
-          ...m,
-          text:
-            typeof m.content === 'string'
-              ? m.content
-              : (m.content as any)?.text || (m.content as any)?.body || '',
-        }))
+        .map((m) => {
+          const normalizedContent = normalizeMessageContent(m.content);
+          return {
+            ...m,
+            content: normalizedContent,
+            text: normalizedContent.text,
+          };
+        })
         .reverse(), // Show in chronological order for frontend
     };
   }
@@ -267,12 +270,11 @@ export class ConversationsService {
     });
 
     // Emit socket event via Gateway
+    const normalizedContent = normalizeMessageContent(newMessage.content);
     const socketMessage = {
       ...newMessage,
-      text:
-        typeof newMessage.content === 'string'
-          ? newMessage.content
-          : (newMessage.content as any)?.text || '',
+      content: normalizedContent,
+      text: normalizedContent.text,
     };
 
     if (updatedConversation.sectorId) {

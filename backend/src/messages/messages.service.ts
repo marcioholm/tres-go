@@ -4,6 +4,7 @@ import { SendMessageDto } from './dto/send-message.dto';
 import axios from 'axios';
 import { decrypt } from '../utils/crypto.util';
 import { SessionService } from '../performance/session.service';
+import { normalizeMessageContent } from './utils/message-utils';
 
 @Injectable()
 export class MessagesService {
@@ -57,7 +58,10 @@ export class MessagesService {
       }
     }
 
-    return messages;
+    return messages.map(msg => ({
+      ...msg,
+      content: normalizeMessageContent(msg.content)
+    }));
   }
 
   async create(
@@ -83,18 +87,20 @@ export class MessagesService {
       }
     }
 
+    const finalContent = normalizeMessageContent(dbContent);
+
     // 1. Save to DB
     const message = await this.prisma.message.create({
       data: {
         conversationId: data.conversationId,
         type:
           data.type ||
-          (dbContent.mediaUrl
-            ? dbContent.isPtt
+          (finalContent.mediaUrl
+            ? finalContent.isPtt
               ? 'AUDIO'
               : (data.type || 'DOCUMENT')
             : 'TEXT'),
-        content: dbContent,
+        content: finalContent,
         fromAgent: true,
         senderName,
         status: 'PENDING',
