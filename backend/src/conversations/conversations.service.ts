@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SectorsService } from '../sectors/sectors.service';
 import { AppGateway } from '../gateway/app.gateway';
@@ -7,6 +7,7 @@ import { SessionService } from '../performance/session.service';
 
 @Injectable()
 export class ConversationsService {
+  private readonly logger = new Logger(ConversationsService.name);
   constructor(
     private prisma: PrismaService,
     private sectorsService: SectorsService,
@@ -16,58 +17,65 @@ export class ConversationsService {
   ) { }
 
   async create(workspaceId: string, data: any) {
-    // Check billing limits (Conversations per month)
-    const limitInfo = await this.billing.checkLimit(
-      workspaceId,
-      'conversations',
-    );
-    if (!limitInfo.allowed) {
-      throw new Error(
-        `Limite de conversas mensais (${limitInfo.limit}) atingido para o seu plano.`,
-      );
-    }
+    try {
+      this.logger.log(`[ConversationsService] Creating conversation for workspace: ${workspaceId}, contact: ${data.contactId}`);
 
-    // Auto-detect sector if not provided
-    let sectorId = data.sectorId;
-    if (!sectorId && data.messageBody) {
-      sectorId = await this.sectorsService.findMatchingSector(
+      // Check billing limits (Conversations per month)
+      const limitInfo = await this.billing.checkLimit(
         workspaceId,
-        data.messageBody,
-        data.contactPhone,
+        'conversations',
       );
-    }
-
-    // Default to "Novo Lead" column (order 0) in the sector's board
-    let kanbanColumnId = data.kanbanColumnId;
-    if (!kanbanColumnId && sectorId) {
-      const board = await this.prisma.kanbanBoard.findFirst({
-        where: { sectorId },
-        include: { columns: { orderBy: { order: 'asc' }, take: 1 } },
-      });
-      if (board && board.columns.length > 0) {
-        kanbanColumnId = board.columns[0].id;
+      if (!limitInfo.allowed) {
+        throw new Error(
+          `Limite de conversas mensais (${limitInfo.limit}) atingido para o seu plano.`,
+        );
       }
+
+      // Auto-detect sector if not provided
+      let sectorId = data.sectorId;
+      if (!sectorId && data.messageBody) {
+        sectorId = await this.sectorsService.findMatchingSector(
+          workspaceId,
+          data.messageBody,
+          data.contactPhone,
+        );
+      }
+
+      // Default to "Novo Lead" column (order 0) in the sector's board
+      let kanbanColumnId = data.kanbanColumnId;
+      if (!kanbanColumnId && sectorId) {
+        const board = await this.prisma.kanbanBoard.findFirst({
+          where: { sectorId },
+          include: { columns: { orderBy: { order: 'asc' }, take: 1 } },
+        });
+        if (board && board.columns.length > 0) {
+          kanbanColumnId = board.columns[0].id;
+        }
+      }
+
+      const conversation = await this.prisma.conversation.create({
+        data: {
+          ...data,
+          workspaceId,
+          sectorId,
+          kanbanColumn: kanbanColumnId,
+          status: 'OPEN',
+        },
+        include: { sector: true, contact: true, channel: true },
+      });
+
+      console.log('Emitindo new_conversation para workspace:', workspaceId);
+      this.gateway.emitToWorkspace(workspaceId, 'new_conversation', conversation);
+
+      if (data.agentId) {
+        await this.sessionService.startSession(conversation.id, data.agentId);
+      }
+
+      return conversation;
+    } catch (error) {
+      this.logger.error(`[ConversationsService] Error creating conversation:`, error);
+      throw error;
     }
-
-    const conversation = await this.prisma.conversation.create({
-      data: {
-        ...data,
-        workspaceId,
-        sectorId,
-        kanbanColumn: kanbanColumnId, // Use ID relationship ideally, but schema uses String?
-        status: 'OPEN',
-      },
-      include: { sector: true, contact: true, channel: true },
-    });
-
-    console.log('Emitindo new_conversation para workspace:', workspaceId);
-    this.gateway.emitToWorkspace(workspaceId, 'new_conversation', conversation);
-
-    if (data.agentId) {
-      await this.sessionService.startSession(conversation.id, data.agentId);
-    }
-
-    return conversation;
   }
 
   async findAll(workspaceId: string, params: any) {
