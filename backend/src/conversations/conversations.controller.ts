@@ -8,6 +8,7 @@ import {
   Body,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ConversationsService } from './conversations.service';
 import { JwtAuthGuard } from '../auth/jwt.strategy';
@@ -21,7 +22,9 @@ export class ConversationsController {
   findOrCreate(
     @Param('workspaceId') workspaceId: string,
     @Body() body: { channelId: string; contactId: string },
+    @Req() req: any,
   ) {
+    console.log(`[ConversationsController] findOrCreate call — Workspace: ${workspaceId}, User: ${req.user?.id || 'NOT_AUTH'}`);
     return this.conversationsService.findOrCreate(
       workspaceId,
       body.channelId,
