@@ -22,6 +22,12 @@ export class WebhooksService {
     return mode === 'subscribe' && token === 'northway_omni_token';
   }
 
+  async findChannelByPhoneId(phoneNumberId: string) {
+    return this.prisma.channel.findFirst({
+      where: { phoneNumberId },
+    });
+  }
+
   async processWhatsappMessage(workspaceId: string, body: any) {
     // 1. Extract data (simplified for brevity, assumes standard WhatsApp Webhook structure)
     const entry = body.entry?.[0];

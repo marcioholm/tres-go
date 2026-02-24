@@ -13,7 +13,7 @@ import { WebhooksService } from './webhooks.service';
 
 @Controller('webhooks')
 export class WebhooksController {
-  constructor(private readonly webhooksService: WebhooksService) {}
+  constructor(private readonly webhooksService: WebhooksService) { }
 
   @Get('whatsapp/:phoneNumberId')
   verifyWhatsapp(
@@ -39,13 +39,18 @@ export class WebhooksController {
   ) {
     console.log('Received WhatsApp message for', phoneNumberId);
 
-    // TODO: Resolve workspaceId from phoneNumberId
-    const workspaceId = 'default-workspace-id'; // Placeholder
+    // Dynamic resolution of workspaceId
+    const channel = await this.webhooksService.findChannelByPhoneId(phoneNumberId);
+    if (!channel) {
+      console.error(`No channel found for WhatsApp Phone ID ${phoneNumberId}`);
+      return res.status(HttpStatus.NOT_FOUND).send('CHANNEL_NOT_FOUND');
+    }
 
-    await this.webhooksService.processWhatsappMessage(workspaceId, body);
+    await this.webhooksService.processWhatsappMessage(channel.workspaceId, body);
     return res.status(HttpStatus.OK).send('EVENT_RECEIVED');
   }
 
+  @Post('zapi/:instanceId')
   async handleZapiMessage(
     @Param('instanceId') instanceId: string,
     @Body() body: any,
