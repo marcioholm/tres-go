@@ -98,7 +98,7 @@ export class UploadsService {
       fs.writeFileSync(newPath, fileBuffer);
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+    const backendUrl = process.env.BACKEND_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
     const finalUrl = `${backendUrl}/uploads/${finalFilename}`;
 
     let uploadRecord = null;

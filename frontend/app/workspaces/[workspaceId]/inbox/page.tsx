@@ -902,7 +902,7 @@ export default function InboxPage() {
                                                 </div>
                                             )}
 
-                                            <p className="whitespace-pre-wrap">{msg?.text || ""}</p>
+                                            <p className="whitespace-pre-wrap">{msg?.text === 'Media/Unsupported Type' ? "" : (msg?.text || "")}</p>
                                             <div className="flex items-center gap-1 mt-1 justify-end">
                                                 <span className={`text-[10px] ${msg?.fromMe ? 'text-white/80' : 'text-slate-400'} ${msg?.isInternal ? 'text-yellow-700' : ''}`}>
                                                     {msg?.time || ""}

@@ -41,7 +41,7 @@ import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.mi
 @Module({
   imports: [
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
+      rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
     }),
     BullModule.forRootAsync({

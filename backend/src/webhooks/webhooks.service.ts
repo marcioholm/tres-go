@@ -195,10 +195,25 @@ export class WebhooksService {
 
       // Map Z-API media fields
       let messageBody = body.text?.message || body.message || body.caption || '';
-      const mediaType = (body.type || 'text').toLowerCase();
-      // Expanded media mapping
-      let mediaUrl = body.audio || body.image || body.video || body.document ||
-        body.sticker || body.thumbnailUrl || body.url || body.link || body.file;
+
+      // Detect media type based on present fields
+      let mediaType = 'text';
+      let mediaUrl = '';
+
+      if (body.audio) { mediaUrl = body.audio; mediaType = 'audio'; }
+      else if (body.image) { mediaUrl = body.image; mediaType = 'image'; }
+      else if (body.video) { mediaUrl = body.video; mediaType = 'video'; }
+      else if (body.sticker) { mediaUrl = body.sticker; mediaType = 'sticker'; }
+      else if (body.document) { mediaUrl = body.document; mediaType = 'document'; }
+      else if (body.file) { mediaUrl = body.file; mediaType = 'file'; }
+      else if (body.location) { mediaType = 'location'; }
+      else if (body.contact) { mediaType = 'contact'; }
+      else if (body.type) {
+        const t = body.type.toLowerCase();
+        if (!['received', 'sent', 'message'].includes(t)) {
+          mediaType = t;
+        }
+      }
 
       // Use descriptive placeholder if body is empty (non-text messages)
       if (!messageBody) {
@@ -209,7 +224,8 @@ export class WebhooksService {
         else if (mediaType === 'document' || mediaType === 'file') messageBody = body.fileName || 'Arquivo';
         else if (mediaType === 'location') messageBody = 'Localização';
         else if (mediaType === 'contact') messageBody = 'Contato';
-        else messageBody = 'Media/Unsupported Type';
+        else if (mediaUrl) messageBody = 'Arquivo de Mídia';
+        else messageBody = 'Mensagem';
       }
 
       console.log(`[Z-API Webhook] Event Data: RawPhone=${rawPhone}, CleanPhone=${senderPhone}, EventType=${eventType}, BodyType=${mediaType}, HasMedia=${!!mediaUrl}, Body=${messageBody.substring(0, 50)}`);
