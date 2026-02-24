@@ -185,7 +185,6 @@ model Conversation {
   sessions          ConversationSession[]
   conversion        ConversationConversion?
   pipelineStages    ConversationPipelineStage[]
-  convertedAt       DateTime?
 }
 
 // ── Message: adicionar nota interna

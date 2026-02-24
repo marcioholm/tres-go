@@ -86,10 +86,13 @@ export class PipelineService {
         const stage = await this.prisma.pipelineStage.findUnique({ where: { id: stageId } });
 
         if (stage?.isConversion) {
+            // TODO: Link to ConversationConversion record instead of phantom field
+            /*
             await this.prisma.conversation.update({
                 where: { id: conversationId },
                 data: { convertedAt: new Date() },
             });
+            */
         }
 
         return stage;

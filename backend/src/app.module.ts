@@ -47,8 +47,11 @@ import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.mi
     BullModule.forRootAsync({
       useFactory: () => {
         const redisPort = parseInt(process.env.REDIS_PORT || '6379');
+        const redisHost = process.env.REDIS_HOST || 'localhost';
+        console.log(`[Redis Config] Connecting to ${redisHost}:${redisPort}. TLS: ${process.env.REDIS_TLS === 'true' || redisPort === 6380}`);
+
         const connection: any = {
-          host: process.env.REDIS_HOST,
+          host: redisHost,
           port: redisPort,
           password: process.env.REDIS_PASSWORD,
           maxRetriesPerRequest: null,
