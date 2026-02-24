@@ -17,6 +17,18 @@ import { JwtAuthGuard } from '../auth/jwt.strategy';
 export class ConversationsController {
   constructor(private readonly conversationsService: ConversationsService) { }
 
+  @Post('find-or-create')
+  findOrCreate(
+    @Param('workspaceId') workspaceId: string,
+    @Body() body: { channelId: string; contactId: string },
+  ) {
+    return this.conversationsService.findOrCreate(
+      workspaceId,
+      body.channelId,
+      body.contactId,
+    );
+  }
+
   @Get()
   findAll(
     @Param('workspaceId') workspaceId: string,
@@ -95,18 +107,6 @@ export class ConversationsController {
   ) {
     // Implementation pending
     return { success: true };
-  }
-
-  @Post('find-or-create')
-  findOrCreate(
-    @Param('workspaceId') workspaceId: string,
-    @Body() body: { channelId: string; contactId: string },
-  ) {
-    return this.conversationsService.findOrCreate(
-      workspaceId,
-      body.channelId,
-      body.contactId,
-    );
   }
 
   @Delete(':id/tags/:tagId')
