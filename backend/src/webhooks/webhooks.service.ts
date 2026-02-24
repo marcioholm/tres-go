@@ -147,7 +147,16 @@ export class WebhooksService {
 
   async processZapiMessage(instanceId: string, body: any) {
     try {
-      console.log(`[Z-API Webhook] START processing for instance ${instanceId}`);
+      // 0. Filter non-message events
+      const eventType = (body.type || '').toLowerCase();
+      const ignoredTypes = ['messagestatuscallback', 'messagestatusreceived', 'disconnected', 'connected', 'status-instance'];
+
+      if (ignoredTypes.includes(eventType)) {
+        console.log(`[Z-API Webhook] Skipping non-message event type: ${eventType}`);
+        return;
+      }
+
+      console.log(`[Z-API Webhook] START processing for instance ${instanceId} (Type: ${eventType})`);
 
       // 1. Find Workspace by Instance ID
       const channels = await this.prisma.channel.findMany({
