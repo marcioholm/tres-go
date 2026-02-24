@@ -46,28 +46,33 @@ import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.mi
     }),
     BullModule.forRootAsync({
       useFactory: () => {
+        const redisUrl = process.env.REDIS_URL;
         const redisPort = parseInt(process.env.REDIS_PORT || '6379');
         const redisHost = process.env.REDIS_HOST || 'localhost';
-        console.log(`[Redis Config] Connecting to ${redisHost}:${redisPort}. TLS: ${process.env.REDIS_TLS === 'true' || redisPort === 6380}`);
+        const useTls = process.env.REDIS_TLS === 'true' || redisPort === 6380 || (redisUrl && redisUrl.startsWith('rediss://'));
 
-        const connection: any = {
+        console.log(`[Redis Config] Connecting via ${redisUrl ? 'URL' : 'Host:Port'}. TLS: ${useTls}`);
+
+        const connection: any = redisUrl ? { url: redisUrl } : {
           host: redisHost,
           port: redisPort,
           password: process.env.REDIS_PASSWORD,
-          maxRetriesPerRequest: null,
-          enableOfflineQueue: false,
-          lazyConnect: true,
         };
-        // Auto-enable TLS for port 6380 (common for Upstash/managed Redis)
-        if (process.env.REDIS_TLS === 'true' || redisPort === 6380) {
+
+        connection.maxRetriesPerRequest = null;
+        connection.enableOfflineQueue = false;
+        connection.lazyConnect = true;
+
+        if (useTls) {
           connection.tls = { rejectUnauthorized: false };
         }
+
         return {
           connection,
           defaultJobOptions: { removeOnComplete: 50, removeOnFail: 20 },
           onClientCreated: (client) => {
             client.on('error', (err) => console.error('[Redis Error]', err));
-            client.once('ready', () => console.log('[Redis Ready] Connected to Upstash/Redis'));
+            client.once('ready', () => console.log('[Redis Ready] Connected to Redis'));
           }
         };
       },
