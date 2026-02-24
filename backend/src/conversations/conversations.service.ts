@@ -299,6 +299,7 @@ export class ConversationsService {
     channelId: string,
     contactId: string,
   ) {
+    this.logger.log(`[ConversationsService] findOrCreate called: WS=${workspaceId}, Channel=${channelId}, Contact=${contactId}`);
     try {
       let conversation = await this.prisma.conversation.findFirst({
         where: {
