@@ -291,23 +291,28 @@ export class ConversationsService {
     channelId: string,
     contactId: string,
   ) {
-    let conversation = await this.prisma.conversation.findFirst({
-      where: {
-        workspaceId,
-        channelId,
-        contactId,
-        status: 'OPEN',
-      },
-      include: { sector: true, contact: true },
-    });
-
-    if (!conversation) {
-      conversation = await this.create(workspaceId, {
-        channelId,
-        contactId,
+    try {
+      let conversation = await this.prisma.conversation.findFirst({
+        where: {
+          workspaceId,
+          channelId,
+          contactId,
+          status: 'OPEN',
+        },
+        include: { sector: true, contact: true },
       });
-    }
 
-    return conversation;
+      if (!conversation) {
+        conversation = await this.create(workspaceId, {
+          channelId,
+          contactId,
+        });
+      }
+
+      return conversation;
+    } catch (error) {
+      console.error('[ConversationsService] Error in findOrCreate:', error);
+      throw error;
+    }
   }
 }

@@ -46,15 +46,17 @@ import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.mi
     }),
     BullModule.forRootAsync({
       useFactory: () => {
+        const redisPort = parseInt(process.env.REDIS_PORT || '6380');
         const connection: any = {
           host: process.env.REDIS_HOST,
-          port: parseInt(process.env.REDIS_PORT || '6380'),
+          port: redisPort,
           password: process.env.REDIS_PASSWORD,
           maxRetriesPerRequest: null,
           enableOfflineQueue: false,
           lazyConnect: true,
         };
-        if (process.env.REDIS_TLS === 'true') {
+        // Auto-enable TLS for port 6380 (common for Upstash/managed Redis)
+        if (process.env.REDIS_TLS === 'true' || redisPort === 6380) {
           connection.tls = { rejectUnauthorized: false };
         }
         return {
