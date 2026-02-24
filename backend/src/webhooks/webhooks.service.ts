@@ -197,8 +197,11 @@ export class WebhooksService {
       let messageBody = body.text?.message || body.message || body.caption || (typeof body.text === 'string' ? body.text : '') || '';
 
       // Detect media type and URL with broad fallbacks
-      let mediaUrl = body.audio || body.image || body.video || body.document ||
+      let rawMediaUrl = body.audio || body.image || body.video || body.document ||
         body.sticker || body.thumbnailUrl || body.url || body.link || body.file;
+
+      // Flatten mediaUrl if it's an object (some Z-API payloads send {url, caption...})
+      let mediaUrl = typeof rawMediaUrl === 'object' && rawMediaUrl !== null ? (rawMediaUrl.url || rawMediaUrl.link || rawMediaUrl.file) : rawMediaUrl;
 
       let mediaType = (body.type || 'text').toLowerCase();
 
@@ -292,11 +295,36 @@ export class WebhooksService {
 
       // 5. Create Message (with duplicate protection and media support)
       let newMessage;
-      const existingMessage = externalId ? await this.prisma.message.findFirst({ where: { externalId } }) : null;
+      let existingMessage = externalId ? await this.prisma.message.findFirst({ where: { externalId } }) : null;
+
+      // If it's from me, and we didn't find by externalId, check for a PENDING message in this conversation
+      // This prevents duplicates when the webhook arrives before the API response is saved
+      if (!existingMessage && isFromMe) {
+        existingMessage = await this.prisma.message.findFirst({
+          where: {
+            conversationId: conversation.id,
+            fromAgent: true,
+            status: 'PENDING',
+            createdAt: { gte: new Date(Date.now() - 30000) } // Last 30 seconds
+          },
+          orderBy: { createdAt: 'desc' }
+        });
+        if (existingMessage) {
+          console.log(`[Z-API Webhook] Matched PENDING message ${existingMessage.id} for outbound echo`);
+        }
+      }
 
       if (existingMessage) {
-        console.warn(`[Z-API Webhook] Message ${externalId} already exists, skipping creation for "${messageBody.substring(0, 20)}"`);
-        newMessage = existingMessage;
+        console.warn(`[Z-API Webhook] Message ${externalId || existingMessage.id} already exists or matched, updating status and skipping creation`);
+
+        // Update externalId and status if it was pending
+        newMessage = await this.prisma.message.update({
+          where: { id: existingMessage.id },
+          data: {
+            externalId: externalId || existingMessage.externalId,
+            status: 'SENT'
+          }
+        });
       } else {
         const messageContent: any = { text: messageBody };
         if (mediaUrl) {

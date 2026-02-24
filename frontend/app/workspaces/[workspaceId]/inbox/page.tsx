@@ -218,6 +218,9 @@ export default function InboxPage() {
                 const isActiveConv = String(conv.id) === String(activeChatId)
                 const currentMessages = Array.isArray(conv.messages) ? conv.messages : []
                 const messageExists = currentMessages.some(m => String(m.id) === String(mappedMessage.id))
+                const updatedMessages = messageExists
+                    ? currentMessages.map(m => String(m.id) === String(mappedMessage.id) ? mappedMessage : m)
+                    : [...currentMessages, mappedMessage];
 
                 const updatedConv: Conversation = {
                     ...conv,
@@ -225,7 +228,7 @@ export default function InboxPage() {
                     channel: data.channelType ? { ...conv.channel, type: data.channelType as any, name: conv.channel?.name || 'Canal' } as any : conv.channel,
                     // If this is the open chat, don't increment unread — clear it instead
                     unread: isActiveConv ? 0 : (conv.unread || 0) + 1,
-                    messages: messageExists ? currentMessages : [...currentMessages, mappedMessage],
+                    messages: updatedMessages,
                     ...(safeContactUpdate ? {
                         name: (safeContactUpdate.name as string) || conv.name,
                         contact: {

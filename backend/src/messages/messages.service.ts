@@ -141,13 +141,25 @@ export class MessagesService {
           );
         } else if (channelProvider === 'ZAPI') {
           // Z-API WhatsApp
-          await this.sendViaZapi(
+          const externalId = await this.sendViaZapi(
             conversation.channel,
             conversation.contact.phone || '',
             data,
             dbContent,
           );
-        } else if (
+
+          if (externalId) {
+            await this.prisma.message.update({
+              where: { id: message.id },
+              data: {
+                externalId,
+                status: 'SENT'
+              }
+            });
+            this.logger.log(`[MessagesService] Message ${message.id} updated with externalId: ${externalId}`);
+          }
+        }
+        else if (
           channelProvider === 'INSTAGRAM' ||
           channelProvider === 'MESSENGER'
         ) {
