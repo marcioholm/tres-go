@@ -214,7 +214,7 @@ export class WebhooksService {
         senderName,
         avatarUrl,
       );
-      console.log(`[Z-API Webhook] Contact: ${dbContact.id} (${dbContact.name})`);
+      console.log(`[Z-API Webhook] Success: Found/Created Contact ${dbContact.id} for "${messageBody.substring(0, 20)}"`);
 
       // 4. Find/Create Conversation
       let conversation = await this.prisma.conversation.findFirst({
@@ -227,7 +227,7 @@ export class WebhooksService {
       });
 
       if (!conversation) {
-        console.log(`[Z-API Webhook] Creating new conversation for ${senderPhone}`);
+        console.log(`[Z-API Webhook] Creating NEW conversation for ${senderPhone} - "${messageBody.substring(0, 20)}"`);
         conversation = await this.conversationsService.create(workspaceId, {
           contactId: dbContact.id,
           channelId: channel.id,
@@ -236,22 +236,31 @@ export class WebhooksService {
         });
       }
 
+      console.log(`[Z-API Webhook] Using Conversation ${conversation.id} for "${messageBody.substring(0, 20)}"`);
+
       // Session tracking
-      await this.sessionService.trackClientMessage(conversation.id);
+      await this.sessionService.trackClientMessage(conversation.id).catch(e => console.error(`[Z-API Webhook] Session track failed for "${messageBody.substring(0, 20)}":`, e.message));
 
-      // 5. Create Message
-      const newMessage = await this.prisma.message.create({
-        data: {
-          conversationId: conversation.id,
-          content: messageBody,
-          type: (body.type || 'text').toUpperCase(),
-          status: isFromMe ? 'SENT' : 'RECEIVED',
-          fromAgent: isFromMe,
-          externalId,
-        },
-      });
+      // 5. Create Message (with duplicate protection)
+      let newMessage;
+      const existingMessage = externalId ? await this.prisma.message.findFirst({ where: { externalId } }) : null;
 
-      console.log(`[Z-API Webhook] SUCCESS: Message ${newMessage.id} stored (FromMe=${isFromMe})`);
+      if (existingMessage) {
+        console.warn(`[Z-API Webhook] Message ${externalId} already exists, skipping creation for "${messageBody.substring(0, 20)}"`);
+        newMessage = existingMessage;
+      } else {
+        newMessage = await this.prisma.message.create({
+          data: {
+            conversationId: conversation.id,
+            content: messageBody,
+            type: (body.type || 'text').toUpperCase(),
+            status: isFromMe ? 'SENT' : 'RECEIVED',
+            fromAgent: isFromMe,
+            externalId,
+          },
+        });
+        console.log(`[Z-API Webhook] SUCCESS: Message ${newMessage.id} stored for "${messageBody.substring(0, 20)}"`);
+      }
 
       // Detect keywords
       await this.keywordDetector.detect(
@@ -270,31 +279,25 @@ export class WebhooksService {
 
       // 6. Emit socket event
       try {
+        const emitPayload = {
+          conversationId: conversation.id,
+          channelType: 'WHATSAPP',
+          message: socketMessage,
+          contact: dbContact, // Include contact to help frontend
+        };
+
         if (conversation.sectorId) {
-          this.gateway.emitToSector(
-            workspaceId,
-            conversation.sectorId,
-            'newMessage',
-            {
-              conversationId: conversation.id,
-              channelType: 'WHATSAPP',
-              message: socketMessage,
-            },
-          );
+          this.gateway.emitToSector(workspaceId, conversation.sectorId, 'newMessage', emitPayload);
         } else {
-          this.gateway.emitToWorkspace(workspaceId, 'newMessage', {
-            conversationId: conversation.id,
-            channelType: 'WHATSAPP',
-            message: socketMessage,
-          });
+          this.gateway.emitToWorkspace(workspaceId, 'newMessage', emitPayload);
         }
-        console.log(`[Z-API Webhook] Socket emitted for workspace ${workspaceId}`);
+        console.log(`[Z-API Webhook] Socket emitted for "${messageBody.substring(0, 20)}" in WS ${workspaceId}`);
       } catch (socketErr) {
-        console.error(`[Z-API Webhook] Socket emission failed:`, socketErr.message);
+        console.error(`[Z-API Webhook] Socket emission failed for "${messageBody.substring(0, 20)}":`, socketErr.message);
       }
 
     } catch (error) {
-      console.error(`[Z-API Webhook] CRITICAL ERROR for instance ${instanceId}:`, error);
+      console.error(`[Z-API Webhook] CRITICAL ERROR for "${body?.text?.message || 'unknown'}":`, error);
     }
   }
 }
