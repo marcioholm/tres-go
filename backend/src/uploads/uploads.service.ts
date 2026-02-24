@@ -23,7 +23,7 @@ export class UploadsService {
   constructor(
     private prisma: PrismaService,
     private audioConverter: AudioConverterService,
-  ) {}
+  ) { }
 
   async uploadFile(
     file: Express.Multer.File,
@@ -31,56 +31,77 @@ export class UploadsService {
     uploadedBy: string,
     options?: { asPtt?: boolean },
   ): Promise<MediaUploadResult> {
-    const isAudio = file.mimetype.startsWith('audio/');
+    const fileBuffer = fs.readFileSync(file.path);
+    const result = await this.uploadFromBuffer(
+      fileBuffer,
+      file.originalname,
+      file.mimetype,
+      workspaceId,
+      uploadedBy,
+      options,
+    );
+
+    // Limpar arquivo temporário do multer
+    try {
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    } catch (e) { }
+
+    return result;
+  }
+
+  async uploadFromBuffer(
+    buffer: Buffer,
+    originalname: string,
+    mimetype: string,
+    workspaceId: string,
+    uploadedBy: string,
+    options?: { asPtt?: boolean },
+  ): Promise<MediaUploadResult> {
+    const isAudio = mimetype.startsWith('audio/');
     const shouldConvertToPtt = isAudio && options?.asPtt !== false;
 
-    let fileBuffer = fs.readFileSync(file.path);
-    let finalMimeType = file.mimetype;
-    let finalFilename = file.filename;
+    let fileBuffer = buffer;
+    let finalMimeType = mimetype;
+    let finalFilename = `${Date.now()}-${originalname.replace(/\s+/g, '_')}`;
     let duration = 0;
     let waveform: number[] = [];
 
     if (shouldConvertToPtt) {
       try {
-        // 1. Converter para OGG/Opus
         const conversion = await this.audioConverter.convertToOggOpus(
           fileBuffer,
-          file.mimetype,
+          mimetype,
         );
-
-        // 2. Ler o arquivo convertido
         fileBuffer = fs.readFileSync(conversion.outputPath);
         duration = conversion.duration;
         finalMimeType = 'audio/ogg; codecs=opus';
-
-        // Remove old file
-        fs.unlinkSync(file.path);
-
-        // Save new converted file into uploads destination manually
         finalFilename = `audio-${Date.now()}.ogg`;
         const newPath = path.join(process.cwd(), 'uploads', finalFilename);
         fs.writeFileSync(newPath, fileBuffer);
-
-        // 3. Limpar temp
         conversion.cleanup();
-
-        // 4. Waveform
         waveform = await this.audioConverter.extractWaveform(
           fileBuffer,
           finalMimeType,
         );
       } catch (err) {
         this.logger.error('Failed to convert audio to PTT', err);
-        // Fallback to original if conversion fails
+        // Fallback: save original buffer if conversion fails
+        const newPath = path.join(process.cwd(), 'uploads', finalFilename);
+        if (!fs.existsSync(path.dirname(newPath)))
+          fs.mkdirSync(path.dirname(newPath), { recursive: true });
+        fs.writeFileSync(newPath, fileBuffer);
       }
+    } else {
+      const newPath = path.join(process.cwd(), 'uploads', finalFilename);
+      if (!fs.existsSync(path.dirname(newPath)))
+        fs.mkdirSync(path.dirname(newPath), { recursive: true });
+      fs.writeFileSync(newPath, fileBuffer);
     }
 
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
     const finalUrl = `${backendUrl}/uploads/${finalFilename}`;
 
     let uploadRecord = null;
-
-    // Some routes might not include workspaceId if just uploading blindly
     if (workspaceId && uploadedBy) {
       uploadRecord = await this.prisma.mediaUpload.create({
         data: {

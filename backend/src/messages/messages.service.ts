@@ -193,10 +193,20 @@ export class MessagesService {
     dto: SendMessageDto,
     dbContent: any,
   ): Promise<string | undefined> {
-    const url = `https://graph.facebook.com/v19.0/${channel.phoneNumberId || process.env.META_PHONE_NUMBER_ID}/messages`;
+    const phoneNumberId = channel.phoneNumberId || process.env.META_PHONE_NUMBER_ID;
+    if (!phoneNumberId) {
+      throw new Error(`Canal ${channel.id} não tem phoneNumberId configurado`);
+    }
+
     const token = channel.accessToken
       ? decrypt(channel.accessToken)
       : process.env.META_SYSTEM_USER_TOKEN;
+
+    if (!token) {
+      throw new Error(`Canal ${channel.id} não tem accessToken configurado`);
+    }
+
+    const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
     const headers = { Authorization: `Bearer ${token}` };
 
     const body: any = {

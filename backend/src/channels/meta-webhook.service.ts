@@ -8,6 +8,8 @@ import { MessagesService } from '../messages/messages.service';
 import { AppGateway } from '../gateway/app.gateway';
 import { SessionService } from '../performance/session.service';
 import { decrypt } from '../utils/crypto.util';
+import { UploadsService } from '../uploads/uploads.service';
+import axios from 'axios';
 
 @Injectable()
 export class MetaWebhookService {
@@ -18,6 +20,7 @@ export class MetaWebhookService {
     private readonly messagesService: MessagesService,
     private readonly gateway: AppGateway,
     private readonly sessionService: SessionService,
+    private readonly uploadsService: UploadsService,
   ) { }
 
   validateSignature(rawBody: Buffer, signature: string): boolean {
@@ -233,6 +236,13 @@ export class MetaWebhookService {
       },
     });
 
+    // 5. Persistir mídia se houver anexos
+    if (attachments.length > 0) {
+      this.persistMetaMedia(channel, message.id, attachments).catch(e =>
+        console.error('[Meta Webhook] Error persisting media:', e)
+      );
+    }
+
     // Emit socket event via Gateway
     const socketMessage = {
       ...message,
@@ -376,6 +386,17 @@ export class MetaWebhookService {
         },
       });
 
+      // Persistir mídia WhatsApp
+      const hasMedia = ['IMAGE', 'VIDEO', 'AUDIO', 'DOCUMENT', 'STICKER'].includes(message.type);
+      if (hasMedia) {
+        const mediaId = msg[msg.type.toLowerCase()]?.id;
+        if (mediaId) {
+          this.persistWhatsAppMedia(channel, message.id, mediaId, msg.type).catch(e =>
+            console.error('[Meta Webhook] Error persisting WA media:', e)
+          );
+        }
+      }
+
       this.gateway.emitToWorkspace(channel.workspaceId, 'newMessage', {
         conversationId: conversation.id,
         message: {
@@ -407,5 +428,92 @@ export class MetaWebhookService {
       },
       data: { status: 'DELIVERED' },
     });
+  }
+
+  private async persistMetaMedia(channel: any, messageId: string, attachments: any[]) {
+    const encryptedToken = channel.accessToken;
+    const token = encryptedToken ? decrypt(encryptedToken) : process.env.META_SYSTEM_USER_TOKEN;
+    if (!token) return;
+
+    for (const attachment of attachments) {
+      if (!attachment.payload?.url) continue;
+
+      try {
+        const response = await axios.get(attachment.payload.url, {
+          responseType: 'arraybuffer',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const buffer = Buffer.from(response.data, 'binary');
+        const filename = `attachment-${Date.now()}`;
+        const upload = await this.uploadsService.uploadFromBuffer(
+          buffer,
+          filename,
+          response.headers['content-type'] || 'application/octet-stream',
+          channel.workspaceId,
+          'SYSTEM'
+        );
+
+        await this.prisma.message.update({
+          where: { id: messageId },
+          data: {
+            content: {
+              ...(typeof (await this.prisma.message.findUnique({ where: { id: messageId } })).content === 'object'
+                ? (await this.prisma.message.findUnique({ where: { id: messageId } })).content as any
+                : { text: '' }),
+              mediaUrl: upload.url
+            }
+          }
+        });
+      } catch (e) {
+        console.error(`[Meta Webhook] Failed to persist attachment:`, e.message);
+      }
+    }
+  }
+
+  private async persistWhatsAppMedia(channel: any, messageId: string, mediaId: string, type: string) {
+    const token = channel.accessToken ? decrypt(channel.accessToken) : process.env.META_SYSTEM_USER_TOKEN;
+    if (!token) return;
+
+    try {
+      // 1. Get media URL
+      const metaUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
+      const metadataRes = await axios.get(metaUrl, { headers: { Authorization: `Bearer ${token}` } });
+      const downloadUrl = metadataRes.data.url;
+
+      if (!downloadUrl) return;
+
+      // 2. Download content
+      const mediaRes = await axios.get(downloadUrl, {
+        responseType: 'arraybuffer',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // 3. Save to local storage
+      const buffer = Buffer.from(mediaRes.data, 'binary');
+      const filename = `wa-${type.toLowerCase()}-${Date.now()}`;
+      const upload = await this.uploadsService.uploadFromBuffer(
+        buffer,
+        filename,
+        mediaRes.headers['content-type'] || 'image/jpeg',
+        channel.workspaceId,
+        'SYSTEM',
+        { asPtt: type === 'AUDIO' }
+      );
+
+      // 4. Update message content
+      await this.prisma.message.update({
+        where: { id: messageId },
+        data: {
+          content: {
+            body: (await this.prisma.message.findUnique({ where: { id: messageId } })).content as string || '',
+            mediaUrl: upload.url,
+            mediaType: type.toLowerCase()
+          }
+        }
+      });
+    } catch (e) {
+      console.error(`[Meta Webhook] Failed to persist WA media ${mediaId}:`, e.message);
+    }
   }
 }

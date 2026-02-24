@@ -14,6 +14,7 @@ import { MetaIntegrationController } from './meta-integration.controller';
 import { MetaIntegrationService } from './meta-integration.service';
 import { GatewayModule } from '../gateway/gateway.module';
 import { PerformanceModule } from '../performance/performance.module';
+import { UploadsModule } from '../uploads/uploads.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { PerformanceModule } from '../performance/performance.module';
     forwardRef(() => MessagesModule),
     GatewayModule,
     PerformanceModule,
+    UploadsModule,
   ],
   providers: [
     ChannelsService,
