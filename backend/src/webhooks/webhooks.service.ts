@@ -139,6 +139,12 @@ export class WebhooksService {
     }
   }
 
+  private normalizePhone(phone: string): string {
+    if (!phone) return '';
+    // Strip +, @lid, @s.whatsapp.net, etc.
+    return phone.replace(/^\+/, '').split('@')[0];
+  }
+
   async processZapiMessage(instanceId: string, body: any) {
     try {
       console.log(`[Z-API Webhook] START processing for instance ${instanceId}`);
@@ -172,7 +178,8 @@ export class WebhooksService {
 
       // 2. Extract Data
       const isFromMe = body.fromMe === true;
-      const senderPhone = body.phone;
+      const rawPhone = body.phone;
+      const senderPhone = this.normalizePhone(rawPhone);
       const senderName = body.senderName || senderPhone;
       let avatarUrl = body.photo;
       const externalId = body.zaapId || body.messageId;
@@ -180,7 +187,8 @@ export class WebhooksService {
       // Map Z-API media fields
       let messageBody = body.text?.message || body.message || body.caption || '';
       const mediaType = (body.type || 'text').toLowerCase();
-      let mediaUrl = body.audio || body.image || body.video || body.document || body.thumbnailUrl;
+      // Expanded media mapping
+      let mediaUrl = body.audio || body.image || body.video || body.document || body.thumbnailUrl || body.url || body.link;
 
       // Use descriptive placeholder if body is empty (non-text messages)
       if (!messageBody) {
@@ -188,10 +196,13 @@ export class WebhooksService {
         else if (mediaType === 'image') messageBody = 'Imagem';
         else if (mediaType === 'video') messageBody = 'Vídeo';
         else if (mediaType === 'document') messageBody = body.fileName || 'Arquivo';
+        else if (mediaType === 'location') messageBody = 'Localização';
+        else if (mediaType === 'contact') messageBody = 'Contato';
+        else if (mediaType === 'sticker') messageBody = 'Figurinha';
         else messageBody = 'Media/Unsupported Type';
       }
 
-      console.log(`[Z-API Webhook] Event Data: FromMe=${isFromMe}, Phone=${senderPhone}, Type=${mediaType}, Body=${messageBody.substring(0, 50)}`);
+      console.log(`[Z-API Webhook] Event Data: RawPhone=${rawPhone}, CleanPhone=${senderPhone}, Type=${mediaType}, Body=${messageBody.substring(0, 50)}`);
 
       if (!senderPhone || (!messageBody && !body.type)) {
         console.warn('[Z-API Webhook] WARNING: Missing phone or message content, skipping.');
