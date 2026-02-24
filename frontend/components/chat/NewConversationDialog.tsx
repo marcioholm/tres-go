@@ -7,9 +7,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Search, Check, Instagram, MessageCircle, Facebook, Phone } from "lucide-react"
+import { Search, Check, Instagram, MessageCircle, Facebook, Phone, Plus } from "lucide-react"
 import { api } from "@/lib/api"
 import { useParams } from "next/navigation"
+import { toast } from "sonner"
 
 interface Contact {
     id: string
@@ -83,7 +84,6 @@ export function NewConversationDialog({ open, onOpenChange, onConversationCreate
             })
 
             // 2. Send initial message
-            // Get agent name from localStorage
             let currentUserName = "Agente";
             try {
                 const storedUser = localStorage.getItem('user');
@@ -101,11 +101,13 @@ export function NewConversationDialog({ open, onOpenChange, onConversationCreate
                 content: { body: initialMessage }
             })
 
+            toast.success("Conversa iniciada com sucesso!")
             onConversationCreated(conversation.id)
             onOpenChange(false)
             resetForm()
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to start conversation", error)
+            toast.error(error.response?.data?.message || "Erro ao iniciar conversa. Verifique sua conexão.")
         } finally {
             setCreating(false)
         }
