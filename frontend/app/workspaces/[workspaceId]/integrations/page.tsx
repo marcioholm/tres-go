@@ -51,7 +51,7 @@ export default function IntegrationsPage() {
                 setLoading(false)
             }
         }
-        if (workspaceId) fetchChannels()
+        if (workspaceId && workspaceId !== 'undefined') fetchChannels()
     }, [workspaceId])
 
     const handleStartMetaOAuth = async (selectedType: 'INSTAGRAM' | 'MESSENGER') => {

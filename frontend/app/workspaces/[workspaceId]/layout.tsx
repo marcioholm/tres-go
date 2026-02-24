@@ -47,7 +47,7 @@ export default function DashboardLayout({
     const [workspace, setWorkspace] = useState<any>(null)
 
     useEffect(() => {
-        if (workspaceId && workspaceId !== 'default') {
+        if (workspaceId && workspaceId !== 'default' && workspaceId !== 'undefined') {
             api.get(`/workspaces/${workspaceId}`).then(res => {
                 setWorkspace(res.data)
             }).catch(err => {
@@ -57,7 +57,7 @@ export default function DashboardLayout({
     }, [workspaceId])
 
     useEffect(() => {
-        if (workspaceId === 'default') {
+        if (workspaceId === 'default' || workspaceId === 'undefined') {
             const checkWorkspace = async () => {
                 try {
                     // Try to get from local storage first (fastest)
@@ -75,7 +75,7 @@ export default function DashboardLayout({
                                 }
 
                                 const currentPath = window.location.pathname;
-                                const newPath = currentPath.replace('/workspaces/default', `/workspaces/${realId}`);
+                                const newPath = currentPath.replace(`/workspaces/${workspaceId}`, `/workspaces/${realId}`);
                                 router.replace(newPath);
                                 return;
                             }
@@ -115,7 +115,7 @@ export default function DashboardLayout({
     }, [workspaceId, router]);
 
     // List of all navigation routes
-    const allRoutes = workspaceId ? [
+    const allRoutes = (workspaceId && workspaceId !== 'undefined') ? [
         { name: "Dashboard", id: "dashboard", href: `/workspaces/${workspaceId}`, icon: LayoutGrid },
         { name: "Inbox", id: "inbox", href: `/workspaces/${workspaceId}/inbox`, icon: MessageSquare },
         { name: "Campanhas", id: "campaigns", href: `/workspaces/${workspaceId}/campaigns`, icon: Megaphone },
