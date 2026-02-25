@@ -160,7 +160,13 @@ export class WebhooksProcessor extends WorkerHost {
                     channelId: channel.id,
                     fromAgent: msg.fromMe,
                     type: msg.type,
-                    content: { text: msg.text, ...(msg.media ? { originalUrl: msg.media.url } : {}) },
+                    content: {
+                        text: msg.text,
+                        type: msg.type,
+                        kind: msg.type?.toLowerCase(),
+                        mediaUrl: msg.media?.url,
+                        ...(msg.media || {})
+                    },
                     status,
                     provider: msg.provider,
                     providerMessageId: msg.providerMessageId,
