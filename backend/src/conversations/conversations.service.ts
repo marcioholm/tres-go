@@ -5,6 +5,7 @@ import { AppGateway } from '../gateway/app.gateway';
 import { BillingService } from '../billing/billing.service';
 import { SessionService } from '../performance/session.service';
 import { normalizeMessageContent } from '../messages/utils/message-utils';
+import { MessageType } from '@prisma/client';
 
 @Injectable()
 export class ConversationsService {
@@ -263,7 +264,7 @@ export class ConversationsService {
         conversationId: id,
         fromAgent: true,
         isInternalNote: true,
-        type: 'text',
+        type: MessageType.TEXT,
         content: systemText,
         status: 'SENT',
       },
