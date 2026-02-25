@@ -41,6 +41,7 @@ interface Message {
     content?: any // Raw content from API
     sequence?: number
     type?: string
+    fileName?: string
 }
 
 interface Sector {
@@ -216,6 +217,7 @@ export default function InboxPage() {
                     isPtt: data.message.isPtt || content.isPtt,
                     duration: data.message.duration || content.duration,
                     waveform: data.message.waveform || content.waveform,
+                    fileName: data.message.fileName || content.fileName,
                     fromMe: isFromMe,
                     time: data.message.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 }
