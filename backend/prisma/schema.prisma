@@ -230,6 +230,7 @@ model ArchivedMessage {
   content        Json
   status         String
   externalId     String?
+  sequence       Int?
   createdAt      DateTime
   archivedAt     DateTime     @default(now())
 
