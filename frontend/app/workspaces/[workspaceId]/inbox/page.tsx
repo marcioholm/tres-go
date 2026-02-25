@@ -913,9 +913,15 @@ export default function InboxPage() {
                                             )}
 
                                             {msg.mediaUrl && (
-                                                <div className="mb-2 rounded-lg overflow-hidden">
+                                                <div className="mb-2 rounded-lg overflow-hidden border border-black/5 bg-black/5">
                                                     {msg.mediaType === 'image' && (
-                                                        <img src={msg.mediaUrl} alt="Attachment" className="max-w-full h-auto object-cover max-h-[300px]" />
+                                                        <img
+                                                            src={msg.mediaUrl}
+                                                            alt="Attachment"
+                                                            className="max-w-full h-auto object-cover max-h-[300px] cursor-pointer hover:opacity-90 transition-opacity"
+                                                            onClick={() => window.open(msg.mediaUrl, '_blank')}
+                                                            title="Clique para ampliar"
+                                                        />
                                                     )}
                                                     {msg.mediaType === 'sticker' && (
                                                         <img src={msg.mediaUrl} alt="Sticker" className="max-w-[150px] h-[150px] object-contain" />
@@ -925,21 +931,25 @@ export default function InboxPage() {
                                                     )}
                                                     {msg.mediaType === 'audio' && (
                                                         msg.isPtt ? (
-                                                            <AudioPttBubble
-                                                                message={{
-                                                                    id: msg.id as number,
-                                                                    content: { mediaUrl: msg.mediaUrl, waveform: msg.waveform, duration: msg.duration }
-                                                                }}
-                                                                fromAgent={msg.fromMe}
-                                                            />
+                                                            <div className="p-2 flex flex-col items-center">
+                                                                <AudioPttBubble
+                                                                    message={{
+                                                                        id: msg.id as string,
+                                                                        content: { mediaUrl: msg.mediaUrl, waveform: msg.waveform, duration: msg.duration }
+                                                                    } as any}
+                                                                    fromAgent={msg.fromMe}
+                                                                />
+                                                            </div>
                                                         ) : (
-                                                            <audio src={msg.mediaUrl} controls className="max-w-full" />
+                                                            <div className="p-2">
+                                                                <audio src={msg.mediaUrl} controls className="max-w-full w-full" />
+                                                            </div>
                                                         )
                                                     )}
                                                     {msg.mediaType === 'document' && (
                                                         <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
                                                             <Paperclip className="h-5 w-5" />
-                                                            <span className="underline">Ver Documento</span>
+                                                            <span className="underline truncate max-w-[150px]">{msg.fileName || "Ver Documento"}</span>
                                                         </a>
                                                     )}
                                                     {msg.mediaUrl && !['image', 'sticker', 'video', 'audio', 'document'].includes(msg.mediaType || '') && (

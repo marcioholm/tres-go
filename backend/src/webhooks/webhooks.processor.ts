@@ -199,6 +199,7 @@ export class WebhooksProcessor extends WorkerHost {
         const socketMessage = {
             ...message,
             text,
+            isPtt: normalized.isPtt,
             mediaUrl: message.mediaFinalUrl || message.mediaOriginalUrl || normalized.mediaUrl,
             mediaType: (message.type || normalized.mediaType || normalized.kind || '').toLowerCase(),
         };

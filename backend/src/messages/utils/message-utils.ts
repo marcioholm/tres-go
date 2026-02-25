@@ -49,6 +49,22 @@ export function normalizeMessageContent(content: any): any {
         else if (text && !raw.mediaUrl) kind = 'text';
     }
 
+    // Media fallbacks for contact list preview ("Sem mensagens" fix)
+    let normalizedText = text;
+    if (!normalizedText && (raw.mediaUrl || raw.url || raw.originalUrl || raw.mediaOriginalUrl || kind !== 'text')) {
+        if (kind === 'image') normalizedText = '📷 Foto';
+        else if (kind === 'video') normalizedText = '🎥 Vídeo';
+        else if (kind === 'audio') normalizedText = '🎵 Áudio';
+        else if (kind === 'sticker') normalizedText = '🎨 Figurinha';
+        else if (kind === 'document') normalizedText = '📄 Documento';
+        else if (kind === 'location') normalizedText = '📍 Localização';
+        else if (kind === 'contact') normalizedText = '👤 Contato';
+        else if (raw.mediaUrl || raw.url) normalizedText = '📎 Arquivo';
+    }
+
+    // PTT / Voice note detection
+    const isPtt = raw.isPtt || raw.isVoiceNote || kind === 'ptt' || (kind === 'audio' && raw.mimeType?.includes('ogg'));
+
     // Ensure mediaUrl is a string and not an object
     let mediaUrl = raw.mediaUrl || raw.url || raw.originalUrl || raw.mediaOriginalUrl || null;
     if (typeof mediaUrl === 'object' && mediaUrl !== null) {
@@ -57,10 +73,11 @@ export function normalizeMessageContent(content: any): any {
 
     return {
         ...raw,
-        text,
-        body: text,
+        text: normalizedText,
+        body: normalizedText,
         type: String(type).toUpperCase(),
         kind: kind,
+        isPtt: !!isPtt,
         mediaUrl: mediaUrl,
         mediaType: kind,
         mimeType: raw.mimeType || raw.mimetype || null,
