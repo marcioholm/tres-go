@@ -170,11 +170,11 @@ export class MessagesService {
             await this.prisma.message.update({
               where: { id: message.id },
               data: {
-                externalId,
+                providerMessageId: externalId,
                 status: 'SENT'
               }
             });
-            this.logger.log(`[MessagesService] Message ${message.id} updated with externalId: ${externalId}`);
+            this.logger.log(`[MessagesService] Message ${message.id} updated with providerMessageId: ${externalId}`);
           }
         }
         else if (

@@ -8,7 +8,7 @@ import * as path from 'path';
 export class ArchiveService {
   private readonly logger = new Logger(ArchiveService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // Run every night at 3:00 AM
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
@@ -52,12 +52,27 @@ export class ArchiveService {
         const archivedData = messages.map((msg) => ({
           id: msg.id,
           conversationId: msg.conversationId,
+          workspaceId: msg.workspaceId,
+          channelId: msg.channelId,
           fromAgent: msg.fromAgent,
+          senderName: msg.senderName,
           isInternalNote: msg.isInternalNote,
           type: msg.type,
           content: msg.content,
           status: msg.status,
-          externalId: msg.externalId,
+          provider: msg.provider,
+          providerMessageId: msg.providerMessageId,
+          providerTimestamp: msg.providerTimestamp,
+          receivedAt: msg.receivedAt,
+          sequence: msg.sequence,
+          mediaOriginalUrl: msg.mediaOriginalUrl,
+          mediaFinalUrl: msg.mediaFinalUrl,
+          mediaMimeType: msg.mediaMimeType,
+          mediaFileName: msg.mediaFileName,
+          mediaSize: msg.mediaSize,
+          mediaStatus: msg.mediaStatus,
+          reactionEmoji: msg.reactionEmoji,
+          reactionTargetProviderMessageId: msg.reactionTargetProviderMessageId,
           createdAt: msg.createdAt,
           archivedAt: new Date(),
         }));

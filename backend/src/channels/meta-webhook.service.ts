@@ -11,6 +11,7 @@ import { decrypt } from '../utils/crypto.util';
 import { UploadsService } from '../uploads/uploads.service';
 import axios from 'axios';
 import { normalizeMessageContent } from '../messages/utils/message-utils';
+import { MessageType } from '@prisma/client';
 
 @Injectable()
 export class MetaWebhookService {
@@ -219,9 +220,9 @@ export class MetaWebhookService {
     const message = await this.prisma.message.create({
       data: {
         conversationId: conversation.id,
-        externalId: mid,
+        providerMessageId: mid,
         fromAgent: false,
-        type: attachments.length > 0 ? 'ATTACHMENT' : 'TEXT',
+        type: attachments.length > 0 ? MessageType.DOCUMENT : MessageType.TEXT,
         content: normalizeMessageContent(
           attachments.length > 0
             ? {
@@ -336,7 +337,7 @@ export class MetaWebhookService {
     const message = await this.prisma.message.create({
       data: {
         conversationId: conversation.id,
-        externalId: mid,
+        providerMessageId: mid,
         fromAgent: true,
         senderName: 'Celular',
         type: 'TEXT',
@@ -380,7 +381,7 @@ export class MetaWebhookService {
       const message = await this.prisma.message.create({
         data: {
           conversationId: conversation.id,
-          externalId: msg.id,
+          providerMessageId: msg.id,
           fromAgent: false,
           type: (msg.type || 'TEXT').toUpperCase(),
           content: normalizeMessageContent({
@@ -420,7 +421,7 @@ export class MetaWebhookService {
     await this.prisma.message.updateMany({
       where: {
         conversation: { channelId: channel.id },
-        externalId: { in: event.read?.watermark ? [] : [event.read?.mid] },
+        providerMessageId: { in: event.read?.watermark ? [] : [event.read?.mid] },
       },
       data: { status: 'READ' },
     });
@@ -430,7 +431,7 @@ export class MetaWebhookService {
     await this.prisma.message.updateMany({
       where: {
         conversation: { channelId: channel.id },
-        externalId: { in: event.delivery?.mids || [] },
+        providerMessageId: { in: event.delivery?.mids || [] },
       },
       data: { status: 'DELIVERED' },
     });
