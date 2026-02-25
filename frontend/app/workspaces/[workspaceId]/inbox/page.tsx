@@ -687,26 +687,35 @@ export default function InboxPage() {
                     </div>
                     <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                        <Input placeholder="Pesquisar..." className="pl-9 bg-slate-100 border-none focus-visible:ring-red-500" />
+                        <Input placeholder="Pesquisar..." className="pl-9 bg-slate-100 border-none focus-visible:ring-indigo-500" />
                     </div>
                     <div className="flex gap-2 text-sm overflow-x-auto pb-1 scrollbar-hide">
                         <Badge
                             variant={filter === 'pending' ? "default" : "outline"}
-                            className={`cursor-pointer ${filter === 'pending' ? 'bg-red-600 hover:bg-red-700' : 'bg-white hover:bg-slate-50'}`}
+                            className={cn(
+                                "cursor-pointer transition-all",
+                                filter === 'pending' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-100' : 'bg-white hover:bg-slate-50 text-slate-600'
+                            )}
                             onClick={() => setFilter('pending')}
                         >
                             Pendentes
                         </Badge>
                         <Badge
                             variant={filter === 'active' ? "default" : "outline"}
-                            className={`cursor-pointer ${filter === 'active' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-white hover:bg-slate-50'}`}
+                            className={cn(
+                                "cursor-pointer transition-all",
+                                filter === 'active' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-100' : 'bg-white hover:bg-slate-50 text-slate-600'
+                            )}
                             onClick={() => setFilter('active')}
                         >
                             Atendendo
                         </Badge>
                         <Badge
                             variant={filter === 'all' ? "default" : "outline"}
-                            className={`cursor-pointer ${filter === 'all' ? 'bg-slate-800 hover:bg-slate-900' : 'bg-white hover:bg-slate-50'}`}
+                            className={cn(
+                                "cursor-pointer transition-all",
+                                filter === 'all' ? 'bg-slate-800 hover:bg-slate-900 shadow-md shadow-slate-200' : 'bg-white hover:bg-slate-50 text-slate-600'
+                            )}
                             onClick={() => setFilter('all')}
                         >
                             Todos
@@ -757,8 +766,8 @@ export default function InboxPage() {
                                 key={chat.id}
                                 onClick={() => setActiveChatId(chat.id)}
                                 className={cn(
-                                    "flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-100 transition-colors border-b border-slate-50 relative",
-                                    activeChatId === chat.id ? 'bg-red-50/50 border-l-4 border-l-red-600' : ''
+                                    "flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-50 transition-all border-b border-slate-100/50 relative",
+                                    activeChatId === chat.id ? 'bg-indigo-50/50 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'
                                 )}
                             >
                                 {chat.currentStage && (
@@ -769,9 +778,9 @@ export default function InboxPage() {
                                     />
                                 )}
                                 <div className="relative">
-                                    <Avatar>
+                                    <Avatar className="ring-2 ring-white shadow-sm">
                                         <AvatarImage src={chat.contact?.avatarUrl || chat.avatar} />
-                                        <AvatarFallback className="bg-red-100 text-red-600 font-medium">{(chat.contact?.name || chat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
+                                        <AvatarFallback className="bg-indigo-100 text-indigo-700 font-semibold">{(chat.contact?.name || chat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
                                     </Avatar>
                                     {/* Channel Icon Overlay */}
                                     <div className="absolute -bottom-1 -left-1 bg-white rounded-full p-0.5 shadow-sm border border-slate-100">
@@ -803,7 +812,7 @@ export default function InboxPage() {
                                     </p>
                                 </div>
                                 {chat.unread > 0 && (
-                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white shadow-sm shadow-emerald-100">
                                         {chat.unread}
                                     </span>
                                 )}
@@ -820,9 +829,9 @@ export default function InboxPage() {
                         {/* Chat Header */}
                         <div className="h-16 border-b bg-white flex items-center justify-between px-6 shadow-sm z-10">
                             <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9">
+                                <Avatar className="h-10 w-10 ring-2 ring-slate-100">
                                     <AvatarImage src={activeChat?.contact?.avatarUrl || activeChat.avatar} />
-                                    <AvatarFallback className="bg-red-100 text-red-600">
+                                    <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold">
                                         {(activeChat?.contact?.name || activeChat?.name || "?").substring(0, 2).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
@@ -913,12 +922,23 @@ export default function InboxPage() {
                                                 {(msg as any).senderName}
                                             </span>
                                         )}
-                                        <div className={`p-3 rounded-2xl shadow-sm max-w-[75%] text-sm relative group overflow-hidden ${msg.isInternal
-                                            ? 'bg-yellow-100 text-yellow-900 border border-yellow-200'
-                                            : msg.fromMe
-                                                ? 'bg-red-600 text-white rounded-br-sm'
-                                                : 'bg-white text-slate-800 rounded-bl-sm'
-                                            } ${msg.isScheduled ? 'border-2 border-dashed border-slate-300 opacity-80 bg-slate-50 text-slate-600' : ''}`}>
+                                        <div className={cn(
+                                            "p-3 rounded-2xl shadow-sm max-w-[75%] text-sm relative group mb-1",
+                                            msg.isInternal
+                                                ? 'bg-yellow-50 text-yellow-900 border border-yellow-200'
+                                                : msg.fromMe
+                                                    ? 'bg-[#E7FFDB] text-slate-800 rounded-tr-none' // WhatsApp Outgoing Style
+                                                    : 'bg-white text-slate-800 rounded-tl-none border border-slate-100',
+                                            msg.isScheduled ? 'border-2 border-dashed border-slate-300 opacity-80 bg-slate-50 text-slate-600' : ''
+                                        )}>
+                                            {/* Corner Tails (Subtle) */}
+                                            {!msg.isInternal && !msg.isScheduled && (
+                                                <div className={cn(
+                                                    "absolute top-0 w-2 h-2",
+                                                    msg.fromMe ? "-right-1.5 bg-[#E7FFDB]" : "-left-1.5 bg-white border-l border-t border-slate-100",
+                                                    msg.fromMe ? "clip-path-tail-right" : "clip-path-tail-left"
+                                                )} />
+                                            )}
 
                                             {msg.isInternal && (
                                                 <div className="flex items-center gap-1 mb-1 opacity-70 border-b border-yellow-200 pb-1">
@@ -990,7 +1010,7 @@ export default function InboxPage() {
                                                 {msg?.text === 'Media/Unsupported Type' ? "" : (msg?.text || "")}
                                             </p>
                                             <div className="flex items-center gap-1 mt-1 justify-end">
-                                                <span className={`text-[10px] ${msg?.fromMe ? 'text-white/80' : 'text-slate-400'} ${msg?.isInternal ? 'text-yellow-700' : ''}`}>
+                                                <span className={`text-[10px] ${msg?.fromMe ? 'text-slate-500' : 'text-slate-400'} ${msg?.isInternal ? 'text-yellow-700' : ''}`}>
                                                     {msg?.time || ""}
                                                 </span>
                                                 {msg.fromMe && !msg.isInternal && !msg.isScheduled && (

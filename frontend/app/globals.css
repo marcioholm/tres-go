@@ -197,3 +197,11 @@
   background: #fee2e2;
   color: #b91c1c;
 }
+/* Chat Bubble Tails */
+.clip-path-tail-right {
+  clip-path: polygon(0 0, 0% 100%, 100% 0);
+}
+
+.clip-path-tail-left {
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+}
