@@ -87,6 +87,25 @@ export default function InboxPage() {
     const { t } = useLanguage()
     const params = useParams()
     const workspaceId = params.workspaceId as string
+
+    const getMessagePreview = (msg: Message | undefined) => {
+        if (!msg) return "Sem mensagens";
+        if (msg.isSystem) {
+            return msg.text === "system:transferred" ? "Conversa transferida" : "Você entrou na conversa";
+        }
+        if (msg.text && msg.text !== 'Media/Unsupported Type') return msg.text;
+
+        const type = (msg.mediaType || msg.type || '').toLowerCase();
+        if (type === 'image') return '📷 Foto';
+        if (type === 'video') return '🎥 Vídeo';
+        if (type === 'audio' || type === 'ptt') return '🎵 Áudio';
+        if (type === 'sticker') return '🎨 Figurinha';
+        if (type === 'document') return '📄 Documento';
+        if (msg.mediaUrl) return '📎 Arquivo';
+
+        return "Sem mensagens";
+    };
+
     const [isTransferOpen, setIsTransferOpen] = useState(false)
     const [sectors, setSectors] = useState<Sector[]>([])
     const [selectedSector, setSelectedSector] = useState<string | null>(null)
@@ -777,9 +796,7 @@ export default function InboxPage() {
                                         <span className="text-xs text-slate-500">{chat?.messages?.[(chat?.messages?.length || 0) - 1]?.time || ""}</span>
                                     </div>
                                     <p className="text-xs text-slate-500 truncate">
-                                        {chat?.messages?.[(chat?.messages?.length || 0) - 1]?.isSystem ?
-                                            (chat?.messages?.[(chat?.messages?.length || 0) - 1]?.text === "system:transferred" ? "Conversa transferida" : "Você entrou na conversa")
-                                            : (chat?.messages?.[(chat?.messages?.length || 0) - 1]?.text || "Sem mensagens")}
+                                        {getMessagePreview(chat?.messages?.[(chat?.messages?.length || 0) - 1])}
                                     </p>
                                 </div>
                                 {chat.unread > 0 && (
@@ -916,7 +933,7 @@ export default function InboxPage() {
 
                                             {msg.mediaUrl && (
                                                 <div className="mb-2 rounded-lg overflow-hidden border border-black/5 bg-black/5">
-                                                    {msg.mediaType === 'image' && (
+                                                    {(msg.mediaType === 'image' || msg.type === 'IMAGE') && (
                                                         <img
                                                             src={msg.mediaUrl}
                                                             alt="Attachment"
@@ -925,18 +942,18 @@ export default function InboxPage() {
                                                             title="Clique para ampliar"
                                                         />
                                                     )}
-                                                    {msg.mediaType === 'sticker' && (
-                                                        <img src={msg.mediaUrl} alt="Sticker" className="max-w-[150px] h-[150px] object-contain" />
+                                                    {(msg.mediaType === 'sticker' || msg.type === 'STICKER') && (
+                                                        <img src={msg.mediaUrl} alt="Sticker" className="max-w-[150px] h-[150px] object-contain mx-auto" />
                                                     )}
-                                                    {msg.mediaType === 'video' && (
+                                                    {(msg.mediaType === 'video' || msg.type === 'VIDEO') && (
                                                         <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px]" />
                                                     )}
-                                                    {msg.mediaType === 'audio' && (
+                                                    {(msg.mediaType === 'audio' || msg.mediaType === 'ptt' || msg.type === 'AUDIO') && (
                                                         msg.isPtt ? (
                                                             <div className="p-2 flex flex-col items-center">
                                                                 <AudioPttBubble
                                                                     message={{
-                                                                        id: msg.id as string,
+                                                                        id: String(msg.id),
                                                                         content: { mediaUrl: msg.mediaUrl, waveform: msg.waveform, duration: msg.duration }
                                                                     } as any}
                                                                     fromAgent={msg.fromMe}
@@ -948,13 +965,13 @@ export default function InboxPage() {
                                                             </div>
                                                         )
                                                     )}
-                                                    {msg.mediaType === 'document' && (
+                                                    {(msg.mediaType === 'document' || msg.type === 'DOCUMENT') && (
                                                         <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
                                                             <Paperclip className="h-5 w-5" />
                                                             <span className="underline truncate max-w-[150px]">{msg.fileName || "Ver Documento"}</span>
                                                         </a>
                                                     )}
-                                                    {msg.mediaUrl && !['image', 'sticker', 'video', 'audio', 'document'].includes(msg.mediaType || '') && (
+                                                    {msg.mediaUrl && !['image', 'sticker', 'video', 'audio', 'ptt', 'document'].includes((msg.mediaType || msg.type || '').toLowerCase()) && (
                                                         <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
                                                             <Paperclip className="h-5 w-5" />
                                                             <span className="underline">Baixar Arquivo</span>
