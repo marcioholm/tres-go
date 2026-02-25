@@ -309,8 +309,26 @@ export default function InboxPage() {
             }
         })
 
+        socket.on('messageStatusUpdate', (data: { messageId: string, conversationId: string, status: string }) => {
+            console.log('[Socket] Message status update:', data)
+            setConversations(prev => {
+                return prev.map(c => {
+                    if (String(c.id) === String(data.conversationId)) {
+                        return {
+                            ...c,
+                            messages: c.messages.map(m =>
+                                String(m.id) === String(data.messageId) ? { ...m, status: data.status } : m
+                            )
+                        }
+                    }
+                    return c
+                })
+            })
+        })
+
         return () => {
             socket.off('newMessage')
+            socket.off('messageStatusUpdate')
             socket.off('conversationTransferred')
             socket.off('new_conversation')
         }
@@ -942,6 +960,7 @@ export default function InboxPage() {
                                                 </span>
                                                 {msg.fromMe && !msg.isInternal && !msg.isScheduled && (
                                                     <>
+                                                        {msg.status === 'READ' && <CheckCheck className="h-3 w-3 text-blue-300" />}
                                                         {msg.status === 'DELIVERED' && <CheckCheck className="h-3 w-3 text-white/90" />}
                                                         {msg.status === 'SENT' && <Check className="h-3 w-3 text-white/90" />}
                                                         {msg.status === 'PENDING' && <Clock className="h-3 w-3 text-white/60 animate-pulse" />}

@@ -418,23 +418,72 @@ export class MetaWebhookService {
   }
 
   private async handleMessageRead(channel: any, event: any) {
-    await this.prisma.message.updateMany({
-      where: {
-        conversation: { channelId: channel.id },
-        providerMessageId: { in: event.read?.watermark ? [] : [event.read?.mid] },
-      },
-      data: { status: 'READ' },
-    });
+    if (event.read?.watermark) {
+      const watermarkDate = new Date(parseInt(event.read.watermark));
+      const updated = await this.prisma.message.findMany({
+        where: {
+          conversation: { channelId: channel.id },
+          fromAgent: true,
+          status: { not: 'READ' },
+          createdAt: { lte: watermarkDate },
+        }
+      });
+
+      await this.prisma.message.updateMany({
+        where: { id: { in: updated.map(m => m.id) } },
+        data: { status: 'READ' },
+      });
+
+      for (const m of updated) {
+        this.gateway.emitToWorkspace(channel.workspaceId, 'messageStatusUpdate', {
+          messageId: m.id,
+          conversationId: m.conversationId,
+          status: 'READ',
+        });
+      }
+    } else if (event.read?.mid) {
+      const message = await this.prisma.message.findFirst({
+        where: {
+          conversation: { channelId: channel.id },
+          providerMessageId: event.read.mid,
+        },
+      });
+
+      if (message) {
+        await this.prisma.message.update({
+          where: { id: message.id },
+          data: { status: 'READ' },
+        });
+
+        this.gateway.emitToWorkspace(channel.workspaceId, 'messageStatusUpdate', {
+          messageId: message.id,
+          conversationId: message.conversationId,
+          status: 'READ',
+        });
+      }
+    }
   }
 
   private async handleMessageDelivery(channel: any, event: any) {
-    await this.prisma.message.updateMany({
+    const messages = await this.prisma.message.findMany({
       where: {
         conversation: { channelId: channel.id },
         providerMessageId: { in: event.delivery?.mids || [] },
       },
+    });
+
+    await this.prisma.message.updateMany({
+      where: { id: { in: messages.map(m => m.id) } },
       data: { status: 'DELIVERED' },
     });
+
+    for (const m of messages) {
+      this.gateway.emitToWorkspace(channel.workspaceId, 'messageStatusUpdate', {
+        messageId: m.id,
+        conversationId: m.conversationId,
+        status: 'DELIVERED',
+      });
+    }
   }
 
   private async persistMetaMedia(channel: any, messageId: string, attachments: any[]) {

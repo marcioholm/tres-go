@@ -26,6 +26,10 @@ export interface NormalizedIncomingMessage {
         targetProviderMessageId: string;
     };
     rawPayload: any;
+    statusUpdate?: {
+        messageId: string;
+        status: 'SENT' | 'DELIVERED' | 'READ' | 'FAILED';
+    };
 }
 
 @Injectable()
@@ -33,6 +37,27 @@ export class MessageIngestService {
     private readonly logger = new Logger(MessageIngestService.name);
 
     normalizeZapi(instanceId: string, payload: any): NormalizedIncomingMessage | null {
+        // Z-API status update handling
+        if (payload.status && (payload.messageId || payload.zaapId)) {
+            const status = payload.status.toUpperCase();
+            const allowedStatuses = ['SENT', 'DELIVERED', 'READ', 'FAILED'];
+            if (allowedStatuses.includes(status)) {
+                return {
+                    provider: MessageProvider.ZAPI,
+                    channelKey: instanceId,
+                    providerMessageId: payload.messageId || payload.zaapId,
+                    fromMe: true,
+                    contact: { phone: payload.phone || '' },
+                    type: MessageType.TEXT,
+                    rawPayload: payload,
+                    statusUpdate: {
+                        messageId: payload.messageId || payload.zaapId,
+                        status: status as any
+                    }
+                };
+            }
+        }
+
         // 0. Filtrar eventos que não são de mensagem
         const typeStr = (payload.type || '').toLowerCase();
 

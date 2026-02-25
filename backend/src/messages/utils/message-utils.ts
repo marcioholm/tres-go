@@ -20,7 +20,14 @@ export function normalizeMessageContent(content: any): any {
 
     // Handle object content
     if (typeof content === 'object') {
-        const text = content.text || content.body || content.caption || (content.kind === 'text' ? '' : null);
+        let textValue = content.text || content.body || content.caption;
+
+        // Handle nested text objects (common in Z-API / WhatsApp payloads)
+        if (typeof textValue === 'object' && textValue !== null) {
+            textValue = textValue.message || textValue.text || textValue.body || null;
+        }
+
+        const text = String(textValue || (content.kind === 'text' ? '' : ''));
 
         // Determine type (TEXT, MEDIA, SYSTEM, etc.)
         let type = content.type || (content.mediaUrl || content.url ? 'MEDIA' : 'TEXT');
@@ -41,8 +48,8 @@ export function normalizeMessageContent(content: any): any {
 
         return {
             ...content,
-            text: text || '',
-            body: text || '',
+            text,
+            body: text,
             type: String(type).toUpperCase(),
             kind: kind,
             mediaUrl: mediaUrl,

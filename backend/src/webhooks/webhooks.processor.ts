@@ -104,7 +104,32 @@ export class WebhooksProcessor extends WorkerHost {
             });
         }
 
-        // 4. Handle Monotone Sequencing and Deduplication
+        // 4. Handle Status Updates
+        if (msg.statusUpdate) {
+            const message = await this.prisma.message.findFirst({
+                where: {
+                    channelId: channel.id,
+                    provider: msg.provider,
+                    providerMessageId: msg.statusUpdate.messageId,
+                }
+            });
+
+            if (message) {
+                const updated = await this.prisma.message.update({
+                    where: { id: message.id },
+                    data: { status: msg.statusUpdate.status }
+                });
+
+                this.gateway.emitToWorkspace(workspaceId, 'messageStatusUpdate', {
+                    messageId: updated.id,
+                    conversationId: updated.conversationId,
+                    status: updated.status,
+                });
+            }
+            return;
+        }
+
+        // 5. Handle Monotone Sequencing and Deduplication
         const message = await this.prisma.$transaction(async (tx) => {
             // Check for duplicate
             const existing = await tx.message.findUnique({
