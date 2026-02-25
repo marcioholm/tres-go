@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import axios from 'axios';
 import { createClient } from '@supabase/supabase-js';
 import { MessageType, MediaStatus, MessageProvider } from '@prisma/client';
+import { decrypt } from '../utils/crypto.util';
 
 @Processor('media-processing', {
     concurrency: 5,
@@ -120,15 +121,16 @@ export class MediaProcessor extends WorkerHost {
         }
 
         // 1. Get media URL from Graph API
+        const token = decrypt(channel.accessToken);
         const urlResponse = await axios.get(`https://graph.facebook.com/v21.0/${mediaId}`, {
-            headers: { Authorization: `Bearer ${channel.accessToken}` },
+            headers: { Authorization: `Bearer ${token}` },
         });
 
         const mediaUrl = urlResponse.data.url;
 
         // 2. Download media binary
         const downloadResponse = await axios.get(mediaUrl, {
-            headers: { Authorization: `Bearer ${channel.accessToken}` },
+            headers: { Authorization: `Bearer ${token}` },
             responseType: 'arraybuffer',
         });
 

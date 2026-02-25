@@ -39,7 +39,7 @@ export function normalizeMessageContent(content: any): any {
             body: text || '',
             type: String(type).toUpperCase(),
             kind: kind,
-            mediaUrl: content.mediaUrl || content.url || null,
+            mediaUrl: content.mediaUrl || content.url || content.originalUrl || content.mediaOriginalUrl || null,
             mimeType: content.mimeType || content.mimetype || null,
             fileName: content.fileName || content.filename || content.name || null,
             size: content.size || content.fileSize || 0,

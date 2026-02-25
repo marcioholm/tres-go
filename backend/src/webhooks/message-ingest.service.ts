@@ -53,10 +53,16 @@ export class MessageIngestService {
 
         let mediaUrl: string | undefined;
         if (typeof rawMediaUrl === 'object' && rawMediaUrl !== null) {
-            mediaUrl = rawMediaUrl.url || rawMediaUrl.link || rawMediaUrl.file;
-            this.logger.debug(`[ZAPI] Extracted URL from object for ${providerMessageId}: ${mediaUrl}`);
-        } else if (typeof rawMediaUrl === 'string') {
+            mediaUrl = rawMediaUrl.url || rawMediaUrl.link || rawMediaUrl.file || rawMediaUrl.thumbnailUrl;
+            if (!mediaUrl) {
+                this.logger.warn(`[ZAPI] Media object detected but no URL found: ${JSON.stringify(rawMediaUrl)}`);
+            } else {
+                this.logger.debug(`[ZAPI] Extracted URL from object for ${providerMessageId}: ${mediaUrl}`);
+            }
+        } else if (typeof rawMediaUrl === 'string' && rawMediaUrl.startsWith('http')) {
             mediaUrl = rawMediaUrl;
+        } else if (payload.data && typeof payload.data === 'string' && payload.data.startsWith('http')) {
+            mediaUrl = payload.data; // Z-API sometime uses .data for URLs
         }
 
         // Mapeamento de tipo

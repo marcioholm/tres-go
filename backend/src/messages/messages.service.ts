@@ -5,6 +5,7 @@ import axios from 'axios';
 import { decrypt } from '../utils/crypto.util';
 import { SessionService } from '../performance/session.service';
 import { normalizeMessageContent } from './utils/message-utils';
+import { MessageType } from '@prisma/client';
 
 @Injectable()
 export class MessagesService {
@@ -58,10 +59,15 @@ export class MessagesService {
       }
     }
 
-    return messages.map(msg => ({
-      ...msg,
-      content: normalizeMessageContent(msg.content)
-    }));
+    return messages.map(msg => {
+      const normalized = normalizeMessageContent(msg.content);
+      return {
+        ...msg,
+        content: normalized,
+        mediaUrl: msg.mediaFinalUrl || msg.mediaOriginalUrl || normalized.mediaUrl,
+        text: normalized.text
+      };
+    });
   }
 
   async create(
@@ -103,12 +109,12 @@ export class MessagesService {
           conversationId: data.conversationId,
           channelId: conversation.channelId,
           type:
-            data.type ||
+            (data.type?.toUpperCase() as MessageType) ||
             (finalContent.mediaUrl
               ? finalContent.isPtt
-                ? 'AUDIO'
-                : (data.type || 'DOCUMENT')
-              : 'TEXT'),
+                ? MessageType.AUDIO
+                : (data.type?.toUpperCase() as MessageType) || MessageType.DOCUMENT
+              : MessageType.TEXT),
           content: finalContent,
           fromAgent: true,
           senderName,
