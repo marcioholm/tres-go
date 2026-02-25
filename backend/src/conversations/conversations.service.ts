@@ -125,6 +125,9 @@ export class ConversationsService {
             text: normalized.text,
             mediaUrl: m.mediaFinalUrl || m.mediaOriginalUrl || normalized.mediaUrl,
             mediaType: (m.type || normalized.mediaType || normalized.kind || '').toLowerCase(),
+            mimeType: normalized.mimeType,
+            fileName: normalized.fileName,
+            size: normalized.size,
             isPtt: !!normalized.isPtt,
             duration: normalized.duration,
             waveform: normalized.waveform,
@@ -154,6 +157,9 @@ export class ConversationsService {
         text: normalized.text,
         mediaUrl: m.mediaFinalUrl || m.mediaOriginalUrl || normalized.mediaUrl,
         mediaType: (m.type || normalized.mediaType || normalized.kind || '').toLowerCase(),
+        mimeType: normalized.mimeType,
+        fileName: normalized.fileName,
+        size: normalized.size,
         isPtt: !!normalized.isPtt,
         duration: normalized.duration,
         waveform: normalized.waveform,
@@ -199,21 +205,12 @@ export class ConversationsService {
     });
   }
 
-  async updateKanban(
-    workspaceId: string,
-    id: string,
-    column: string,
-    order?: number,
-  ) {
+  async updateKanban(workspaceId: string, id: string, column: string, order?: number) {
     // Placeholder
     return { success: true };
   }
 
-  async transfer(
-    workspaceId: string,
-    id: string,
-    data: { agentId?: string; sectorId?: string; note?: string },
-  ) {
+  async transfer(workspaceId: string, id: string, data: { agentId?: string; sectorId?: string; note?: string }) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id },
     });
@@ -306,11 +303,7 @@ export class ConversationsService {
     }
   }
 
-  async findOrCreate(
-    workspaceId: string,
-    channelId: string,
-    contactId: string,
-  ) {
+  async findOrCreate(workspaceId: string, channelId: string, contactId: string) {
     this.logger.log(`[ConversationsService] findOrCreate called: WS=${workspaceId}, Channel=${channelId}, Contact=${contactId}`);
     try {
       let conversation = await this.prisma.conversation.findFirst({

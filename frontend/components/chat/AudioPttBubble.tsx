@@ -38,7 +38,7 @@ export const AudioPttBubble = ({ message, fromAgent }: AudioPttBubbleProps) => {
 
             {/* Bolha PTT — idêntica ao WhatsApp */}
             <div className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl max-w-[260px] shadow-sm ${fromAgent
-                ? 'bg-red-600 text-white rounded-br-sm'    // usa a cor brand do sistema
+                ? 'bg-[#E7FFDB] text-slate-800 rounded-br-sm border border-[#D1EAB5]'    // Estilo WhatsApp Outgoing
                 : 'bg-white text-slate-800 rounded-bl-sm border border-slate-100'
                 }`}>
 
@@ -48,10 +48,10 @@ export const AudioPttBubble = ({ message, fromAgent }: AudioPttBubbleProps) => {
                         if (isPlaying) { audioRef.current?.pause(); setIsPlaying(false); }
                         else { audioRef.current?.play(); setIsPlaying(true); }
                     }}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${fromAgent ? 'bg-white/20 hover:bg-white/30' : 'bg-red-600 text-white hover:bg-red-700'
+                    className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${fromAgent ? 'bg-transparent text-emerald-600' : 'bg-emerald-500 text-white hover:bg-emerald-600'
                         }`}
                 >
-                    <span className={`material-symbols-outlined text-xl ${fromAgent ? 'text-white' : 'text-white'}`}>
+                    <span className={`material-symbols-outlined text-3xl font-light`}>
                         {isPlaying ? 'pause' : 'play_arrow'}
                     </span>
                 </button>
@@ -65,8 +65,8 @@ export const AudioPttBubble = ({ message, fromAgent }: AudioPttBubbleProps) => {
                                 <div
                                     key={i}
                                     className={`flex-1 rounded-full transition-colors duration-100 ${isPast
-                                        ? fromAgent ? 'bg-white' : 'bg-red-600'
-                                        : fromAgent ? 'bg-white/40' : 'bg-slate-300'
+                                        ? 'bg-emerald-500'
+                                        : 'bg-slate-300'
                                         }`}
                                     style={{ height: `${Math.max(20, amplitude * 100)}%` }}
                                 />
@@ -76,11 +76,11 @@ export const AudioPttBubble = ({ message, fromAgent }: AudioPttBubbleProps) => {
 
                     {/* Tempo */}
                     <div className="flex items-center justify-between">
-                        <span className={`text-[10px] font-bold tabular-nums ${fromAgent ? 'text-white/80' : 'text-slate-400'}`}>
+                        <span className={`text-[10px] font-medium tabular-nums ${fromAgent ? 'text-slate-500' : 'text-slate-400'}`}>
                             {isPlaying ? formatTime(currentTime) : formatTime(duration)}
                         </span>
-                        {/* Ícone de microfone (identifica que é PTT, não arquivo) */}
-                        <span className={`material-symbols-outlined text-sm ${fromAgent ? 'text-white/60' : 'text-slate-300'}`}>
+                        {/* Ícone de microfone */}
+                        <span className={`material-symbols-outlined text-sm ${fromAgent ? 'text-emerald-500' : 'text-slate-300'}`}>
                             mic
                         </span>
                     </div>

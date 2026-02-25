@@ -42,6 +42,7 @@ interface Message {
     sequence?: number
     type?: string
     fileName?: string
+    mimeType?: string
 }
 
 interface Sector {
@@ -96,10 +97,12 @@ export default function InboxPage() {
         if (msg.text && msg.text !== 'Media/Unsupported Type') return msg.text;
 
         const type = (msg.mediaType || msg.type || '').toLowerCase();
+        const mime = (msg.mimeType || '').toLowerCase();
+
         if (type === 'image') return '📷 Foto';
         if (type === 'video') return '🎥 Vídeo';
         if (type === 'audio' || type === 'ptt') return '🎵 Áudio';
-        if (type === 'sticker') return '🎨 Figurinha';
+        if (type === 'sticker' || mime.includes('webp')) return '🎨 Figurinha';
         if (type === 'document') return '📄 Documento';
         if (msg.mediaUrl) return '📎 Arquivo';
 
@@ -942,7 +945,7 @@ export default function InboxPage() {
                                                             title="Clique para ampliar"
                                                         />
                                                     )}
-                                                    {(msg.mediaType === 'sticker' || msg.type === 'STICKER') && (
+                                                    {(msg.mediaType === 'sticker' || msg.type === 'STICKER' || msg.mimeType?.includes('webp')) && (
                                                         <img src={msg.mediaUrl} alt="Sticker" className="max-w-[150px] h-[150px] object-contain mx-auto" />
                                                     )}
                                                     {(msg.mediaType === 'video' || msg.type === 'VIDEO') && (
@@ -971,7 +974,7 @@ export default function InboxPage() {
                                                             <span className="underline truncate max-w-[150px]">{msg.fileName || "Ver Documento"}</span>
                                                         </a>
                                                     )}
-                                                    {msg.mediaUrl && !['image', 'sticker', 'video', 'audio', 'ptt', 'document'].includes((msg.mediaType || msg.type || '').toLowerCase()) && (
+                                                    {msg.mediaUrl && !['image', 'sticker', 'video', 'audio', 'ptt', 'document'].includes((msg.mediaType || msg.type || '').toLowerCase()) && !msg.mimeType?.includes('webp') && (
                                                         <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
                                                             <Paperclip className="h-5 w-5" />
                                                             <span className="underline">Baixar Arquivo</span>
