@@ -173,8 +173,8 @@ export class WebhooksProcessor extends WorkerHost {
         const socketMessage = {
             ...message,
             text,
-            mediaUrl: message.mediaFinalUrl || message.mediaOriginalUrl,
-            mediaType: message.type,
+            mediaUrl: message.mediaFinalUrl || message.mediaOriginalUrl || (message.content as any)?.mediaUrl,
+            mediaType: (message.type || (message.content as any)?.mediaType || (message.content as any)?.kind || '').toLowerCase(),
         };
 
         const emitPayload = {
