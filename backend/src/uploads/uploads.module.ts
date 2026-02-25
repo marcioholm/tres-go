@@ -7,6 +7,8 @@ import { extname } from 'path';
 import { AudioConverterService } from './audio-converter.service';
 import { PrismaModule } from '../prisma/prisma.module';
 
+import { MediaProcessor } from './media.processor';
+
 @Module({
   imports: [
     MulterModule.register({
@@ -23,8 +25,8 @@ import { PrismaModule } from '../prisma/prisma.module';
     }),
     PrismaModule,
   ],
-  providers: [UploadsService, AudioConverterService],
+  providers: [UploadsService, AudioConverterService, MediaProcessor],
   controllers: [UploadsController],
   exports: [UploadsService, AudioConverterService],
 })
-export class UploadsModule {}
+export class UploadsModule { }

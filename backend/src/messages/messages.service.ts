@@ -24,7 +24,7 @@ export class MessagesService {
         take: 20,
         skip: cursor ? 1 : 0,
         cursor: cursor ? { id: cursor } : undefined,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ sequence: 'desc' }, { createdAt: 'desc' }],
       });
     } catch (e) {
       // Prisma throws if cursor is not found. It means cursor is likely in ArchivedMessage.
@@ -45,7 +45,7 @@ export class MessagesService {
           take: takeRemaining,
           skip: cursorForArchive ? 1 : 0,
           cursor: cursorForArchive,
-          orderBy: { createdAt: 'desc' },
+          orderBy: [{ sequence: 'desc' }, { createdAt: 'desc' }],
         });
         // Map archivedMessage to standard message format so frontend doesn't break
         const formattedArchived = archived.map((msg) => ({
@@ -89,22 +89,34 @@ export class MessagesService {
 
     const finalContent = normalizeMessageContent(dbContent);
 
-    // 1. Save to DB
-    const message = await this.prisma.message.create({
-      data: {
-        conversationId: data.conversationId,
-        type:
-          data.type ||
-          (finalContent.mediaUrl
-            ? finalContent.isPtt
-              ? 'AUDIO'
-              : (data.type || 'DOCUMENT')
-            : 'TEXT'),
-        content: finalContent,
-        fromAgent: true,
-        senderName,
-        status: 'PENDING',
-      },
+    // 1. Save to DB with transaction for sequence numbering
+    const message = await this.prisma.$transaction(async (tx) => {
+      // Find Conversation to get channelId and lastSeq
+      const conversation = await tx.conversation.update({
+        where: { id: data.conversationId },
+        data: { lastSeq: { increment: 1 } },
+        include: { channel: true }
+      });
+
+      return tx.message.create({
+        data: {
+          conversationId: data.conversationId,
+          channelId: conversation.channelId,
+          type:
+            data.type ||
+            (finalContent.mediaUrl
+              ? finalContent.isPtt
+                ? 'AUDIO'
+                : (data.type || 'DOCUMENT')
+              : 'TEXT'),
+          content: finalContent,
+          fromAgent: true,
+          senderName,
+          status: 'PENDING',
+          sequence: conversation.lastSeq,
+          receivedAt: new Date(),
+        },
+      });
     });
 
     this.logger.log(`Mensagem salva no DB: ${message.id} (Status: ${message.status})`);

@@ -68,8 +68,11 @@ model Channel {
 
   config        Json?       // Configurações flexíveis (Z-API instance, Meta secrets, etc)
 
+  zapiInstanceId String?     @unique // Cache for instanceId in config for fast lookup
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+
+  @@index([zapiInstanceId])
 
   conversations     Conversation[]
   scheduledMessages ScheduledMessage[]
@@ -175,6 +178,7 @@ model Conversation {
   channel           Channel             @relation(fields: [channelId], references: [id])
   contact           Contact             @relation(fields: [contactId], references: [id])
   workspace         Workspace           @relation(fields: [workspaceId], references: [id])
+  lastSeq           Int                 @default(0)
   messages          Message[]
   ConversationToTag ConversationToTag[]
   deals             Deal[]
@@ -198,8 +202,22 @@ model Message {
   content        Json
   status         String
   externalId     String?
+  
+  providerTimestamp DateTime?
+  receivedAt        DateTime     @default(now())
+  sequence          Int          @default(0)
+  channelId         String?      // Optional for legacy, but needed for unique index
+  
+  // Media handling
+  originalUrl       String?
+  mediaPublicUrl    String?
+  mediaType         String?      // Can override the message type
+  mimeType          String?
+  
   createdAt      DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  @@unique([channelId, externalId])
 }
 
 // ── ArchivedMessage: Data Warehouse para mensagens antigas
@@ -606,6 +624,22 @@ model MediaUpload {
   uploader    User      @relation(fields: [uploadedBy], references: [id])
 
   @@index([workspaceId, createdAt])
+}
+
+model WebhookEvent {
+  id              String   @id @default(cuid())
+  provider        String   // "WHATSAPP" | "ZAPI"
+  instanceId      String?
+  phoneNumberId   String?
+  externalId      String?
+  payload         Json
+  receivedAt      DateTime @default(now())
+  processedAt     DateTime?
+  status          String   @default("PENDING") // PENDING, PROCESSED, ERROR
+  error           String?
+  
+  @@index([status])
+  @@index([provider, externalId])
 }
 
 // ── SETOR (Departamento) ──────────────────────────────────────────────────────

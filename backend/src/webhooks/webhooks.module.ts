@@ -9,6 +9,8 @@ import { GatewayModule } from '../gateway/gateway.module';
 import { PipelinesModule } from '../pipelines/pipelines.module';
 import { UploadsModule } from '../uploads/uploads.module';
 
+import { BullModule } from '@nestjs/bullmq';
+import { WebhooksProcessor } from './webhooks.processor';
 
 @Module({
   imports: [
@@ -19,8 +21,15 @@ import { UploadsModule } from '../uploads/uploads.module';
     GatewayModule,
     PipelinesModule,
     UploadsModule,
+    BullModule.registerQueue({
+      name: 'webhooks-processing',
+    }),
+    BullModule.registerQueue({
+      name: 'media-processing',
+    }),
   ],
   controllers: [WebhooksController],
-  providers: [WebhooksService],
+  providers: [WebhooksService, WebhooksProcessor],
+  exports: [WebhooksService],
 })
 export class WebhooksModule { }

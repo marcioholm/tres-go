@@ -11,6 +11,9 @@ import axios from 'axios';
 
 import { normalizeMessageContent } from '../messages/utils/message-utils';
 
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+
 @Injectable()
 export class WebhooksService {
   constructor(
@@ -21,7 +24,34 @@ export class WebhooksService {
     private gateway: AppGateway,
     private keywordDetector: KeywordDetectorService,
     private uploadsService: UploadsService,
+    @InjectQueue('webhooks-processing') private webhooksQueue: Queue,
   ) { }
+
+  async enqueueWebhookEvent(provider: string, payload: any, metadata: { phoneNumberId?: string; instanceId?: string }) {
+    const externalId = provider === 'ZAPI'
+      ? (payload.zaapId || payload.messageId)
+      : (payload.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.id);
+
+    // 1. Save to DB
+    const event = await this.prisma.webhookEvent.create({
+      data: {
+        provider,
+        payload,
+        externalId,
+        instanceId: metadata.instanceId,
+        phoneNumberId: metadata.phoneNumberId,
+        status: 'PENDING',
+      },
+    });
+
+    // 2. Add to Queue
+    await this.webhooksQueue.add('process-webhook', { eventId: event.id }, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 1000 },
+    });
+
+    return event;
+  }
 
   verifyWhatsapp(mode: string, token: string): boolean {
     // Simplified check. Real world: fetch config from DB.

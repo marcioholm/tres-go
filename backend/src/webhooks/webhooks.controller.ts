@@ -39,14 +39,11 @@ export class WebhooksController {
   ) {
     console.log('Received WhatsApp message for', phoneNumberId);
 
-    // Dynamic resolution of workspaceId
-    const channel = await this.webhooksService.findChannelByPhoneId(phoneNumberId);
-    if (!channel) {
-      console.error(`No channel found for WhatsApp Phone ID ${phoneNumberId}`);
-      return res.status(HttpStatus.NOT_FOUND).send('CHANNEL_NOT_FOUND');
-    }
+    // Save event and enqueue
+    await this.webhooksService.enqueueWebhookEvent('WHATSAPP', body, {
+      phoneNumberId,
+    });
 
-    await this.webhooksService.processWhatsappMessage(channel.workspaceId, body);
     return res.status(HttpStatus.OK).send('EVENT_RECEIVED');
   }
 
@@ -57,7 +54,12 @@ export class WebhooksController {
     @Res() res: Response,
   ) {
     console.log('Received Z-API message for', instanceId);
-    await this.webhooksService.processZapiMessage(instanceId, body);
+
+    // Save event and enqueue
+    await this.webhooksService.enqueueWebhookEvent('ZAPI', body, {
+      instanceId,
+    });
+
     return res.status(HttpStatus.OK).send({ success: true });
   }
 }
