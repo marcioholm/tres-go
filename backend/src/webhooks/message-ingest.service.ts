@@ -93,15 +93,18 @@ export class MessageIngestService {
 
         // Mapeamento de tipo
         const zType = payload.type?.toLowerCase();
+        const hasStickerUrl = !!(payload.stickerUrl || (typeof payload.data === 'object' && payload.data?.stickerUrl));
+
         if (zType === 'audio' || zType === 'ptt') type = MessageType.AUDIO;
         else if (zType === 'image') type = MessageType.IMAGE;
         else if (zType === 'video') type = MessageType.VIDEO;
-        else if (zType === 'sticker') type = MessageType.STICKER;
+        else if (zType === 'sticker' || hasStickerUrl) type = MessageType.STICKER;
         else if (zType === 'document' || zType === 'file') type = MessageType.DOCUMENT;
         else if (zType === 'location') type = MessageType.LOCATION;
         else if (zType === 'contact') type = MessageType.CONTACT;
         else if (payload.audio) type = MessageType.AUDIO;
         else if (payload.image) type = MessageType.IMAGE;
+        else if (payload.sticker) type = MessageType.STICKER;
 
         // Reações
         let reaction;

@@ -37,7 +37,7 @@ export const AudioPttBubble = ({ message, fromAgent }: AudioPttBubbleProps) => {
         <div className={`flex items-end gap-2 ${fromAgent ? 'flex-row-reverse' : ''}`}>
 
             {/* Bolha PTT — idêntica ao WhatsApp */}
-            <div className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl max-w-[260px] shadow-sm ${fromAgent
+            <div className={`flex items-center gap-2 px-2 py-1 rounded-xl max-w-[210px] shadow-sm ${fromAgent
                 ? 'bg-[#E7FFDB] text-slate-800 rounded-br-sm border border-[#D1EAB5]'    // Estilo WhatsApp Outgoing
                 : 'bg-white text-slate-800 rounded-bl-sm border border-slate-100'
                 }`}>
@@ -48,17 +48,17 @@ export const AudioPttBubble = ({ message, fromAgent }: AudioPttBubbleProps) => {
                         if (isPlaying) { audioRef.current?.pause(); setIsPlaying(false); }
                         else { audioRef.current?.play(); setIsPlaying(true); }
                     }}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${fromAgent ? 'bg-transparent text-emerald-600' : 'bg-emerald-500 text-white hover:bg-emerald-600'
+                    className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${fromAgent ? 'bg-transparent text-emerald-600' : 'bg-emerald-500 text-white hover:bg-emerald-600'
                         }`}
                 >
-                    <span className={`material-symbols-outlined text-3xl font-light`}>
+                    <span className={`material-symbols-outlined text-xl font-light`}>
                         {isPlaying ? 'pause' : 'play_arrow'}
                     </span>
                 </button>
 
-                <div className="flex flex-col gap-1.5 flex-1 min-w-[120px]">
+                <div className="flex flex-col gap-0 flex-1 min-w-[80px]">
                     {/* Waveform com progresso */}
-                    <div className="flex items-center gap-px h-6">
+                    <div className="flex items-center gap-px h-4">
                         {waveform.map((amplitude, i) => {
                             const isPast = (i / waveform.length) < (currentTime / (duration || 1));
                             return (
@@ -75,12 +75,12 @@ export const AudioPttBubble = ({ message, fromAgent }: AudioPttBubbleProps) => {
                     </div>
 
                     {/* Tempo */}
-                    <div className="flex items-center justify-between">
-                        <span className={`text-[10px] font-medium tabular-nums ${fromAgent ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <div className="flex items-center justify-between h-3">
+                        <span className={`text-[8px] font-medium tabular-nums ${fromAgent ? 'text-slate-500' : 'text-slate-400'}`}>
                             {isPlaying ? formatTime(currentTime) : formatTime(duration)}
                         </span>
                         {/* Ícone de microfone */}
-                        <span className={`material-symbols-outlined text-sm ${fromAgent ? 'text-emerald-500' : 'text-slate-300'}`}>
+                        <span className={`material-symbols-outlined text-[10px] ${fromAgent ? 'text-emerald-500' : 'text-slate-300'}`}>
                             mic
                         </span>
                     </div>

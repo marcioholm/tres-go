@@ -44,7 +44,10 @@ export function normalizeMessageContent(content: any): any {
     let kind = (raw.kind || raw.mediaType || raw.type || (text ? 'text' : 'unknown')).toLowerCase();
 
     // Fallback if kind is invalid or too generic
-    if (['received', 'sent', 'message', 'attachment', 'media'].includes(kind)) {
+    const isWebp = raw.mimeType?.includes('webp') || raw.mimetype?.includes('webp') || (typeof raw.mediaUrl === 'string' && raw.mediaUrl.toLowerCase().includes('.webp'));
+    if (kind === 'sticker' || isWebp) {
+        kind = 'sticker';
+    } else if (['received', 'sent', 'message', 'attachment', 'media'].includes(kind)) {
         if (raw.mediaType) kind = raw.mediaType.toLowerCase();
         else if (text && !raw.mediaUrl) kind = 'text';
     }
