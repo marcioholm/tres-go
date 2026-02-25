@@ -78,7 +78,8 @@ export class MessageIngestService {
 
         let mediaUrl: string | undefined;
         if (typeof rawMediaUrl === 'object' && rawMediaUrl !== null) {
-            mediaUrl = rawMediaUrl.url || rawMediaUrl.link || rawMediaUrl.file || rawMediaUrl.thumbnailUrl;
+            mediaUrl = rawMediaUrl.url || rawMediaUrl.link || rawMediaUrl.file || rawMediaUrl.thumbnailUrl ||
+                rawMediaUrl.stickerUrl || rawMediaUrl.audioUrl || rawMediaUrl.videoUrl || rawMediaUrl.imageUrl;
             if (!mediaUrl) {
                 this.logger.warn(`[ZAPI] Media object detected but no URL found: ${JSON.stringify(rawMediaUrl)}`);
             } else {
