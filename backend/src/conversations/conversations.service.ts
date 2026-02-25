@@ -119,11 +119,16 @@ export class ConversationsService {
               ? c.phone
               : c?.externalId || 'Sem nome',
         messages: conv.messages.map((m) => {
-          const normalizedContent = normalizeMessageContent(m.content);
+          const normalized = normalizeMessageContent(m.content);
           return {
             ...m,
-            content: normalizedContent,
-            text: normalizedContent.text,
+            text: normalized.text,
+            mediaUrl: m.mediaFinalUrl || m.mediaOriginalUrl || normalized.mediaUrl,
+            mediaType: (m.type || normalized.mediaType || normalized.kind || '').toLowerCase(),
+            isPtt: !!normalized.isPtt,
+            duration: normalized.duration,
+            waveform: normalized.waveform,
+            content: normalized,
           };
         }),
       };
@@ -136,26 +141,31 @@ export class ConversationsService {
       include: {
         channel: true,
         contact: true,
-        messages: { take: 50, orderBy: { createdAt: 'desc' } },
+        messages: { take: 100, orderBy: { createdAt: 'desc' } }, // Increased to 100 for better history
       },
     });
 
     if (!conversation) return null;
 
+    const messages = conversation.messages.map(m => {
+      const normalized = normalizeMessageContent(m.content);
+      return {
+        ...m,
+        text: normalized.text,
+        mediaUrl: m.mediaFinalUrl || m.mediaOriginalUrl || normalized.mediaUrl,
+        mediaType: (m.type || normalized.mediaType || normalized.kind || '').toLowerCase(),
+        isPtt: !!normalized.isPtt,
+        duration: normalized.duration,
+        waveform: normalized.waveform,
+        content: normalized,
+      };
+    });
+
     return {
       ...conversation,
       name:
         conversation.contact?.name || conversation.contact?.phone || 'Sem nome',
-      messages: conversation.messages
-        .map((m) => {
-          const normalizedContent = normalizeMessageContent(m.content);
-          return {
-            ...m,
-            content: normalizedContent,
-            text: normalizedContent.text,
-          };
-        })
-        .reverse(), // Show in chronological order for frontend
+      messages: messages.reverse(),
     };
   }
 
