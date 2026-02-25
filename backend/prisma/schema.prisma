@@ -191,46 +191,80 @@ model Conversation {
   pipelineStages    ConversationPipelineStage[]
 }
 
-// ── Message: adicionar nota interna
+// ── Message: robust messaging pipeline
 model Message {
   id             String       @id @default(cuid())
   conversationId String
+  workspaceId    String?      // Mandatory for multi-tenancy in future
+  channelId      String?
+  
   fromAgent      Boolean      @default(false)
-  senderName     String?                          // Nome do agente que enviou (null = cliente)
+  senderName     String?      // Nome do agente que enviou (null = cliente)
   isInternalNote Boolean      @default(false)
-  type           String
-  content        Json
-  status         String
-  externalId     String?
   
-  providerTimestamp DateTime?
-  receivedAt        DateTime     @default(now())
-  sequence          Int          @default(0)
-  channelId         String?      // Optional for legacy, but needed for unique index
+  type           MessageType  @default(TEXT)
+  content        Json?        // Texto ou metadados básicos
+  status         String?      // PENDING, SENT, DELIVERED, READ, FAILED
   
-  // Media handling
-  originalUrl       String?
-  mediaPublicUrl    String?
-  mediaType         String?      // Can override the message type
-  mimeType          String?
-  
-  createdAt      DateTime     @default(now())
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  provider       MessageProvider @default(ZAPI)
+  providerMessageId String?     // ID único no provedor
+  providerTimestamp DateTime?    // Timestamp real do provedor
+  receivedAt     DateTime     @default(now())
+  sequence       Int          @default(0)
 
-  @@unique([channelId, externalId])
+  // Media handling
+  mediaOriginalUrl String?
+  mediaFinalUrl    String?
+  mediaMimeType    String?
+  mediaFileName    String?
+  mediaSize        Int?
+  mediaStatus      MediaStatus   @default(NONE)
+
+  // Reactions
+  reactionEmoji                  String?
+  reactionTargetProviderMessageId String?
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt @default(now())
+  
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([workspaceId, createdAt])
+  @@unique([channelId, provider, providerMessageId])
 }
 
 // ── ArchivedMessage: Data Warehouse para mensagens antigas
 model ArchivedMessage {
   id             String       @id
   conversationId String
+  workspaceId    String?
+  channelId      String?
+  
   fromAgent      Boolean
+  senderName     String?
   isInternalNote Boolean
-  type           String
-  content        Json
-  status         String
-  externalId     String?
-  sequence       Int?
+  
+  type           MessageType
+  content        Json?
+  status         String?
+  
+  provider       MessageProvider
+  providerMessageId String?
+  providerTimestamp DateTime?
+  receivedAt     DateTime
+  sequence       Int
+  
+  mediaOriginalUrl String?
+  mediaFinalUrl    String?
+  mediaMimeType    String?
+  mediaFileName    String?
+  mediaSize        Int?
+  mediaStatus      MediaStatus
+
+  reactionEmoji                  String?
+  reactionTargetProviderMessageId String?
+
   createdAt      DateTime
   archivedAt     DateTime     @default(now())
 
@@ -238,6 +272,33 @@ model ArchivedMessage {
 
   @@index([conversationId])
   @@index([createdAt])
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  STICKER
+  REACTION
+  LOCATION
+  CONTACT
+  UNKNOWN
+}
+
+enum MessageProvider {
+  ZAPI
+  WA_CLOUD
+  INSTAGRAM
+  MESSENGER
+}
+
+enum MediaStatus {
+  NONE
+  PENDING
+  READY
+  FAILED
 }
 
 

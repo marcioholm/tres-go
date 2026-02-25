@@ -10,6 +10,8 @@ import { KeywordDetectorService } from '../pipelines/keyword-detector.service';
 import { SessionService } from '../performance/session.service';
 import { ConversationsService } from '../conversations/conversations.service';
 import { ContactsService } from '../contacts/contacts.service';
+import { MessageIngestService, NormalizedIncomingMessage } from './message-ingest.service';
+import { MessageType, MediaStatus, MessageProvider } from '@prisma/client';
 
 @Processor('webhooks-processing', {
     concurrency: 5,
@@ -23,6 +25,7 @@ export class WebhooksProcessor extends WorkerHost {
         private sessionService: SessionService,
         private conversationsService: ConversationsService,
         private contactsService: ContactsService,
+        private ingestService: MessageIngestService,
         @InjectQueue('media-processing') private mediaQueue: Queue,
     ) {
         super();
@@ -37,10 +40,15 @@ export class WebhooksProcessor extends WorkerHost {
         if (!event || event.status === 'PROCESSED') return;
 
         try {
+            let normalized: NormalizedIncomingMessage | null = null;
             if (event.provider === 'ZAPI') {
-                await this.processZapi(event);
-            } else {
-                await this.processWhatsapp(event);
+                normalized = this.ingestService.normalizeZapi(event.instanceId, event.payload);
+            } else if (event.provider === 'WHATSAPP') {
+                normalized = this.ingestService.normalizeWhatsappCloud(event.phoneNumberId, event.payload);
+            }
+
+            if (normalized) {
+                await this.processNormalizedMessage(normalized);
             }
 
             await this.prisma.webhookEvent.update({
@@ -57,43 +65,30 @@ export class WebhooksProcessor extends WorkerHost {
         }
     }
 
-    private async processZapi(event: any) {
-        const body = event.payload;
-        const instanceId = event.instanceId;
-
-        // 1. Optimized Channel Lookup
-        let channel = await this.prisma.channel.findUnique({
-            where: { zapiInstanceId: instanceId },
-        });
-
-        if (!channel) {
-            // Fallback to searching config (slow)
-            const channels = await this.prisma.channel.findMany({ where: { type: 'WHATSAPP' } });
-            channel = channels.find((c: any) => {
-                const config = typeof c.config === 'string' ? JSON.parse(c.config) : c.config;
-                return config?.instanceId === instanceId;
+    private async processNormalizedMessage(msg: NormalizedIncomingMessage) {
+        // 1. Resolve Channel
+        let channel;
+        if (msg.provider === MessageProvider.ZAPI) {
+            channel = await this.prisma.channel.findUnique({
+                where: { zapiInstanceId: msg.channelKey },
             });
-
-            if (channel) {
-                // Cache it for next time
-                await this.prisma.channel.update({
-                    where: { id: channel.id },
-                    data: { zapiInstanceId: instanceId },
-                });
-            }
+        } else if (msg.provider === MessageProvider.WA_CLOUD) {
+            channel = await this.prisma.channel.findFirst({
+                where: { phoneNumberId: msg.channelKey },
+            });
         }
 
-        if (!channel) throw new Error(`Channel not found for Z-API instance ${instanceId}`);
+        if (!channel) throw new Error(`Channel not found for ${msg.provider} key ${msg.channelKey}`);
 
         const workspaceId = channel.workspaceId;
-        const rawPhone = body.phone;
-        const senderPhone = this.normalizePhone(rawPhone);
-        const senderName = body.senderName || senderPhone;
-        const externalId = body.zaapId || body.messageId;
-        const isFromMe = body.fromMe === true;
 
         // 2. Find/Create Contact
-        const dbContact = await this.contactsService.findOrCreate(workspaceId, senderPhone, senderName, body.photo);
+        const dbContact = await this.contactsService.findOrCreate(
+            workspaceId,
+            msg.contact.phone,
+            msg.contact.name,
+            undefined // avatarUrl support later
+        );
 
         // 3. Find/Create Conversation
         let conversation = await this.prisma.conversation.findFirst({
@@ -104,129 +99,73 @@ export class WebhooksProcessor extends WorkerHost {
             conversation = await this.conversationsService.create(workspaceId, {
                 contactId: dbContact.id,
                 channelId: channel.id,
-                messageBody: body.text?.message || body.message || 'Nova conversa',
-                contactPhone: senderPhone,
+                messageBody: msg.text || 'Nova conversa',
+                contactPhone: msg.contact.phone,
             });
         }
 
-        // 4. Handle Media
-        const mediaUrl = body.audio || body.image || body.video || body.document || body.sticker;
-        const status = mediaUrl ? 'PENDING_DOWNLOAD' : (isFromMe ? 'SENT' : 'RECEIVED');
-
-        // 5. Create Message with Transaction and Sequence
-        const message = await this.createMessageTransactional({
-            conversationId: conversation.id,
-            channelId: channel.id,
-            workspaceId,
-            externalId,
-            fromAgent: isFromMe,
-            type: (body.type || 'text').toUpperCase(),
-            content: { text: body.text?.message || body.message || '', originalUrl: mediaUrl },
-            status,
-            providerTimestamp: body.timestamp ? new Date(body.timestamp * 1000) : new Date(),
-        });
-
-        // 6. trigger media processing if needed
-        if (mediaUrl) {
-            await this.mediaQueue.add('download-media', { messageId: message.id });
-        }
-
-        // 7. Post-processing (socket, keywords)
-        await this.postProcessMessage(workspaceId, conversation, dbContact, message, channel.type);
-    }
-
-    private async processWhatsapp(event: any) {
-        const body = event.payload;
-        const entry = body.entry?.[0];
-        const changes = entry?.changes?.[0];
-        const value = changes?.value;
-        const message = value?.messages?.[0];
-        const contact = value?.contacts?.[0];
-
-        if (!message) return;
-
-        const channel = await this.prisma.channel.findFirst({
-            where: { phoneNumberId: event.phoneNumberId },
-        });
-        if (!channel) throw new Error(`Channel not found for WhatsApp Phone ID ${event.phoneNumberId}`);
-
-        const workspaceId = channel.workspaceId;
-        const senderPhone = message.from;
-        const senderName = contact?.profile?.name || senderPhone;
-        const externalId = message.id;
-
-        const dbContact = await this.contactsService.findOrCreate(workspaceId, senderPhone, senderName);
-
-        let conversation = await this.prisma.conversation.findFirst({
-            where: { workspaceId, contactId: dbContact.id, status: 'OPEN' },
-        });
-
-        if (!conversation) {
-            conversation = await this.conversationsService.create(workspaceId, {
-                contactId: dbContact.id,
-                channelId: channel.id,
-                messageBody: message.text?.body || message.type,
-                contactPhone: senderPhone,
+        // 4. Handle Monotone Sequencing and Deduplication
+        const message = await this.prisma.$transaction(async (tx) => {
+            // Check for duplicate
+            const existing = await tx.message.findUnique({
+                where: {
+                    channelId_provider_providerMessageId: {
+                        channelId: channel.id,
+                        provider: msg.provider,
+                        providerMessageId: msg.providerMessageId,
+                    }
+                }
             });
-        }
 
-        const hasMedia = ['image', 'audio', 'video', 'document', 'sticker', 'voice'].includes(message.type);
-        const status = hasMedia ? 'PENDING_DOWNLOAD' : 'RECEIVED';
+            if (existing) return existing;
 
-        const newMessage = await this.createMessageTransactional({
-            conversationId: conversation.id,
-            channelId: channel.id,
-            workspaceId,
-            externalId,
-            fromAgent: false,
-            type: message.type.toUpperCase(),
-            content: { text: message.text?.body || '', type: message.type },
-            status,
-            providerTimestamp: new Date(parseInt(message.timestamp) * 1000),
-        });
-
-        if (hasMedia) {
-            await this.mediaQueue.add('download-media', { messageId: newMessage.id, whatsappMediaId: message[message.type].id });
-        }
-
-        await this.postProcessMessage(workspaceId, conversation, dbContact, newMessage, 'WHATSAPP');
-    }
-
-    private async createMessageTransactional(params: any) {
-        return this.prisma.$transaction(async (tx) => {
-            // 1. Check for duplicate
-            if (params.externalId) {
-                const existing = await tx.message.findFirst({
-                    where: { channelId: params.channelId, externalId: params.externalId },
-                });
-                if (existing) return existing;
-            }
-
-            // 2. Increment lastSeq
-            const conversation = await tx.conversation.update({
-                where: { id: params.conversationId },
+            // Increment lastSeq
+            const updatedConversation = await tx.conversation.update({
+                where: { id: conversation.id },
                 data: { lastSeq: { increment: 1 } },
             });
 
-            // 3. Create message
+            const status = msg.media ? MediaStatus.PENDING : (msg.fromMe ? 'SENT' : 'RECEIVED');
+
+            // Create Message
             return tx.message.create({
                 data: {
-                    conversationId: params.conversationId,
-                    channelId: params.channelId,
-                    externalId: params.externalId,
-                    fromAgent: params.fromAgent,
-                    type: params.type,
-                    content: params.content,
-                    status: params.status,
-                    sequence: conversation.lastSeq,
-                    providerTimestamp: params.providerTimestamp,
-                },
+                    conversationId: conversation.id,
+                    workspaceId,
+                    channelId: channel.id,
+                    fromAgent: msg.fromMe,
+                    type: msg.type,
+                    content: { text: msg.text, ...(msg.media ? { originalUrl: msg.media.url } : {}) },
+                    status,
+                    provider: msg.provider,
+                    providerMessageId: msg.providerMessageId,
+                    providerTimestamp: msg.providerTimestamp,
+                    sequence: updatedConversation.lastSeq,
+                    mediaOriginalUrl: msg.media?.url,
+                    mediaStatus: msg.media ? MediaStatus.PENDING : MediaStatus.NONE,
+                    reactionEmoji: msg.reaction?.emoji,
+                    reactionTargetProviderMessageId: msg.reaction?.targetProviderMessageId,
+                }
             });
         });
+
+        // 5. Trigger Media Processing if needed
+        if (msg.media && message.mediaStatus === MediaStatus.PENDING) {
+            await this.mediaQueue.add('download-media', {
+                messageId: message.id,
+                whatsappMediaId: msg.provider === MessageProvider.WA_CLOUD ? msg.media.url : undefined
+            }, {
+                attempts: 5,
+                backoff: { type: 'exponential', delay: 2000 }
+            });
+        }
+
+        // 6. Post-processing (socket, keywords, session)
+        await this.postProcessMessage(workspaceId, conversation, dbContact, message, channel.type);
     }
 
     private async postProcessMessage(workspaceId: string, conversation: any, contact: any, message: any, channelType: string) {
-        const text = (message.content as any).text || '';
+        const text = (message.content as any)?.text || '';
 
         await this.keywordDetector.detect(text, conversation.id, workspaceId, conversation.sectorId).catch(() => { });
         await this.sessionService.trackClientMessage(conversation.id).catch(() => { });
@@ -234,6 +173,8 @@ export class WebhooksProcessor extends WorkerHost {
         const socketMessage = {
             ...message,
             text,
+            mediaUrl: message.mediaFinalUrl || message.mediaOriginalUrl,
+            mediaType: message.type,
         };
 
         const emitPayload = {

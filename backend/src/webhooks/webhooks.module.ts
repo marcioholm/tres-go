@@ -11,6 +11,7 @@ import { UploadsModule } from '../uploads/uploads.module';
 
 import { BullModule } from '@nestjs/bullmq';
 import { WebhooksProcessor } from './webhooks.processor';
+import { MessageIngestService } from './message-ingest.service';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { WebhooksProcessor } from './webhooks.processor';
     }),
   ],
   controllers: [WebhooksController],
-  providers: [WebhooksService, WebhooksProcessor],
+  providers: [WebhooksService, WebhooksProcessor, MessageIngestService],
   exports: [WebhooksService],
 })
 export class WebhooksModule { }

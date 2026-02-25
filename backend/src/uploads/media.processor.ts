@@ -4,9 +4,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import axios from 'axios';
 import { createClient } from '@supabase/supabase-js';
+import { MessageType, MediaStatus, MessageProvider } from '@prisma/client';
 
 @Processor('media-processing', {
-    concurrency: 2,
+    concurrency: 5,
 })
 export class MediaProcessor extends WorkerHost {
     private readonly logger = new Logger(MediaProcessor.name);
@@ -25,43 +26,53 @@ export class MediaProcessor extends WorkerHost {
         const { messageId, whatsappMediaId } = job.data;
         const message = await this.prisma.message.findUnique({
             where: { id: messageId },
-            include: { conversation: { include: { workspace: true } } },
+            include: { conversation: { include: { channel: true } } },
         });
 
-        if (!message || message.status !== 'PENDING_DOWNLOAD') return;
+        if (!message || message.mediaStatus !== MediaStatus.PENDING) return;
 
         try {
             let mediaBuffer: Buffer;
-            let mimeType: string;
-            let fileName: string = `media-${Date.now()}`;
+            let mimeType: string = message.mediaMimeType || 'application/octet-stream';
+            let fileName: string = message.mediaFileName || `media-${Date.now()}`;
 
-            const content = message.content as any;
-
-            if (whatsappMediaId) {
-                // Handle WhatsApp Cloud API media download (requires token and Meta graph API)
-                mediaBuffer = await this.downloadWhatsappMedia(whatsappMediaId, message.conversation.workspaceId);
-            } else if (content.originalUrl) {
-                // Handle Z-API or other public/signed URLs
-                const response = await axios.get(content.originalUrl, { responseType: 'arraybuffer' });
+            if (message.provider === MessageProvider.WA_CLOUD && whatsappMediaId) {
+                mediaBuffer = await this.downloadWhatsappMedia(whatsappMediaId, message.conversation.channel);
+            } else if (message.mediaOriginalUrl) {
+                // Handling Z-API or direct URLs
+                const response = await axios.get(message.mediaOriginalUrl, {
+                    responseType: 'arraybuffer',
+                    timeout: 45000,
+                    maxContentLength: 52428800 // 50MB
+                });
                 mediaBuffer = Buffer.from(response.data);
-                mimeType = response.headers['content-type'];
+                if (response.headers['content-type']) {
+                    mimeType = response.headers['content-type'];
+                }
             } else {
                 throw new Error('No media source found for download');
             }
 
-            // Sniff type
-            const { fileTypeFromBuffer } = await (eval('import("file-type")') as Promise<typeof import('file-type')>);
-            const sniffed = await fileTypeFromBuffer(mediaBuffer);
-            if (sniffed) {
-                mimeType = sniffed.mime;
-                fileName += `.${sniffed.ext}`;
+            // Sniff type via magic bytes
+            try {
+                const { fileTypeFromBuffer } = await (eval('import("file-type")') as Promise<typeof import('file-type')>);
+                const sniffed = await fileTypeFromBuffer(mediaBuffer);
+                if (sniffed) {
+                    mimeType = sniffed.mime;
+                    if (!message.mediaFileName) {
+                        fileName += `.${sniffed.ext}`;
+                    }
+                }
+            } catch (sniffError) {
+                this.logger.warn(`Could not sniff type for message ${messageId}: ${sniffError.message}`);
             }
 
-            // Upload to Supabase
-            let finalUrl = content.originalUrl;
+            // Upload to Supabase Storage
+            let finalUrl = message.mediaOriginalUrl;
             if (this.supabase) {
                 const bucketName = 'media';
-                const filePath = `${message.conversation.workspaceId}/${message.id}-${fileName}`;
+                const workspacePath = message.workspaceId || 'common';
+                const filePath = `${workspacePath}/${message.id}-${fileName}`;
 
                 const { data, error } = await this.supabase.storage
                     .from(bucketName)
@@ -79,39 +90,34 @@ export class MediaProcessor extends WorkerHost {
                 finalUrl = publicUrl;
             }
 
-            // Update message
+            // Update Message with final data
             await this.prisma.message.update({
                 where: { id: message.id },
                 data: {
-                    status: message.fromAgent ? 'SENT' : 'RECEIVED',
-                    mediaPublicUrl: finalUrl,
-                    mimeType: mimeType,
-                    mediaType: this.determineMediaType(mimeType),
-                    content: {
-                        ...content,
-                        mediaUrl: finalUrl,
-                        mediaType: this.determineMediaType(mimeType),
-                    },
+                    mediaStatus: MediaStatus.READY,
+                    mediaFinalUrl: finalUrl,
+                    mediaMimeType: mimeType,
+                    mediaSize: mediaBuffer.length,
+                    mediaFileName: fileName,
                 },
             });
+
+            this.logger.log(`Success: Media processed for message ${messageId}. Path: ${finalUrl}`);
 
         } catch (error) {
             this.logger.error(`Failed to process media for message ${messageId}:`, error);
             await this.prisma.message.update({
                 where: { id: messageId },
-                data: { status: 'FAILED' },
+                data: { mediaStatus: MediaStatus.FAILED },
             });
             throw error;
         }
     }
 
-    private async downloadWhatsappMedia(mediaId: string, workspaceId: string): Promise<Buffer> {
-        // This requires fetching the channel to get the accessToken
-        const channel = await this.prisma.channel.findFirst({
-            where: { workspaceId, type: 'WHATSAPP', phoneNumberId: { not: null } },
-        });
-
-        if (!channel || !channel.accessToken) throw new Error('WhatsApp channel or access token not found');
+    private async downloadWhatsappMedia(mediaId: string, channel: any): Promise<Buffer> {
+        if (!channel || !channel.accessToken) {
+            throw new Error('WhatsApp channel or access token not found for media download');
+        }
 
         // 1. Get media URL from Graph API
         const urlResponse = await axios.get(`https://graph.facebook.com/v21.0/${mediaId}`, {
@@ -127,12 +133,5 @@ export class MediaProcessor extends WorkerHost {
         });
 
         return Buffer.from(downloadResponse.data);
-    }
-
-    private determineMediaType(mime: string): string {
-        if (mime.startsWith('image/')) return 'IMAGE';
-        if (mime.startsWith('audio/')) return 'AUDIO';
-        if (mime.startsWith('video/')) return 'VIDEO';
-        return 'DOCUMENT';
     }
 }

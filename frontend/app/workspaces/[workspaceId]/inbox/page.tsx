@@ -208,8 +208,8 @@ export default function InboxPage() {
                 const mappedMessage: Message = {
                     ...data.message,
                     text: data.message.text || content.text || content.body || '',
-                    mediaUrl: data.message.mediaUrl || content.mediaUrl,
-                    mediaType: (data.message.mediaType || content.mediaType || '').toLowerCase() as any,
+                    mediaUrl: data.message.mediaFinalUrl || data.message.mediaUrl || content.mediaUrl,
+                    mediaType: (data.message.type || data.message.mediaType || content.mediaType || '').toLowerCase() as any,
                     isPtt: data.message.isPtt || content.isPtt,
                     duration: data.message.duration || content.duration,
                     waveform: data.message.waveform || content.waveform,
@@ -340,8 +340,8 @@ export default function InboxPage() {
                                 return {
                                     ...m,
                                     text: m.text || content.text || content.body || '',
-                                    mediaUrl: m.mediaUrl || content.mediaUrl,
-                                    mediaType: (m.mediaType || content.mediaType || '').toLowerCase(),
+                                    mediaUrl: m.mediaFinalUrl || m.mediaUrl || content.mediaUrl,
+                                    mediaType: (m.type || m.mediaType || content.mediaType || '').toLowerCase(),
                                     isPtt: m.isPtt || content.isPtt,
                                     duration: m.duration || content.duration,
                                     waveform: m.waveform || content.waveform,
@@ -349,6 +349,11 @@ export default function InboxPage() {
                                     fromMe: m.fromAgent
                                 };
                             }).sort((a: any, b: any) => {
+                                // 1. Priority: Monotone sequence
+                                if (a.sequence !== undefined && b.sequence !== undefined && a.sequence !== 0 && b.sequence !== 0) {
+                                    return a.sequence - b.sequence;
+                                }
+                                // 2. Fallback: CreatedAt
                                 const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
                                 const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
                                 return ta - tb
@@ -925,7 +930,9 @@ export default function InboxPage() {
                                                 </div>
                                             )}
 
-                                            <p className="whitespace-pre-wrap">{msg?.text === 'Media/Unsupported Type' ? "" : (msg?.text || "")}</p>
+                                            <p className={cn("whitespace-pre-wrap", (msg.text || "").trim() === "" && msg.mediaUrl ? "hidden" : "")}>
+                                                {msg?.text === 'Media/Unsupported Type' ? "" : (msg?.text || "")}
+                                            </p>
                                             <div className="flex items-center gap-1 mt-1 justify-end">
                                                 <span className={`text-[10px] ${msg?.fromMe ? 'text-white/80' : 'text-slate-400'} ${msg?.isInternal ? 'text-yellow-700' : ''}`}>
                                                     {msg?.time || ""}
