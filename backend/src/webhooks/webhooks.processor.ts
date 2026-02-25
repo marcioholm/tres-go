@@ -190,7 +190,8 @@ export class WebhooksProcessor extends WorkerHost {
     }
 
     private async postProcessMessage(workspaceId: string, conversation: any, contact: any, message: any, channelType: string) {
-        const text = (message.content as any)?.text || '';
+        const normalized = normalizeMessageContent(message.content);
+        const text = normalized.text || '';
 
         await this.keywordDetector.detect(text, conversation.id, workspaceId, conversation.sectorId).catch(() => { });
         await this.sessionService.trackClientMessage(conversation.id).catch(() => { });
@@ -198,22 +199,23 @@ export class WebhooksProcessor extends WorkerHost {
         const socketMessage = {
             ...message,
             text,
-            mediaUrl: message.mediaFinalUrl || message.mediaOriginalUrl || (message.content as any)?.mediaUrl,
-            mediaType: (message.type || (message.content as any)?.mediaType || (message.content as any)?.kind || '').toLowerCase(),
+            mediaUrl: message.mediaFinalUrl || message.mediaOriginalUrl || normalized.mediaUrl,
+            mediaType: (message.type || normalized.mediaType || normalized.kind || '').toLowerCase(),
         };
 
         const emitPayload = {
             conversationId: conversation.id,
             channelType,
             message: socketMessage,
-            contact,
+            contact: {
+                id: contact.id,
+                name: contact.name,
+                phone: contact.phone,
+                thumbnail: contact.thumbnail
+            }
         };
 
-        if (conversation.sectorId) {
-            this.gateway.emitToSector(workspaceId, conversation.sectorId, 'newMessage', emitPayload);
-        } else {
-            this.gateway.emitToWorkspace(workspaceId, 'newMessage', emitPayload);
-        }
+        this.gateway.emitToWorkspace(workspaceId, 'newMessage', emitPayload);
     }
 
     private normalizePhone(phone: string): string {
