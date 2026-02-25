@@ -33,13 +33,20 @@ export function normalizeMessageContent(content: any): any {
             kind = content.mediaType || (content.mediaUrl ? 'media' : 'text');
         }
 
+        // Ensure mediaUrl is a string and not an object
+        let mediaUrl = content.mediaUrl || content.url || content.originalUrl || content.mediaOriginalUrl || null;
+        if (typeof mediaUrl === 'object' && mediaUrl !== null) {
+            mediaUrl = (mediaUrl as any).url || (mediaUrl as any).link || (mediaUrl as any).file || null;
+        }
+
         return {
             ...content,
             text: text || '',
             body: text || '',
             type: String(type).toUpperCase(),
             kind: kind,
-            mediaUrl: content.mediaUrl || content.url || content.originalUrl || content.mediaOriginalUrl || null,
+            mediaUrl: mediaUrl,
+            mediaType: kind, // Ensure mediaType is available for frontend
             mimeType: content.mimeType || content.mimetype || null,
             fileName: content.fileName || content.filename || content.name || null,
             size: content.size || content.fileSize || 0,

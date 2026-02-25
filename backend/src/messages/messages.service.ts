@@ -65,6 +65,7 @@ export class MessagesService {
         ...msg,
         content: normalized,
         mediaUrl: msg.mediaFinalUrl || msg.mediaOriginalUrl || normalized.mediaUrl,
+        mediaType: (msg.type || normalized.mediaType || normalized.kind || '').toLowerCase(),
         text: normalized.text
       };
     });
