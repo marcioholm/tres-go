@@ -3,101 +3,58 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('Seeding banners...');
+    console.log('🌱 Seeding NorthWay Banners...');
 
-    // Banners for NorthWay Assessoria
     const banners = [
         {
-            title: "Atendimento organizado. Funil desenhado?",
-            description: "De nada adianta o melhor atendimento se os leads não chegam. A NorthWay estrutura sua operação do tráfego até a venda.",
-            ctaText: "QUERO ESTRUTURAR MEU FUNIL",
-            ctaUrl: "https://northwaycompany.com.br/diagnostico",
-            type: "EDUCATIONAL",
-            position: "DASHBOARD_TOP",
-            triggerCondition: "LOW_CONVERSATIONS",
-            priority: 80,
+            title: 'Atrair: Capte Leads Qualificados',
+            description: 'Transforme visitantes em oportunidades reais com estratégias de tráfego e funis de atração NorthWay.',
+            ctaText: 'Agendar Mentoria',
+            ctaUrl: 'https://wa.me/5511999999999?text=Quero+atrair+mais+leads',
+            type: 'PROMO',
+            position: 'DASHBOARD_TOP',
+            priority: 10,
+            isActive: true,
         },
         {
-            title: "Muito atendimento. Poucas vendas?",
-            description: "O problema pode estar antes do atendimento. A gente entra na raiz — funil, processo comercial e follow-up.",
-            ctaText: "ENTENDER O DIAGNÓSTICO",
-            ctaUrl: "https://northwaycompany.com.br/diagnostico",
-            type: "EDUCATIONAL",
-            position: "DASHBOARD_TOP",
-            triggerCondition: "LOW_CONVERSION",
-            priority: 85,
+            title: 'Engajar: Automação Inteligente',
+            description: 'Não deixe nenhum lead esfriar. Use nossas automações para manter conversas ativas e relevantes.',
+            ctaText: 'Ver Automações',
+            ctaUrl: 'https://wa.me/5511999999999?text=Quero+engajar+meus+leads',
+            type: 'PROMO',
+            position: 'DASHBOARD_TOP',
+            priority: 9,
+            isActive: true,
         },
         {
-            title: "A ferramenta é só o começo.",
-            description: "O Omni organiza sua operação de atendimento. A NorthWay organiza tudo ao redor — tráfego, funil, CRM e comercial.",
-            ctaText: "CONHECER A ASSESSORIA",
-            ctaUrl: "https://northwaycompany.com.br/diagnostico",
-            type: "EDUCATIONAL",
-            position: "DASHBOARD_TOP",
-            priority: 60,
-            minTrialDays: 1,
-            maxTrialDays: 10,
+            title: 'Reter: Fidelização e LTV',
+            description: 'Custa 7x menos manter um cliente do que atrair um novo. Descubra como reter sua base com a Assessoria.',
+            ctaText: 'Falar com Consultor',
+            ctaUrl: 'https://wa.me/5511999999999?text=Quero+reter+meus+clientes',
+            type: 'PROMO',
+            position: 'DASHBOARD_TOP',
+            priority: 8,
+            isActive: true,
         },
         {
-            title: "Canal conectado. E os clientes?",
-            description: "Tráfego sem estrutura é dinheiro jogado fora. A NorthWay constrói o sistema de crescimento junto com você.",
-            ctaText: "VER COMO FUNCIONA",
-            ctaUrl: "https://northwaycompany.com.br/diagnostico",
-            type: "EDUCATIONAL",
-            position: "DASHBOARD_TOP",
-            triggerCondition: "CHANNEL_NO_TRAFFIC",
-            priority: 75,
-        },
-        {
-            title: "Crescimento não é sorte. É construção.",
-            description: "Empresas que estruturam funil, atendimento e processo comercial crescem com previsibilidade. A NorthWay faz isso.",
-            ctaText: "QUERO CRESCER COM MÉTODO",
-            ctaUrl: "https://northwaycompany.com.br/diagnostico",
-            type: "SOCIAL_PROOF",
-            position: "SIDEBAR",
-            priority: 30,
-        },
-        {
-            title: "Sua operação tem gargalos invisíveis?",
-            description: "Em 30 minutos de diagnóstico gratuito a NorthWay identifica onde seu crescimento está travado — funil, atendimento ou comercial.",
-            ctaText: "AGENDAR DIAGNÓSTICO GRATUITO",
-            ctaUrl: "https://northwaycompany.com.br/diagnostico",
-            type: "PROMO",
-            position: "DASHBOARD_TOP",
-            priority: 95,
-        },
-        // Some general onboarding/upsell banners
-        {
-            title: "Conecte seu WhatsApp",
-            description: "Comece a escala de atendimentos agora mesmo conectando sua conta oficial ou Z-API.",
-            ctaText: "CONECTAR AGORA",
-            ctaUrl: "/settings/channels",
-            type: "FEATURE",
-            position: "DASHBOARD_TOP",
-            triggerCondition: "NO_CHANNELS",
-            priority: 100,
-        },
-        {
-            title: "Novidade: Automação por IA",
-            description: "Já imaginou sua IA respondendo 24/7? Ative agora mesmo na Base de Conhecimento.",
-            ctaText: "EXPLORAR IA",
-            ctaUrl: "/knowledge-base",
-            type: "UPSELL",
-            position: "SIDEBAR",
-            targetPlan: "Starter",
-            priority: 50,
+            title: 'Vender: Maximize suas Conversões',
+            description: 'Otimize cada etapa do seu funil para converter mais vendas com menor esforço e maior lucro.',
+            ctaText: 'Começar Agora',
+            ctaUrl: 'https://wa.me/5511999999999?text=Quero+vender+mais',
+            type: 'PROMO',
+            position: 'DASHBOARD_TOP',
+            priority: 7,
+            isActive: true,
         }
     ];
 
-    for (const banner of banners) {
-        await prisma.smartBanner.upsert({
-            where: { id: banner.title }, // This is a bit hacky, but for seeding it works if we use title as ID or similar
-            update: banner as any,
-            create: banner as any,
+    for (const bannerData of banners) {
+        await prisma.smartBanner.create({
+            data: bannerData as any
         });
     }
 
-    console.log('Banners seeded successfully!');
+    console.log('✅ Banners seeded successfully!');
 }
 
 main()

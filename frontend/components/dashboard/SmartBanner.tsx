@@ -30,10 +30,24 @@ export function SmartBanner({ workspaceId, position }: SmartBannerProps) {
         if (workspaceId) fetchBanners()
     }, [workspaceId, position])
 
+    // Auto-rotation logic
+    useEffect(() => {
+        if (banners.length <= 1) return
+
+        const timer = setInterval(() => {
+            setCurrentIndex(prev => (prev + 1) % banners.length)
+        }, 8000)
+
+        return () => clearInterval(timer)
+    }, [banners.length])
+
     const handleDismiss = async (bannerId: string) => {
         try {
             await api.post(`/workspaces/${workspaceId}/banners/${bannerId}/dismiss`)
             setBanners(prev => prev.filter(b => b.id !== bannerId))
+            if (currentIndex >= banners.length - 1) {
+                setCurrentIndex(0)
+            }
         } catch (error) {
             console.error("Failed to dismiss banner", error)
         }
@@ -82,9 +96,10 @@ export function SmartBanner({ workspaceId, position }: SmartBannerProps) {
         <AnimatePresence mode="wait">
             <motion.div
                 key={currentBanner.id}
-                initial={{ opacity: 0, y: -20, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.98, x: 20 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.95, x: -20 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
                 className={cn(
                     "relative overflow-hidden mb-8 rounded-2xl border shadow-lg transition-all duration-500 hover:shadow-xl",
                     getBannerStyles(currentBanner.type)
@@ -171,6 +186,24 @@ export function SmartBanner({ workspaceId, position }: SmartBannerProps) {
                         </button>
                     </div>
                 </div>
+
+                {/* Banner Indicators (Dots) */}
+                {banners.length > 1 && (
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20">
+                        {banners.map((_, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => setCurrentIndex(idx)}
+                                className={cn(
+                                    "h-1 rounded-full transition-all duration-300",
+                                    idx === currentIndex
+                                        ? (currentBanner.type === 'PROMO' ? "w-4 bg-white" : "w-4 bg-black")
+                                        : (currentBanner.type === 'PROMO' ? "w-1 bg-white/30" : "w-1 bg-black/10")
+                                )}
+                            />
+                        ))}
+                    </div>
+                )}
             </motion.div>
         </AnimatePresence>
     )
