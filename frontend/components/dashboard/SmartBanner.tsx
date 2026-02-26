@@ -62,70 +62,114 @@ export function SmartBanner({ workspaceId, position }: SmartBannerProps) {
 
     const getBannerStyles = (type: string) => {
         switch (type) {
-            case 'EDUCATIONAL': return "bg-[#F0F7FF] border-[#D0E7FF] text-[#0052CC]"
-            case 'SOCIAL_PROOF': return "bg-[#F2FCF5] border-[#D1F7D9] text-[#166534]"
-            case 'PROMO': return "bg-[#FFF9F0] border-[#FFE7C2] text-[#92400E]"
-            default: return "bg-white border-[#F0F0F0] text-[#0F0F0F]"
+            case 'EDUCATIONAL': return "bg-[#F0F7FF]/80 border-[#D0E7FF]/50 text-[#0052CC] backdrop-blur-md"
+            case 'SOCIAL_PROOF': return "bg-[#F2FCF5]/80 border-[#D1F7D9]/50 text-[#166534] backdrop-blur-md"
+            case 'PROMO': return "border-transparent text-white"
+            default: return "bg-white/80 border-[#F0F0F0]/50 text-[#0F0F0F] backdrop-blur-md"
         }
     }
 
     const getIcon = (type: string) => {
         switch (type) {
-            case 'EDUCATIONAL': return <Info className="h-4 w-4" />
-            case 'SOCIAL_PROOF': return <Star className="h-4 w-4" />
-            case 'PROMO': return <Sparkles className="h-4 w-4" />
-            default: return <Info className="h-4 w-4" />
+            case 'EDUCATIONAL': return <Info className="h-5 w-5" />
+            case 'SOCIAL_PROOF': return <Star className="h-5 w-5" />
+            case 'PROMO': return <Sparkles className="h-5 w-5 fill-white/20" />
+            default: return <Info className="h-5 w-5" />
         }
     }
 
     return (
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
             <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
+                key={currentBanner.id}
+                initial={{ opacity: 0, y: -20, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 className={cn(
-                    "relative overflow-hidden mb-6 p-4 rounded-xl border flex items-center gap-4 transition-all duration-300",
+                    "relative overflow-hidden mb-8 rounded-2xl border shadow-lg transition-all duration-500 hover:shadow-xl",
                     getBannerStyles(currentBanner.type)
                 )}
             >
-                <div className={cn(
-                    "h-10 w-10 shrink-0 rounded-lg flex items-center justify-center bg-white/50 backdrop-blur-sm shadow-sm",
-                    currentBanner.type === 'PROMO' ? "text-[#E8202A]" : "text-inherit"
-                )}>
-                    {getIcon(currentBanner.type)}
-                </div>
+                {/* Premium Background for PROMO */}
+                {currentBanner.type === 'PROMO' && (
+                    <div className="absolute inset-0 z-0">
+                        <img
+                            src="/banner-premium-bg.png"
+                            alt=""
+                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
 
-                <div className="flex-1 min-w-0">
-                    <h4 className="text-[14px] font-bold truncate leading-tight mb-0.5">
-                        {currentBanner.title}
-                    </h4>
-                    <p className="text-[13px] opacity-90 truncate font-medium">
-                        {currentBanner.description}
-                    </p>
-                </div>
+                        {/* Shimmer Effect */}
+                        <motion.div
+                            initial={{ x: '-100%' }}
+                            animate={{ x: '200%' }}
+                            transition={{ repeat: Infinity, duration: 3, ease: "linear", repeatDelay: 5 }}
+                            className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent w-1/2 -skew-x-12"
+                        />
+                    </div>
+                )}
 
-                <div className="flex items-center gap-3 shrink-0">
-                    <Button
-                        size="sm"
-                        onClick={() => handleClick(currentBanner)}
-                        className={cn(
-                            "h-8 px-4 text-[12px] font-bold gap-2",
-                            currentBanner.type === 'PROMO'
-                                ? "bg-[#E8202A] hover:bg-[#CC1018] text-white"
-                                : "bg-black hover:bg-zinc-800 text-white"
-                        )}
-                    >
-                        {currentBanner.ctaText}
-                        <ExternalLink className="h-3 w-3" />
-                    </Button>
+                <div className="relative z-10 p-5 md:p-6 flex flex-col md:flex-row items-center gap-5">
+                    <div className={cn(
+                        "h-12 w-12 shrink-0 rounded-xl flex items-center justify-center shadow-inner",
+                        currentBanner.type === 'PROMO'
+                            ? "bg-white/10 backdrop-blur-xl border border-white/20 text-white"
+                            : "bg-white/50 backdrop-blur-sm border border-black/5 text-inherit"
+                    )}>
+                        {getIcon(currentBanner.type)}
+                    </div>
 
-                    <button
-                        onClick={() => handleDismiss(currentBanner.id)}
-                        className="p-1.5 hover:bg-black/5 rounded-full transition-colors opacity-60 hover:opacity-100"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
+                    <div className="flex-1 text-center md:text-left min-w-0">
+                        <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+                            {currentBanner.type === 'PROMO' && (
+                                <span className="px-2 py-0.5 rounded-full bg-[#E8202A] text-[10px] font-black uppercase tracking-widest text-white shadow-sm border border-white/10">
+                                    Assessoria Exclusive
+                                </span>
+                            )}
+                            <h4 className={cn(
+                                "text-[16px] font-black tracking-tight leading-tight",
+                                currentBanner.type === 'PROMO' ? "text-white" : "text-zinc-900"
+                            )}>
+                                {currentBanner.title}
+                            </h4>
+                        </div>
+                        <p className={cn(
+                            "text-[14px] font-medium max-w-2xl line-clamp-2",
+                            currentBanner.type === 'PROMO' ? "text-white/80" : "text-zinc-600"
+                        )}>
+                            {currentBanner.description}
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-4 shrink-0">
+                        <Button
+                            onClick={() => handleClick(currentBanner)}
+                            className={cn(
+                                "h-11 px-6 rounded-xl text-[14px] font-bold gap-3 transition-all active:scale-95 shadow-lg",
+                                currentBanner.type === 'PROMO'
+                                    ? "bg-[#E8202A] hover:bg-[#CC1018] text-white hover:shadow-red-500/20"
+                                    : "bg-black hover:bg-zinc-800 text-white"
+                            )}
+                        >
+                            {currentBanner.ctaText}
+                            <div className="p-1 rounded-full bg-white/20">
+                                <ExternalLink className="h-3 w-3" />
+                            </div>
+                        </Button>
+
+                        <button
+                            onClick={() => handleDismiss(currentBanner.id)}
+                            className={cn(
+                                "p-2 rounded-full transition-all group",
+                                currentBanner.type === 'PROMO'
+                                    ? "hover:bg-white/10 text-white/40 hover:text-white"
+                                    : "hover:bg-black/5 text-zinc-400 hover:text-zinc-900"
+                            )}
+                        >
+                            <X className="h-5 w-5 group-hover:rotate-90 transition-transform duration-300" />
+                        </button>
+                    </div>
                 </div>
             </motion.div>
         </AnimatePresence>
