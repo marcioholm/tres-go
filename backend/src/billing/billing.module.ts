@@ -4,11 +4,12 @@ import { BillingService } from './billing.service';
 import { BillingWebhookController } from './billing-webhook.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { GatewayModule } from '../gateway/gateway.module';
+import { ImplementationModule } from '../implementation/implementation.module';
 
 @Module({
-  imports: [PrismaModule, GatewayModule],
-  providers: [AsaasService, BillingService],
+  imports: [PrismaModule, GatewayModule, ImplementationModule],
+  providers: [BillingService],
   controllers: [BillingWebhookController],
-  exports: [BillingService, AsaasService],
+  exports: [BillingService],
 })
-export class BillingModule {}
+export class BillingModule { }

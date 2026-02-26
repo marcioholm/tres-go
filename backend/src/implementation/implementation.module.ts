@@ -5,7 +5,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { BillingModule } from '../billing/billing.module';
 
 @Module({
-    imports: [PrismaModule, BillingModule],
+    imports: [PrismaModule],
     controllers: [ImplementationController],
     providers: [ImplementationService],
     exports: [ImplementationService],

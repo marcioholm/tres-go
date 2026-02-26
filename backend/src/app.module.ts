@@ -39,6 +39,7 @@ import { PerformanceModule } from './performance/performance.module';
 import { PipelinesModule } from './pipelines/pipelines.module';
 import { BannersModule } from './banners/banners.module';
 import { ImplementationModule } from './implementation/implementation.module';
+import { AsaasModule } from './billing/asaas.module';
 import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.middleware';
 
 @Module({
@@ -108,6 +109,7 @@ import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.mi
     PipelinesModule,
     BannersModule,
     ImplementationModule,
+    AsaasModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
