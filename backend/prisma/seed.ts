@@ -111,6 +111,49 @@ const plansSeed = [
     },
 ];
 
+const bannersSeed = [
+    {
+        title: 'Atrair: Capte Leads Qualificados',
+        description: 'Transforme visitantes em oportunidades reais com estratégias de tráfego e funis de atração NorthWay.',
+        ctaText: 'Agendar Mentoria',
+        ctaUrl: 'https://wa.me/5511999999999?text=Quero+atrair+mais+leads',
+        type: 'PROMO',
+        position: 'DASHBOARD_TOP',
+        priority: 10,
+        isActive: true,
+    },
+    {
+        title: 'Engajar: Automação Inteligente',
+        description: 'Não deixe nenhum lead esfriar. Use nossas automações para manter conversas ativas e relevantes.',
+        ctaText: 'Ver Automações',
+        ctaUrl: 'https://wa.me/5511999999999?text=Quero+engajar+meus+leads',
+        type: 'PROMO',
+        position: 'DASHBOARD_TOP',
+        priority: 9,
+        isActive: true,
+    },
+    {
+        title: 'Reter: Fidelização e LTV',
+        description: 'Custa 7x menos manter um cliente do que atrair um novo. Descubra como reter sua base com a Assessoria.',
+        ctaText: 'Falar com Consultor',
+        ctaUrl: 'https://wa.me/5511999999999?text=Quero+reter+meus+clientes',
+        type: 'PROMO',
+        position: 'DASHBOARD_TOP',
+        priority: 8,
+        isActive: true,
+    },
+    {
+        title: 'Vender: Maximize suas Conversões',
+        description: 'Otimize cada etapa do seu funil para converter mais vendas com menor esforço e maior lucro.',
+        ctaText: 'Começar Agora',
+        ctaUrl: 'https://wa.me/5511999999999?text=Quero+vender+mais',
+        type: 'PROMO',
+        position: 'DASHBOARD_TOP',
+        priority: 7,
+        isActive: true,
+    }
+];
+
 async function main() {
     console.log('🌱 Start seeding...');
 
@@ -160,6 +203,27 @@ async function main() {
             console.log(`Skipping workspace ${workspace.name}, board already exists.`);
         }
     }
+
+    // Seeding banners
+    console.log('Seeding banners...');
+    for (const banner of bannersSeed) {
+        // We use title as a simple way to find existing banners in seed
+        const existing = await prisma.smartBanner.findFirst({
+            where: { title: banner.title }
+        });
+
+        if (!existing) {
+            await prisma.smartBanner.create({
+                data: banner as any
+            });
+        } else {
+            await prisma.smartBanner.update({
+                where: { id: existing.id },
+                data: banner as any
+            });
+        }
+    }
+    console.log('✅ Banners seeded successfully.');
 
     console.log('✅ Seeding finished.');
 }
