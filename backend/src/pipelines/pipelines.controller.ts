@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, Post, Body, Req } from '@nestjs/common';
 import { PipelineService } from './pipeline.service';
 import { QuickReplyService } from './quick-reply.service';
 import { JwtAuthGuard } from '../auth/jwt.strategy';
@@ -27,5 +27,20 @@ export class PipelinesController {
     @Get()
     async listAll(@Param('workspaceId') workspaceId: string) {
         return this.pipelineService.listAll(workspaceId);
+    }
+
+    @Post('move')
+    async move(
+        @Param('workspaceId') workspaceId: string,
+        @Body() body: { conversationId: string, stageId: string },
+        @Req() req: any,
+    ) {
+        return this.pipelineService.moveToStage(
+            body.conversationId,
+            body.stageId,
+            'MANUAL', // Corrigido de 'AGENT' para 'MANUAL' (MovedBy enum)
+            undefined,
+            req.user?.id
+        );
     }
 }

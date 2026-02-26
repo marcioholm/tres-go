@@ -12,6 +12,7 @@ import { UploadsService } from '../uploads/uploads.service';
 import axios from 'axios';
 import { normalizeMessageContent } from '../messages/utils/message-utils';
 import { MessageType } from '@prisma/client';
+import { KeywordDetectorService } from '../pipelines/keyword-detector.service';
 
 @Injectable()
 export class MetaWebhookService {
@@ -23,6 +24,7 @@ export class MetaWebhookService {
     private readonly gateway: AppGateway,
     private readonly sessionService: SessionService,
     private readonly uploadsService: UploadsService,
+    private readonly keywordDetector: KeywordDetectorService,
   ) { }
 
   validateSignature(rawBody: Buffer, signature: string): boolean {
@@ -414,6 +416,16 @@ export class MetaWebhookService {
               : (message.content as any)?.text || '',
         },
       });
+
+      // Detecção de gatilhos de funil (Palavras-chave)
+      if (message.type === 'TEXT' || (message.content as any)?.text) {
+        this.keywordDetector.detect(
+          (message.content as any)?.text || '',
+          conversation.id,
+          channel.workspaceId,
+          conversation.sectorId || undefined
+        ).catch(err => console.error('[Meta Webhook] Keyword detection error:', err));
+      }
     }
   }
 

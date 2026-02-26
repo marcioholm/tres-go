@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { ArrowRightLeft, Check, CheckCheck, Instagram, Facebook, MessageSquare, Phone, Video, Plus, MoreVertical, Search, Paperclip, Clock, AlertCircle } from "lucide-react"
+import { ArrowRightLeft, Check, CheckCheck, Instagram, Facebook, MessageSquare, Phone, Video, Plus, MoreVertical, Search, Paperclip, Clock, AlertCircle, Zap, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -317,19 +317,37 @@ export default function InboxPage() {
             })
         })
 
-        socket.on('conversation_stage_changed', (data: { conversationId: string, stage: PipelineStage, triggeredBy?: string, automatic: boolean }) => {
+        socket.on('conversation_stage_changed', (data: { conversationId: string, stage: any, triggeredBy?: string, automatic: boolean }) => {
             console.log('[Socket] Conversation stage changed:', data)
             setConversations(prev => prev.map(c => {
                 if (c.id === data.conversationId) {
-                    return { ...c, currentStage: data.stage }
+                    const updatedConv = { ...c, currentStage: data.stage }
+
+                    if (data.automatic) {
+                        const systemMsg = {
+                            id: `auto-${Date.now()}`,
+                            isSystem: true,
+                            isAutomatic: true,
+                            text: `🎯 Movido para ${data.stage.name} — gatilho: '${data.triggeredBy}'`,
+                            triggeredBy: data.triggeredBy,
+                            stageName: data.stage.name,
+                            stageColor: data.stage.color,
+                            previousStageId: c.currentStage?.id,
+                            createdAt: new Date(),
+                            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            expiresAt: Date.now() + 30000, // 30 seconds
+                            fromMe: false
+                        }
+                        updatedConv.messages = [...(c.messages || []), systemMsg]
+                    }
+
+                    return updatedConv
                 }
                 return c
             }))
 
             if (data.automatic) {
-                toast.info(`Conversa movida automaticamente para ${data.stage.name} (Gatilho: ${data.triggeredBy})`, {
-                    duration: 5000,
-                })
+                toast.info(`Conversa movida automaticamente para ${data.stage.name}`)
             }
         })
 
@@ -905,6 +923,41 @@ export default function InboxPage() {
 
                             {(activeChat?.messages || []).map((msg) => {
                                 if (msg.isSystem) {
+                                    const isAutomatic = (msg as any).isAutomatic;
+                                    const expiresAt = (msg as any).expiresAt;
+                                    const isExpired = expiresAt && Date.now() > expiresAt;
+
+                                    if (isAutomatic) {
+                                        return (
+                                            <div key={msg.id} className="flex justify-center my-4 flex-col items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <div
+                                                    className="px-4 py-2 rounded-full text-xs font-semibold shadow-sm border flex items-center gap-2"
+                                                    style={{
+                                                        backgroundColor: `${(msg as any).stageColor}15`,
+                                                        borderColor: (msg as any).stageColor,
+                                                        color: (msg as any).stageColor
+                                                    }}
+                                                >
+                                                    <Zap className="h-3 w-3 fill-current" />
+                                                    <span>{msg.text}</span>
+                                                    <span className="bg-white/50 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider">Automático</span>
+                                                </div>
+
+                                                {!isExpired && (msg as any).previousStageId && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="h-7 text-[10px] font-bold border-slate-200 hover:bg-white shadow-sm"
+                                                        onClick={() => handleStageChange((msg as any).previousStageId)}
+                                                    >
+                                                        <RotateCcw className="mr-1 h-3 w-3" />
+                                                        DESFAZER
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        )
+                                    }
+
                                     return (
                                         <div key={msg.id} className="flex justify-center my-4">
                                             <span className="bg-slate-200/80 px-3 py-1 rounded text-xs text-slate-500 font-medium">

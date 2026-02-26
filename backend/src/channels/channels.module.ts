@@ -15,6 +15,7 @@ import { MetaIntegrationService } from './meta-integration.service';
 import { GatewayModule } from '../gateway/gateway.module';
 import { PerformanceModule } from '../performance/performance.module';
 import { UploadsModule } from '../uploads/uploads.module';
+import { PipelinesModule } from '../pipelines/pipelines.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { UploadsModule } from '../uploads/uploads.module';
     GatewayModule,
     PerformanceModule,
     UploadsModule,
+    PipelinesModule,
   ],
   providers: [
     ChannelsService,

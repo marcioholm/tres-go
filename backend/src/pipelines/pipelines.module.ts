@@ -5,10 +5,12 @@ import { QuickReplyService } from './quick-reply.service';
 import { PipelinesController } from './pipelines.controller';
 import { GatewayModule } from '../gateway/gateway.module';
 
+import { RedisService } from '../common/redis.service';
+
 @Module({
     imports: [GatewayModule],
     controllers: [PipelinesController],
-    providers: [PipelineService, KeywordDetectorService, QuickReplyService],
-    exports: [PipelineService, KeywordDetectorService, QuickReplyService],
+    providers: [PipelineService, KeywordDetectorService, QuickReplyService, RedisService],
+    exports: [PipelineService, KeywordDetectorService, QuickReplyService, RedisService],
 })
 export class PipelinesModule { }

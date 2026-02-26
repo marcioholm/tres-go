@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { BarChart3 } from "lucide-react"
+import { BarChart3, Zap, MessageCircle } from "lucide-react"
 
 import { useRouter, useParams } from "next/navigation"
 
@@ -103,6 +103,39 @@ export default function SettingsPage() {
                         <Button variant="secondary" className="w-full">Gerenciar Tags</Button>
                     </CardContent>
                 </Card>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+                <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-amber-500" />
+                    Automação
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="cursor-pointer hover:bg-slate-50 transition-colors border-amber-100" onClick={() => {
+                        if (workspaceId && workspaceId !== 'undefined') router.push(`/workspaces/${workspaceId}/settings/kanban`); // Assuming funnel settings are in kanban or specialized page
+                    }}>
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                                Funil de Vendas
+                            </CardTitle>
+                            <CardDescription>Configure gatilhos automáticos por palavras-chave.</CardDescription>
+                        </CardHeader>
+                    </Card>
+
+                    <Card className="cursor-pointer hover:bg-slate-50 transition-colors border-blue-100" onClick={() => {
+                        if (workspaceId && workspaceId !== 'undefined') router.push(`/workspaces/${workspaceId}/settings/quick-replies`);
+                    }}>
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <MessageCircle className="h-4 w-4 text-blue-500" />
+                                Atalhos de Resposta
+                            </CardTitle>
+                            <CardDescription>Crie respostas rápidas para agilizar o atendimento.</CardDescription>
+                        </CardHeader>
+                    </Card>
+                </div>
             </div>
         </div>
     )
