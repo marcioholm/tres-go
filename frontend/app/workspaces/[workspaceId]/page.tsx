@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { useLanguage } from "@/lib/language-context"
-import { MessageSquare, CheckCircle, Reply, Timer, DollarSign, Award, Smile, AlertTriangle, Download, Filter, Bell, Search, Menu } from "lucide-react"
+import { MessageSquare, CheckCircle, Reply, Timer, DollarSign, Award, Smile, AlertTriangle, Download, Filter, Bell, Search, Menu, Users } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -99,28 +99,19 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
     return (
         <div className="min-h-screen bg-[#f4f5f7] pb-10">
             {/* ══ HEADER ══════════════════════════════════════════════════════════════ */}
-            <header className="flex items-center justify-between border-b border-border bg-white px-6 py-3 sticky top-0 z-20 shadow-sm">
-                <div className="flex items-center gap-8">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-primary p-1.5 rounded-lg">
-                            <Menu className="text-white w-6 h-6" />
-                        </div>
-                        <h1 className="text-lg font-bold tracking-tight uppercase italic">Northway <span className="text-primary not-italic">Omni</span></h1>
-                    </div>
+            {/* Cabeçalho da Página (Sub-header) */}
+            <div className="flex items-center justify-between px-6 py-4 bg-white/50 backdrop-blur-sm border-b sticky top-0 z-20 h-16">
+                <div className="flex items-center gap-2">
+                    <h1 className="text-xl font-black text-slate-800 tracking-tight tracking-[-0.02em]">Dashboard</h1>
                 </div>
                 <div className="flex items-center gap-4">
-                    {/* Period selector */}
-                    <div className="flex items-center bg-slate-100 rounded-lg p-1 gap-1">
-                        <button onClick={() => setPeriod('hoje')} className={cn("period-btn px-4 py-1.5 text-xs font-bold rounded-md transition-all", period === 'hoje' ? "bg-white shadow-sm text-text-dark" : "text-slate-500 hover:text-slate-800")}>Hoje</button>
-                        <button onClick={() => setPeriod('7d')} className={cn("period-btn px-4 py-1.5 text-xs font-bold rounded-md transition-all", period === '7d' ? "bg-white shadow-sm text-text-dark" : "text-slate-500 hover:text-slate-800")}>7 dias</button>
-                        <button onClick={() => setPeriod('30d')} className={cn("period-btn px-4 py-1.5 text-xs font-bold rounded-md transition-all", period === '30d' ? "bg-white shadow-sm text-text-dark" : "text-slate-500 hover:text-slate-800")}>30 dias</button>
+                    <div className="flex items-center bg-slate-100/80 rounded-xl p-1 gap-1">
+                        <button onClick={() => setPeriod('hoje')} className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", period === 'hoje' ? "bg-white shadow-sm text-nw-blue" : "text-slate-500 hover:text-slate-800")}>Hoje</button>
+                        <button onClick={() => setPeriod('7d')} className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", period === '7d' ? "bg-white shadow-sm text-nw-blue" : "text-slate-500 hover:text-slate-800")}>7 dias</button>
+                        <button onClick={() => setPeriod('30d')} className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", period === '30d' ? "bg-white shadow-sm text-nw-blue" : "text-slate-500 hover:text-slate-800")}>30 dias</button>
                     </div>
-                    <button className="p-2 text-slate-400 hover:text-primary transition-colors relative">
-                        <Bell className="w-5 h-5" />
-                        <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-primary rounded-full ring-2 ring-white"></span>
-                    </button>
                 </div>
-            </header>
+            </div>
 
             {/* ══ MAIN ════════════════════════════════════════════════════════════════ */}
             <main className="max-w-[1440px] mx-auto p-6 space-y-6">
@@ -204,65 +195,65 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
 
                     {/* KPI 1: Total conversas */}
-                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm group hover:shadow-md transition-all h-full">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50/50 rounded-full -translate-y-8 translate-x-8"></div>
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                                <MessageSquare className="text-blue-500 w-5 h-5" />
+                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm hover:shadow-md transition-all h-full group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-nw-blue/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform"></div>
+                        <div className="flex items-start justify-between mb-4 relative z-10">
+                            <div className="w-10 h-10 rounded-xl bg-nw-blue/10 flex items-center justify-center">
+                                <MessageSquare className="text-nw-blue w-5 h-5" />
                             </div>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Conversas</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.totalConversations?.value || 0}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">Total Conversas</p>
+                        <p className="text-3xl font-black text-slate-800 count-anim relative z-10">{dashboardMetrics?.totalConversations?.value || 0}</p>
                     </Card>
 
                     {/* KPI 2: Resolvidas */}
-                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm group hover:shadow-md transition-all h-full">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-50/50 rounded-full -translate-y-8 translate-x-8"></div>
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                                <CheckCircle className="text-emerald-500 w-5 h-5" />
+                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm hover:shadow-md transition-all h-full group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-nw-green/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform"></div>
+                        <div className="flex items-start justify-between mb-4 relative z-10">
+                            <div className="w-10 h-10 rounded-xl bg-nw-green/10 flex items-center justify-center">
+                                <CheckCircle className="text-nw-green w-5 h-5" />
                             </div>
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{dashboardMetrics?.resolved?.rate || 0}%</span>
+                            <span className="text-[10px] font-bold text-nw-green bg-nw-green/10 px-2 py-0.5 rounded-full">{dashboardMetrics?.resolved?.rate || 0}%</span>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Resolvidas</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.resolved?.value || 0}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">Resolvidas</p>
+                        <p className="text-3xl font-black text-slate-800 count-anim relative z-10">{dashboardMetrics?.resolved?.value || 0}</p>
                     </Card>
 
                     {/* KPI 3: Novos Contatos */}
-                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm group hover:shadow-md transition-all h-full">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-amber-50/50 rounded-full -translate-y-8 translate-x-8"></div>
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                                <Reply className="text-amber-500 w-5 h-5" />
+                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm hover:shadow-md transition-all h-full group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-nw-purple/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform"></div>
+                        <div className="flex items-start justify-between mb-4 relative z-10">
+                            <div className="w-10 h-10 rounded-xl bg-nw-purple/10 flex items-center justify-center">
+                                <Users className="text-nw-purple w-5 h-5" />
                             </div>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Novos Contatos</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.newContacts?.value || 0}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">Novos Contatos</p>
+                        <p className="text-3xl font-black text-slate-800 count-anim relative z-10">{dashboardMetrics?.newContacts?.value || 0}</p>
                     </Card>
 
                     {/* KPI 4: TMA */}
-                    <Card className="p-5 relative overflow-hidden border-none shadow-sm group hover:shadow-md transition-all h-full bg-white">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-8 translate-x-8"></div>
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                <Timer className="text-primary w-5 h-5" />
+                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm hover:shadow-md transition-all h-full group font-geist-sans">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-nw-red/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform"></div>
+                        <div className="flex items-start justify-between mb-4 relative z-10">
+                            <div className="w-10 h-10 rounded-xl bg-nw-red/10 flex items-center justify-center">
+                                <Timer className="text-nw-red w-5 h-5" />
                             </div>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">TMA Médio</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim">{dashboardMetrics?.tma?.value || "12m"}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">TMA Médio</p>
+                        <p className="text-3xl font-black text-slate-800 count-anim relative z-10">{dashboardMetrics?.tma?.value || "12m"}</p>
                     </Card>
 
                     {/* KPI 5: Receita */}
-                    <Card className="p-5 relative overflow-hidden border-none shadow-sm group hover:shadow-md transition-all h-full bg-white">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-50/50 rounded-full -translate-y-8 translate-x-8"></div>
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                                <DollarSign className="text-emerald-600 w-5 h-5" />
+                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm hover:shadow-md transition-all h-full group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform"></div>
+                        <div className="flex items-start justify-between mb-4 relative z-10">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                                <DollarSign className="text-emerald-500 w-5 h-5" />
                             </div>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Receita</p>
-                        <p className="text-3xl font-black text-emerald-600 count-anim">R$ {dashboardMetrics?.revenue?.value?.toLocaleString('pt-BR') || 0}</p>
-                        <p className="text-[10px] text-slate-500 mt-1 font-bold">Ticket: R$ {dashboardMetrics?.revenue?.ticketMedia?.toLocaleString('pt-BR') || 0}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">Receita</p>
+                        <p className="text-3xl font-black text-emerald-500 count-anim relative z-10">R$ {dashboardMetrics?.revenue?.value?.toLocaleString('pt-BR') || 0}</p>
+                        <p className="text-[10px] text-slate-400 mt-1 font-bold relative z-10">Ticket: R$ {dashboardMetrics?.revenue?.ticketMedia?.toLocaleString('pt-BR') || 0}</p>
                     </Card>
 
                 </div>

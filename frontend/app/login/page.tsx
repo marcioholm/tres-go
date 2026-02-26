@@ -94,11 +94,17 @@ export default function LoginPage() {
             <div className="flex flex-col items-center justify-center p-8 lg:p-12 bg-white animate-in fade-in slide-in-from-left duration-700">
                 <div className="w-full max-w-md space-y-8">
                     <div className="flex flex-col items-center lg:items-start space-y-6">
-                        <a href="https://www.northwaycompany.com.br/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-80 transition-all transform hover:scale-105 active:scale-95">
-                            <img src="/logo-northway.png" alt="NorthWay Logo" className="h-14 w-14 object-contain shadow-sm rounded-lg" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                            <div className="flex flex-col">
-                                <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none">NORTHWAY</span>
-                                <span className="text-lg font-bold text-red-600 tracking-widest leading-none mt-1">OMNI</span>
+                        <a href="https://www.northwaycompany.com.br/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 hover:opacity-95 transition-all transform hover:scale-[1.02] active:scale-95 group">
+                            <div className="relative h-16 w-16 flex-shrink-0">
+                                <img
+                                    src="/logo-northway.png"
+                                    alt="NorthWay Omni Logo"
+                                    className="object-contain drop-shadow-md"
+                                />
+                            </div>
+                            <div className="flex flex-col leading-tight">
+                                <span className="text-2xl font-black text-slate-900 tracking-tighter">NORTHWAY</span>
+                                <span className="text-lg font-bold text-nw-red tracking-[0.2em] -mt-1 group-hover:tracking-[0.25em] transition-all">OMNI</span>
                             </div>
                         </a>
                         <div className="space-y-2 text-center lg:text-left">
@@ -117,7 +123,7 @@ export default function LoginPage() {
                                     type="email"
                                     placeholder="nome@empresa.com"
                                     required
-                                    className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all rounded-xl pl-4 pr-10"
+                                    className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-nw-blue focus:ring-4 focus:ring-nw-blue/10 transition-all rounded-xl pl-4 pr-10"
                                 />
                             </div>
                         </div>
@@ -134,7 +140,7 @@ export default function LoginPage() {
                                     type={showPassword ? "text" : "password"}
                                     placeholder="••••••••"
                                     required
-                                    className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all rounded-xl pl-4 pr-12"
+                                    className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:border-nw-blue focus:ring-4 focus:ring-nw-blue/10 transition-all rounded-xl pl-4 pr-12"
                                 />
                                 <button
                                     type="button"
@@ -147,13 +153,13 @@ export default function LoginPage() {
                         </div>
 
                         <div className="flex items-center space-x-2 py-1">
-                            <Checkbox id="remember" className="rounded-md border-slate-300 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600" />
+                            <Checkbox id="remember" className="rounded-md border-slate-300 data-[state=checked]:bg-nw-blue data-[state=checked]:border-nw-blue" />
                             <label htmlFor="remember" className="text-sm font-semibold text-slate-500 cursor-pointer select-none">Mantenha-me conectado</label>
                         </div>
 
                         <Button
                             type="submit"
-                            className="w-full bg-red-600 hover:bg-red-700 text-white font-black text-base h-14 rounded-xl shadow-xl shadow-red-200 transition-all transform hover:scale-[1.02] active:scale-[0.98] mt-4 flex items-center justify-center gap-2 group"
+                            className="w-full bg-nw-blue hover:bg-nw-blue/90 text-white font-black text-base h-14 rounded-xl shadow-xl shadow-nw-blue/20 transition-all transform hover:scale-[1.02] active:scale-[0.98] mt-4 flex items-center justify-center gap-2 group"
                             disabled={loading}
                         >
                             {loading ? "CONECTANDO..." : (

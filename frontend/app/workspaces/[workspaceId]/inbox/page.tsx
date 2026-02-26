@@ -994,7 +994,7 @@ export default function InboxPage() {
                                                     {(msg.mediaType === 'document' || msg.type === 'DOCUMENT') && !(msg.mediaUrl.toLowerCase().endsWith('.webp') || msg.mimeType?.includes('webp')) && (
                                                         <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
                                                             <Paperclip className="h-5 w-5" />
-                                                            <span className="underline truncate max-w-[150px]">{msg.fileName || "Ver Documento"}</span>
+                                                            <span className="underline truncate max-w-[150px]">{(msg as any).fileName || "Ver Documento"}</span>
                                                         </a>
                                                     )}
                                                     {msg.mediaUrl && !['image', 'sticker', 'video', 'audio', 'ptt', 'document'].includes((msg.mediaType || msg.type || '').toLowerCase()) && !msg.mimeType?.includes('webp') && !msg.mediaUrl.toLowerCase().endsWith('.webp') && (
