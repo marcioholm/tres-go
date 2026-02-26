@@ -114,7 +114,7 @@ export default function SettingsPage() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="cursor-pointer hover:bg-slate-50 transition-colors border-amber-100" onClick={() => {
-                        if (workspaceId && workspaceId !== 'undefined') router.push(`/workspaces/${workspaceId}/settings/kanban`); // Assuming funnel settings are in kanban or specialized page
+                        if (workspaceId && workspaceId !== 'undefined') router.push(`/workspaces/${workspaceId}/configuracoes/funil`);
                     }}>
                         <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2">
@@ -125,7 +125,7 @@ export default function SettingsPage() {
                     </Card>
 
                     <Card className="cursor-pointer hover:bg-slate-50 transition-colors border-blue-100" onClick={() => {
-                        if (workspaceId && workspaceId !== 'undefined') router.push(`/workspaces/${workspaceId}/settings/quick-replies`);
+                        if (workspaceId && workspaceId !== 'undefined') router.push(`/workspaces/${workspaceId}/configuracoes/atalhos`);
                     }}>
                         <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2">
