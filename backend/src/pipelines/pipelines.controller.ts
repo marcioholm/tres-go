@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards, Post, Body, Req } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, Post, Body, Req, Put, Delete } from '@nestjs/common';
 import { PipelineService } from './pipeline.service';
 import { QuickReplyService } from './quick-reply.service';
 import { JwtAuthGuard } from '../auth/jwt.strategy';
@@ -29,6 +29,11 @@ export class PipelinesController {
         return this.pipelineService.listAll(workspaceId);
     }
 
+    @Post()
+    async create(@Param('workspaceId') workspaceId: string, @Body() body: any) {
+        return this.pipelineService.create(workspaceId, body);
+    }
+
     @Post('move')
     async move(
         @Param('workspaceId') workspaceId: string,
@@ -38,9 +43,28 @@ export class PipelinesController {
         return this.pipelineService.moveToStage(
             body.conversationId,
             body.stageId,
-            'MANUAL', // Corrigido de 'AGENT' para 'MANUAL' (MovedBy enum)
+            'MANUAL',
             undefined,
             req.user?.id
         );
+    }
+
+    @Post(':id') // Correcting fallback for create in case frontend uses it
+    async createWithId(@Param('workspaceId') workspaceId: string, @Body() body: any) {
+        return this.pipelineService.create(workspaceId, body);
+    }
+
+    @Put(':id')
+    async update(
+        @Param('workspaceId') workspaceId: string,
+        @Param('id') id: string,
+        @Body() body: any
+    ) {
+        return this.pipelineService.update(id, workspaceId, body);
+    }
+
+    @Get(':id')
+    async findOne(@Param('workspaceId') workspaceId: string, @Param('id') id: string) {
+        return this.pipelineService.listAll(workspaceId).then(list => list.find(p => p.id === id));
     }
 }

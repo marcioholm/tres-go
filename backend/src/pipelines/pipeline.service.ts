@@ -72,6 +72,75 @@ export class PipelineService {
         });
     }
 
+    async update(id: string, workspaceId: string, dto: any) {
+        // Enforce workspace ownership
+        const pipeline = await this.prisma.pipeline.findFirst({ where: { id, workspaceId } });
+        if (!pipeline) throw new Error('Pipeline not found');
+
+        return this.prisma.$transaction(async (tx) => {
+            // 1. Update pipeline metadata
+            await tx.pipeline.update({
+                where: { id },
+                data: {
+                    name: dto.name,
+                    description: dto.description,
+                    sectorId: dto.sectorId || null,
+                    isDefault: dto.isDefault || false,
+                },
+            });
+
+            // 2. Handle stages deletion (not in new list)
+            const newStageIds = (dto.stages || []).map(s => s.id).filter(sid => !sid.startsWith('temp'));
+            await tx.pipelineStage.deleteMany({
+                where: { pipelineId: id, id: { notIn: newStageIds } }
+            });
+
+            // 3. Upsert stages and keywords
+            for (const [index, stageDto] of (dto.stages || []).entries()) {
+                const isTemp = stageDto.id.startsWith('temp');
+
+                const stage = isTemp ? await tx.pipelineStage.create({
+                    data: {
+                        pipelineId: id,
+                        name: stageDto.name,
+                        color: stageDto.color || '#6366f1',
+                        order: index,
+                        isConversion: stageDto.isConversion || false,
+                    }
+                }) : await tx.pipelineStage.update({
+                    where: { id: stageDto.id },
+                    data: {
+                        name: stageDto.name,
+                        color: stageDto.color || '#6366f1',
+                        order: index,
+                        isConversion: stageDto.isConversion || false,
+                    }
+                });
+
+                // Clear and recreate keywords for this stage (cleaner than upserting individual keywords)
+                await tx.pipelineKeyword.deleteMany({ where: { stageId: stage.id } });
+                if (stageDto.keywords && stageDto.keywords.length > 0) {
+                    await tx.pipelineKeyword.createMany({
+                        data: stageDto.keywords.map(k => ({
+                            stageId: stage.id,
+                            phrase: k.phrase.toLowerCase().trim(),
+                            matchType: k.matchType || 'CONTAINS'
+                        }))
+                    });
+                }
+            }
+
+            return tx.pipeline.findUnique({
+                where: { id },
+                include: { stages: { include: { keywords: true } } }
+            });
+        });
+    }
+
+    async delete(id: string, workspaceId: string) {
+        return this.prisma.pipeline.delete({ where: { id, workspaceId } });
+    }
+
     async moveToStage(
         conversationId: string,
         stageId: string,

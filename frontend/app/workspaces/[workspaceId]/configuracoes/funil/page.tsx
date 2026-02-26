@@ -130,12 +130,32 @@ export default function PipelineConfigPage() {
     });
   };
 
+  const createNewPipeline = () => {
+    const newPipeline: Pipeline = {
+      id: `temp-${Date.now()}`,
+      name: 'Novo Funil de Vendas',
+      workspaceId: workspaceId as string,
+      isDefault: pipelines.length === 0,
+      stages: [
+        { id: `temp-s1-${Date.now()}`, name: 'Lead', color: '#6366f1', order: 0, isConversion: false, keywords: [] },
+        { id: `temp-s2-${Date.now()}`, name: 'Contatado', color: '#8b5cf6', order: 1, isConversion: false, keywords: [] },
+        { id: `temp-s3-${Date.now()}`, name: 'Venda Finalizada', color: '#10b981', order: 2, isConversion: true, keywords: [] }
+      ]
+    };
+    setSelected(newPipeline);
+  };
+
   const savePipeline = async () => {
     if (!selected) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/workspaces/${workspaceId}/pipelines/${selected.id}`, {
-        method: selected.id.startsWith('temp') ? 'POST' : 'PUT',
+      const isNew = selected.id.startsWith('temp');
+      const url = isNew
+        ? `${process.env.NEXT_PUBLIC_API_URL}/workspaces/${workspaceId}/pipelines`
+        : `${process.env.NEXT_PUBLIC_API_URL}/workspaces/${workspaceId}/pipelines/${selected.id}`;
+
+      const res = await fetch(url, {
+        method: isNew ? 'POST' : 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
@@ -167,7 +187,7 @@ export default function PipelineConfigPage() {
           <h1 className="text-2xl font-bold">Funil de Vendas</h1>
           <p className="text-muted-foreground">Configure as etapas de atendimento por setor e automatize com palavras-chave.</p>
         </div>
-        <Button onClick={() => {/* Lógica para novo funil */ }}>
+        <Button onClick={createNewPipeline}>
           <Plus className="w-4 h-4 mr-2" /> Novo Funil
         </Button>
       </div>
@@ -363,7 +383,7 @@ export default function PipelineConfigPage() {
           <p className="text-muted-foreground max-w-sm mb-8">
             Você ainda não criou um funil de vendas. Crie etapas e palavras-chave para automatizar seus processos.
           </p>
-          <Button variant="outline" size="lg" className="px-10 border-primary text-primary hover:bg-primary/5" onClick={() => {/* Lógica para novo funil */ }}>
+          <Button variant="outline" size="lg" className="px-10 border-primary text-primary hover:bg-primary/5" onClick={createNewPipeline}>
             Começar Agora
           </Button>
         </div>
