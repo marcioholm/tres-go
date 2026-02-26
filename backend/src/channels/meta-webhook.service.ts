@@ -186,10 +186,7 @@ export class MetaWebhookService {
         });
       }
     } catch (error) {
-      console.error(
-        '[Meta Webhook] Error in profile fetching flow:',
-        error.message,
-      );
+      // Ignored
     }
 
     // Buscar ou criar contato (usando o perfil se encontrado)
@@ -271,6 +268,16 @@ export class MetaWebhookService {
         handle: (contact as any).handle || null,
       },
     });
+
+    // Detecção de gatilhos de funil (Palavras-chave)
+    if (message.type === 'TEXT' || (message.content as any)?.text) {
+      this.keywordDetector.detect(
+        (message.content as any)?.text || '',
+        conversation.id,
+        channel.workspaceId,
+        conversation.sectorId || undefined
+      ).catch(err => console.error('[Meta Webhook] Keyword detection error:', err));
+    }
 
     console.log('Mensagem salva e emitida:', message.id);
   }

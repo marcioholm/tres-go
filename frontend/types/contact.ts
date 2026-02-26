@@ -28,6 +28,10 @@ export interface Sale {
     title: string
     amount: number
     status: 'COMPLETED' | 'PENDING' | 'CANCELLED' | 'REFUNDED'
+    paymentMethod?: string
+    paymentStatus?: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED'
+    notes?: string
+    saleDate?: string
     createdAt: string
     items: SaleItem[]
 }

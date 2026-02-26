@@ -37,6 +37,8 @@ import { SuperAdminModule } from './super-admin/super-admin.module';
 import { LegalModule } from './legal/legal.module';
 import { PerformanceModule } from './performance/performance.module';
 import { PipelinesModule } from './pipelines/pipelines.module';
+import { BannersModule } from './banners/banners.module';
+import { ImplementationModule } from './implementation/implementation.module';
 import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.middleware';
 
 @Module({
@@ -104,6 +106,8 @@ import { WorkspaceBlockMiddleware } from './common/middleware/workspace-block.mi
     ArchiveModule,
     LegalModule,
     PipelinesModule,
+    BannersModule,
+    ImplementationModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

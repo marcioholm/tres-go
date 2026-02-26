@@ -115,4 +115,35 @@ export class WorkspacesService {
   async deleteQuickReply(workspaceId: string, id: string) {
     return this.prisma.quickReply.delete({ where: { id } });
   }
+
+  async getScore(workspaceId: string) {
+    const [totalConversations, resolvedConversations, totalChannels, activeChannels, totalSales, paidSales] = await Promise.all([
+      this.prisma.conversation.count({ where: { workspaceId } }),
+      this.prisma.conversation.count({ where: { workspaceId, status: 'RESOLVED' } }),
+      this.prisma.channel.count({ where: { workspaceId } }),
+      this.prisma.channel.count({ where: { workspaceId, status: 'ACTIVE' } }),
+      this.prisma.sale.count({ where: { workspaceId } }),
+      this.prisma.sale.count({ where: { workspaceId, paymentStatus: 'PAID' } }),
+    ]);
+
+    const channelScore = totalChannels > 0 ? (activeChannels / totalChannels) * 100 : 0;
+    const conversationScore = totalConversations > 0 ? (resolvedConversations / totalConversations) * 100 : 0;
+    const salesScore = totalSales > 0 ? (paidSales / totalSales) * 100 : 0;
+
+    const weightedScore = Math.round((channelScore * 0.3) + (conversationScore * 0.4) + (salesScore * 0.3));
+
+    return {
+      score: weightedScore,
+      breakdown: [
+        { category: 'Canais', score: Math.round(channelScore), weight: 0.3 },
+        { category: 'Atendimento', score: Math.round(conversationScore), weight: 0.4 },
+        { category: 'Vendas', score: Math.round(salesScore), weight: 0.3 },
+      ],
+      recommendations: weightedScore < 80 ? [
+        'Conecte mais canais para aumentar sua presença.',
+        'Melhore a taxa de resolução das conversas.',
+        'Considere a Implementação NorthWay para otimizar seus processos.'
+      ] : []
+    };
+  }
 }

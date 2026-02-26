@@ -21,7 +21,8 @@ import {
     FileText,
     Layers,
     ClipboardList,
-    ShieldCheck
+    ShieldCheck,
+    Rocket
 } from "lucide-react"
 import Link from "next/link"
 import { UserStatusMenu } from "@/components/layout/UserStatusMenu"
@@ -82,6 +83,7 @@ export default function SuperAdminLayout({
         { name: "Audit Log", id: "audit", href: `/super-admin/audit`, icon: ClipboardList },
         { name: "Saúde", id: "health", href: `/super-admin/health`, icon: Activity },
         { name: "Admins", id: "admins", href: `/super-admin/admins`, icon: ShieldCheck },
+        { name: "Implementações", id: "implementations", href: `/super-admin/implementations`, icon: Rocket },
     ]
 
 

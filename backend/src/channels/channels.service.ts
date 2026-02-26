@@ -7,12 +7,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
 import { Channel } from '@prisma/client';
 import { encrypt } from '../utils/crypto.util';
+import { RedisService } from '../common/redis.service';
 
 @Injectable()
 export class ChannelsService {
   constructor(
     private prisma: PrismaService,
     private billing: BillingService,
+    private redis: RedisService,
   ) { }
 
   async create(workspaceId: string, data: any) {
@@ -45,7 +47,6 @@ export class ChannelsService {
         webhookSecret: data.webhookSecret,
         // Flexible config (Z-API, etc.)
         config: data.config ?? {},
-        zapiInstanceId: data.config?.instanceId,
       },
     });
   }
@@ -88,9 +89,6 @@ export class ChannelsService {
     workspaceId: string,
   ) {
     const data: any = { ...body };
-    if (body.config?.instanceId) {
-      data.zapiInstanceId = body.config.instanceId;
-    }
 
     return this.prisma.channel.update({
       where: { id, workspaceId },
@@ -192,14 +190,13 @@ export class ChannelsService {
     });
   }
 
-  // Usado temporariamente para guardar sessão de páginas (Mock)
-  private pageSessions = new Map<string, any>();
   async storePageSession(pages: any[]): Promise<string> {
     const key = Math.random().toString(36).substring(7);
-    this.pageSessions.set(key, pages);
+    await this.redis.set(`page-session:${key}`, JSON.stringify(pages), 600);
     return key;
   }
   async getPageSession(key: string) {
-    return this.pageSessions.get(key);
+    const data = await this.redis.get(`page-session:${key}`);
+    return data ? JSON.parse(data) : null;
   }
 }

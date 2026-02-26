@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { ArrowRightLeft, Check, CheckCheck, Instagram, Facebook, MessageSquare, Phone, Video, Plus, MoreVertical, Search, Paperclip, Clock, AlertCircle, Zap, RotateCcw } from "lucide-react"
+import { ArrowRightLeft, Check, CheckCheck, Instagram, Facebook, MessageSquare, Phone, Video, Plus, MoreVertical, Search, Paperclip, Clock, AlertCircle, Zap, RotateCcw, Send, DollarSign, CheckCircle2 } from "lucide-react"
 import { toast } from "sonner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +20,7 @@ import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { socketService } from "@/lib/socket-service"
 import Link from "next/link"
+import { SaleModal } from "@/components/sales/SaleModal"
 
 interface Message {
     id: string | number
@@ -82,6 +83,7 @@ interface Conversation {
         name: string
     }
     currentStage?: PipelineStage
+    agentId?: string
 }
 
 export default function InboxPage() {
@@ -113,7 +115,9 @@ export default function InboxPage() {
     const [sectors, setSectors] = useState<Sector[]>([])
     const [selectedSector, setSelectedSector] = useState<string | null>(null)
     const [isNewChatOpen, setIsNewChatOpen] = useState(false)
+    const [search, setSearch] = useState('')
     const [availableStages, setAvailableStages] = useState<PipelineStage[]>([])
+    const [showSaleModal, setShowSaleModal] = useState(false)
 
     // Fetch Sectors
     useEffect(() => {
@@ -174,13 +178,38 @@ export default function InboxPage() {
 
 
 
-    const [filter, setFilter] = useState<'all' | 'pending' | 'active'>('all')
+    const [filter, setFilter] = useState<'all' | 'pending' | 'active' | 'me'>('all')
+    const [userId, setUserId] = useState<string | null>(null); // Assuming userId is available from auth context or similar
 
-    const filteredConversations = (conversations || []).filter(c => {
-        if (!c) return false
-        if (selectedSector && c.sectorId !== selectedSector) return false
+    useEffect(() => {
+        try {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                const parsed = JSON.parse(storedUser);
+                setUserId(parsed.id);
+            }
+        } catch (e) {
+            console.error("Failed to parse user for userId", e);
+        }
+    }, []);
+
+    const filteredConversations = (conversations || []).filter(chat => {
+        if (!chat) return false
+        if (selectedSector && chat.sectorId !== selectedSector) return false
         if (filter === 'all') return true
-        return c.status === filter
+        if (filter === 'pending') return chat.status === 'pending'
+        if (filter === 'active') return chat.status === 'active'
+        if (filter === 'me') return (chat.agentId === userId || !chat.agentId)
+        return true
+    }).filter(chat => {
+        if (!search) return true;
+        const searchLower = search.toLowerCase();
+        return (
+            chat.contact?.name?.toLowerCase().includes(searchLower) ||
+            chat.contact?.phone?.includes(search) ||
+            chat.contact?.handle?.toLowerCase().includes(searchLower) ||
+            chat.name?.toLowerCase().includes(searchLower)
+        );
     })
 
     const [activeChatId, setActiveChatId] = useState<string | null>(null)
@@ -479,7 +508,22 @@ export default function InboxPage() {
         }
     }, [activeChatId, activeChat?.messages?.length])
 
-    const handleAcceptChat = () => {
+    const handleResolve = async () => {
+        if (!activeChat) return;
+        try {
+            await fetch(`/api/workspaces/${workspaceId}/conversations/${activeChat.id}/resolve`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            toast.success("Conversa finalizada!");
+            setActiveChatId(null);
+            fetchConversations();
+        } catch (error) {
+            toast.error("Erro ao finalizar conversa");
+        }
+    };
+
+    const handleAcceptChat = async () => {
         if (!activeChatId) return
         setConversations(prev => prev.map(c => {
             if (c.id === activeChatId) {
@@ -692,450 +736,302 @@ export default function InboxPage() {
     }
 
     return (
-        <div className="flex h-[calc(100vh-theme(spacing.4))] overflow-hidden bg-white border rounded-xl shadow-sm m-2">
-            {/* Left Pane: Chat List */}
-            <div className="w-80 border-r flex flex-col bg-slate-50/50">
-                <div className="p-3 border-b bg-white space-y-3">
+        <div className="flex h-screen overflow-hidden bg-[#FAFAFA]">
+            {/* COLUMN 1: CONVERSATIONS LIST (280px) */}
+            <div className="w-[320px] border-r border-[#F0F0F0] flex flex-col bg-white">
+                <div className="p-6 pb-2 space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="font-bold text-lg text-slate-800">{t("inbox")}</h2>
-                        <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsNewChatOpen(true)}><Plus className="h-5 w-5 text-red-600" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
-                        </div>
-                    </div>
-                    <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                        <Input placeholder="Pesquisar..." className="pl-9 bg-slate-100 border-none focus-visible:ring-indigo-500" />
-                    </div>
-                    <div className="flex gap-2 text-sm overflow-x-auto pb-1 scrollbar-hide">
-                        <Badge
-                            variant={filter === 'pending' ? "default" : "outline"}
-                            className={cn(
-                                "cursor-pointer transition-all",
-                                filter === 'pending' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-100' : 'bg-white hover:bg-slate-50 text-slate-600'
-                            )}
-                            onClick={() => setFilter('pending')}
+                        <h2 className="text-[20px] font-semibold text-[#0F0F0F]">Inbox</h2>
+                        <Button
+                            variant="ghost"
+                            className="h-8 gap-1.5 text-[#E8202A] hover:text-[#CC1018] hover:bg-[#FFF5F5] font-bold text-[11px]"
+                            onClick={() => setShowSaleModal(true)}
                         >
-                            Pendentes
-                        </Badge>
-                        <Badge
-                            variant={filter === 'active' ? "default" : "outline"}
-                            className={cn(
-                                "cursor-pointer transition-all",
-                                filter === 'active' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-100' : 'bg-white hover:bg-slate-50 text-slate-600'
-                            )}
-                            onClick={() => setFilter('active')}
-                        >
-                            Atendendo
-                        </Badge>
-                        <Badge
-                            variant={filter === 'all' ? "default" : "outline"}
-                            className={cn(
-                                "cursor-pointer transition-all",
-                                filter === 'all' ? 'bg-slate-800 hover:bg-slate-900 shadow-md shadow-slate-200' : 'bg-white hover:bg-slate-50 text-slate-600'
-                            )}
-                            onClick={() => setFilter('all')}
-                        >
-                            Todos
-                        </Badge>
+                            <DollarSign className="h-3.5 w-3.5" />
+                            REGISTRAR VENDA
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-[#F5F5F5]" onClick={() => setIsNewChatOpen(true)}>
+                            <Plus className="h-5 w-5 text-[#0F0F0F]" />
+                        </Button>
                     </div>
 
-                    {/* Sector Filter */}
-                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide pt-2 border-t mt-2">
-                        <Badge
-                            variant={!selectedSector ? "secondary" : "outline"}
-                            className="cursor-pointer whitespace-nowrap"
-                            onClick={() => setSelectedSector(null)}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF] stroke-[1.5px]" />
+                        <Input
+                            placeholder="Buscar..."
+                            className="pl-9 h-9 bg-[#F5F5F5] border-none text-[13px] rounded-md focus-visible:ring-1 focus-visible:ring-[#E8202A]"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-4 text-[13px] font-medium border-b border-[#F0F0F0]">
+                        <button
+                            onClick={() => setFilter('pending')}
+                            className={cn("pb-2 px-1 relative transition-colors", filter === 'pending' ? "text-[#0F0F0F]" : "text-[#6B6B6B] hover:text-[#0F0F0F]")}
                         >
-                            Todos os Setores
-                        </Badge>
+                            Pendentes
+                            {filter === 'pending' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#E8202A] animate-in fade-in duration-300" />}
+                        </button>
+                        <button
+                            onClick={() => setFilter('active')}
+                            className={cn("pb-2 px-1 relative transition-colors", filter === 'active' ? "text-[#0F0F0F]" : "text-[#6B6B6B] hover:text-[#0F0F0F]")}
+                        >
+                            Atendendo
+                            {filter === 'active' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#E8202A] animate-in fade-in duration-300" />}
+                        </button>
+                        <button
+                            onClick={() => setFilter('all')}
+                            className={cn("pb-2 px-1 relative transition-colors", filter === 'all' ? "text-[#0F0F0F]" : "text-[#6B6B6B] hover:text-[#0F0F0F]")}
+                        >
+                            Todos
+                            {filter === 'all' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#E8202A] animate-in fade-in duration-300" />}
+                        </button>
+                    </div>
+
+                    {/* Sector Filters (Chips) */}
+                    <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                        <button
+                            onClick={() => setSelectedSector(null)}
+                            className={cn(
+                                "h-7 px-3 text-[11px] font-bold rounded-full border transition-all whitespace-nowrap",
+                                !selectedSector ? "bg-[#0F0F0F] text-white border-[#0F0F0F]" : "bg-white text-[#6B6B6B] border-[#F0F0F0] hover:bg-[#F5F5F5]"
+                            )}
+                        >
+                            Todos
+                        </button>
                         {sectors.map(sector => (
-                            <Badge
+                            <button
                                 key={sector.id}
-                                variant="outline"
-                                className={cn(
-                                    "cursor-pointer whitespace-nowrap border-l-4",
-                                    selectedSector === sector.id ? "bg-slate-100" : ""
-                                )}
-                                style={{ borderLeftColor: sector.color }}
                                 onClick={() => setSelectedSector(sector.id)}
+                                className={cn(
+                                    "h-7 px-3 text-[11px] font-bold rounded-full border transition-all whitespace-nowrap",
+                                    selectedSector === sector.id ? "bg-[#0F0F0F] text-white border-[#0F0F0F]" : "bg-white text-[#6B6B6B] border-[#F0F0F0] hover:bg-[#F5F5F5]"
+                                )}
                             >
                                 {sector.name}
-                            </Badge>
+                            </button>
                         ))}
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
-                    {filteredConversations.map((chat) => {
-                        const channelType = chat.channel?.type || 'WHATSAPP'
-                        const getIcon = () => {
-                            switch (channelType) {
-                                case 'INSTAGRAM': return <Instagram className="h-3 w-3 text-pink-500" />
-                                case 'MESSENGER': return <Facebook className="h-3 w-3 text-blue-500" />
-                                case 'WHATSAPP':
-                                case 'ZAPI': return <MessageSquare className="h-3 w-3 text-emerald-500" />
-                                default: return <MessageSquare className="h-3 w-3 text-slate-400" />
-                            }
-                        }
+                <div className="flex-1 overflow-y-auto no-scrollbar">
+                    {filteredConversations.map((chat) => (
+                        <div
+                            key={chat.id}
+                            onClick={() => setActiveChatId(chat.id)}
+                            className={cn(
+                                "px-6 py-4 cursor-pointer transition-all border-b border-[#F0F0F0] relative",
+                                activeChatId === chat.id ? 'bg-[#F5F5F5]' : 'bg-white hover:bg-[#FAFAFA]'
+                            )}
+                        >
+                            {activeChatId === chat.id && <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#E8202A]" />}
 
-                        return (
-                            <div
-                                key={chat.id}
-                                onClick={() => setActiveChatId(chat.id)}
-                                className={cn(
-                                    "flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-50 transition-all border-b border-slate-100/50 relative",
-                                    activeChatId === chat.id ? 'bg-indigo-50/50 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'
-                                )}
-                            >
-                                {chat.currentStage && (
-                                    <div
-                                        className="absolute right-0 top-0 bottom-0 w-1.5"
-                                        style={{ backgroundColor: chat.currentStage.color }}
-                                        title={`Estágio: ${chat.currentStage.name}`}
-                                    />
-                                )}
-                                <div className="relative">
-                                    <Avatar className="ring-2 ring-white shadow-sm">
+                            <div className="flex gap-3">
+                                <div className="relative flex-shrink-0">
+                                    <Avatar className="h-10 w-10 border border-[#F0F0F0]">
                                         <AvatarImage src={chat.contact?.avatarUrl || chat.avatar} />
-                                        <AvatarFallback className="bg-indigo-100 text-indigo-700 font-semibold">{(chat.contact?.name || chat?.name || "?").substring(0, 2).toUpperCase()}</AvatarFallback>
+                                        <AvatarFallback className="bg-[#F5F5F5] text-[#0F0F0F] font-bold">
+                                            {(chat.contact?.name || chat?.name || "?").substring(0, 2).toUpperCase()}
+                                        </AvatarFallback>
                                     </Avatar>
-                                    {/* Channel Icon Overlay */}
-                                    <div className="absolute -bottom-1 -left-1 bg-white rounded-full p-0.5 shadow-sm border border-slate-100">
-                                        {getIcon()}
+                                    <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 border border-[#F0F0F0]">
+                                        <div className="w-3 h-3 flex items-center justify-center">
+                                            {chat.channel?.type === 'INSTAGRAM' && <Instagram className="h-2 w-2 text-pink-500" />}
+                                            {chat.channel?.type === 'MESSENGER' && <Facebook className="h-2 w-2 text-blue-500" />}
+                                            {(chat.channel?.type === 'WHATSAPP' || chat.channel?.type === 'ZAPI') && <MessageSquare className="h-2 w-2 text-[#16A34A]" />}
+                                        </div>
                                     </div>
-                                    {/* SLA Indicator */}
-                                    <div className={cn(
-                                        "absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white",
-                                        chat.sla === 'danger' ? "bg-red-500" :
-                                            chat.sla === 'warning' ? "bg-yellow-500" : "bg-emerald-500"
-                                    )} title="Status SLA" />
-                                    {chat.sector && (
-                                        <div
-                                            className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white"
-                                            style={{ backgroundColor: chat.sector.color }}
-                                            title={`Setor: ${chat.sector.name}`}
-                                        />
-                                    )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-baseline mb-1">
-                                        <h3 className="font-semibold text-sm text-slate-900 truncate">
-                                            {chat.contact?.handle ? `@${chat.contact.handle}` : (chat.contact?.name || chat?.contact?.phone || chat?.name || "Sem nome")}
+                                    <div className="flex justify-between items-baseline">
+                                        <h3 className="text-[13px] font-semibold text-[#0F0F0F] truncate">
+                                            {chat.contact?.name || chat?.contact?.phone || "Sem nome"}
                                         </h3>
-                                        <span className="text-xs text-slate-500">{chat?.messages?.[(chat?.messages?.length || 0) - 1]?.time || ""}</span>
+                                        <span className="text-[11px] text-[#9CA3AF]">
+                                            {chat?.messages?.[chat?.messages?.length - 1]?.time || ""}
+                                        </span>
                                     </div>
-                                    <p className="text-xs text-slate-500 truncate">
-                                        {getMessagePreview(chat?.messages?.[(chat?.messages?.length || 0) - 1])}
-                                    </p>
+                                    <div className="flex justify-between mt-0.5">
+                                        <p className="text-[12px] text-[#6B6B6B] truncate pr-4">
+                                            {getMessagePreview(chat?.messages?.[chat?.messages?.length - 1])}
+                                        </p>
+                                        {chat.unread > 0 && (
+                                            <div className="h-4 w-4 rounded-full bg-[#E8202A] text-[10px] font-bold text-white flex items-center justify-center">
+                                                {chat.unread}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                {chat.unread > 0 && (
-                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white shadow-sm shadow-emerald-100">
-                                        {chat.unread}
-                                    </span>
-                                )}
                             </div>
-                        )
-                    })}
+                        </div>
+                    ))}
                 </div>
             </div>
 
-            {/* Middle Pane: Chat Window */}
-            <div className="flex-1 flex flex-col bg-[#F3F4F6]">
+            {/* COLUMN 2: CHAT AREA (Flex-1) */}
+            <div className="flex-1 flex flex-col bg-[#F9FAFB]">
                 {activeChat ? (
                     <>
-                        {/* Chat Header */}
-                        <div className="h-16 border-b bg-white flex items-center justify-between px-6 shadow-sm z-10">
+                        <div className="h-14 bg-white border-b border-[#F0F0F0] flex items-center justify-between px-6 z-10 shrink-0">
                             <div className="flex items-center gap-3">
-                                <Avatar className="h-10 w-10 ring-2 ring-slate-100">
-                                    <AvatarImage src={activeChat?.contact?.avatarUrl || activeChat.avatar} />
-                                    <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold">
-                                        {(activeChat?.contact?.name || activeChat?.name || "?").substring(0, 2).toUpperCase()}
+                                <Avatar className="h-8 w-8 border border-[#F0F0F0]">
+                                    <AvatarImage src={activeChat?.contact?.avatarUrl} />
+                                    <AvatarFallback className="bg-[#F5F5F5] text-[#0F0F0F] font-bold text-[10px]">
+                                        {(activeChat?.contact?.name || "?").substring(0, 2).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
-                                <div>
-                                    <h2 className="font-bold text-sm text-slate-900 group flex items-center gap-2">
-                                        {activeChat?.contact?.name || activeChat?.contact?.phone || activeChat?.name || "Sem nome"}
-                                        {activeChat?.channel?.type === 'INSTAGRAM' && <Instagram className="h-3 w-3 text-pink-500" />}
-                                        {activeChat?.channel?.type === 'MESSENGER' && <Facebook className="h-3 w-3 text-blue-500" />}
-                                        {(activeChat?.channel?.type === 'WHATSAPP' || activeChat?.channel?.type === 'ZAPI') && <MessageSquare className="h-3 w-3 text-emerald-500" />}
-                                        {(!activeChat?.channel?.type || (activeChat?.channel?.type !== 'INSTAGRAM' && activeChat?.channel?.type !== 'MESSENGER' && activeChat?.channel?.type !== 'WHATSAPP' && activeChat?.channel?.type !== 'ZAPI')) && <MessageSquare className="h-3 w-3 text-slate-400" />}
-
-                                        {activeChat?.contact?.handle && (
-                                            <span className="text-[10px] font-normal text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
-                                                @{activeChat.contact.handle}
-                                            </span>
-                                        )}
+                                <div className="flex flex-col">
+                                    <h2 className="text-[13px] font-semibold text-[#0F0F0F] flex items-center gap-2">
+                                        {activeChat?.contact?.name || "Sem nome"}
+                                        <span className="text-[10px] px-1.5 py-0.25 bg-[#F5F5F5] text-[#6B6B6B] rounded-full border border-[#F0F0F0]">Aguardando</span>
                                     </h2>
-                                    <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                                        <span className="block h-2 w-2 rounded-full bg-emerald-500" />
-                                        Online
-                                    </p>
                                 </div>
                             </div>
 
-                            {/* Pipeline Stages Switcher */}
-                            <div className="flex-1 max-w-sm px-4">
-                                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-1">
-                                    {availableStages.map((stage) => (
-                                        <button
-                                            key={stage.id}
-                                            onClick={() => handleStageChange(stage.id)}
-                                            className={cn(
-                                                "px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border-2",
-                                                activeChat?.currentStage?.id === stage.id
-                                                    ? "bg-white shadow-sm scale-105"
-                                                    : "bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100"
-                                            )}
-                                            style={{
-                                                borderColor: activeChat?.currentStage?.id === stage.id ? stage.color : 'transparent',
-                                                color: activeChat?.currentStage?.id === stage.id ? stage.color : undefined
-                                            }}
-                                        >
-                                            {stage.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-slate-500">
-                                <Button variant="ghost" size="icon"><Phone className="h-5 w-5" /></Button>
-                                <Button variant="ghost" size="icon"><Video className="h-5 w-5" /></Button>
-                                <div className="h-6 w-px bg-slate-200 mx-2" />
+                            <div className="flex items-center gap-3">
                                 <Button
                                     variant="ghost"
-                                    className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                                    onClick={() => setIsTransferOpen(true)}
+                                    className="h-8 text-[11px] font-bold text-[#E8202A] hover:text-[#CC1018] hover:bg-[#FFF5F5]"
+                                    onClick={() => setShowSaleModal(true)}
                                 >
-                                    <ArrowRightLeft className="mr-2 h-4 w-4" /> Transferir
+                                    <DollarSign className="mr-2 h-3.5 w-3.5" /> Registrar Venda
                                 </Button>
-                                <Button variant="outline" className="ml-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                                    <CheckCheck className="mr-2 h-4 w-4" /> Resolver
+                                <Button variant="ghost" className="h-8 text-[11px] font-bold text-[#6B6B6B] hover:text-[#0F0F0F] hover:bg-[#F5F5F5]" onClick={() => setIsTransferOpen(true)}>
+                                    <ArrowRightLeft className="mr-2 h-3.5 w-3.5" /> Transferir
+                                </Button>
+                                <Button variant="outline" className="h-8 text-[11px] font-bold text-[#16A34A] border-[#DCFCE7] hover:bg-[#F0FDF4] transition-all" onClick={handleResolve}>
+                                    <CheckCheck className="mr-2 h-3.5 w-3.5" /> Resolver
                                 </Button>
                             </div>
                         </div>
 
-                        {/* Messages Area */}
+                        {/* MESSAGES AREA */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                            <div className="flex justify-center">
-                                <span className="bg-white/60 px-3 py-1 rounded-full text-xs text-slate-500 font-medium shadow-sm">Hoje</span>
-                            </div>
-
                             {(activeChat?.messages || []).map((msg) => {
                                 if (msg.isSystem) {
-                                    const isAutomatic = (msg as any).isAutomatic;
-                                    const expiresAt = (msg as any).expiresAt;
-                                    const isExpired = expiresAt && Date.now() > expiresAt;
-
-                                    if (isAutomatic) {
-                                        return (
-                                            <div key={msg.id} className="flex justify-center my-4 flex-col items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                <div
-                                                    className="px-4 py-2 rounded-full text-xs font-semibold shadow-sm border flex items-center gap-2"
-                                                    style={{
-                                                        backgroundColor: `${(msg as any).stageColor}15`,
-                                                        borderColor: (msg as any).stageColor,
-                                                        color: (msg as any).stageColor
-                                                    }}
-                                                >
-                                                    <Zap className="h-3 w-3 fill-current" />
-                                                    <span>{msg.text}</span>
-                                                    <span className="bg-white/50 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider">Automático</span>
-                                                </div>
-
-                                                {!isExpired && (msg as any).previousStageId && (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="h-7 text-[10px] font-bold border-slate-200 hover:bg-white shadow-sm"
-                                                        onClick={() => handleStageChange((msg as any).previousStageId)}
-                                                    >
-                                                        <RotateCcw className="mr-1 h-3 w-3" />
-                                                        DESFAZER
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        )
-                                    }
-
                                     return (
-                                        <div key={msg.id} className="flex justify-center my-4">
-                                            <span className="bg-slate-200/80 px-3 py-1 rounded text-xs text-slate-500 font-medium">
-                                                {msg.text === "system:agent_joined" ? `Você assumiu este atendimento - ${msg.time}` :
-                                                    msg.text === "system:transferred" ? `Atendimento transferido - ${msg.time}` : msg.text}
+                                        <div key={msg.id} className="flex justify-center">
+                                            <span className="text-[11px] font-medium text-[#9CA3AF] bg-white px-3 py-1 rounded-full border border-[#F0F0F0]">
+                                                {msg.text === "system:agent_joined" ? "Você assumiu este atendimento" : msg.text}
                                             </span>
                                         </div>
-                                    )
+                                    );
                                 }
 
+                                const isInternal = msg.isInternal;
+                                const fromMe = msg.fromMe;
+
                                 return (
-                                    <div key={msg.id} className={`flex flex-col gap-1 ${msg.fromMe ? 'items-end' : 'items-start'}`}>
-                                        {msg.fromMe && (msg as any).senderName && (
-                                            <span className="text-[10px] text-slate-400 font-medium px-1 mb-0.5">
-                                                {(msg as any).senderName}
-                                            </span>
-                                        )}
+                                    <div key={msg.id} className={cn("flex flex-col group", fromMe ? "items-end" : "items-start")}>
                                         <div className={cn(
-                                            "p-3 rounded-2xl shadow-sm max-w-[75%] text-sm relative group mb-1",
-                                            msg.isInternal
-                                                ? 'bg-yellow-50 text-yellow-900 border border-yellow-200'
-                                                : msg.fromMe
-                                                    ? 'bg-[#E7FFDB] text-slate-800 rounded-tr-none' // WhatsApp Outgoing Style
-                                                    : 'bg-white text-slate-800 rounded-tl-none border border-slate-100',
-                                            msg.isScheduled ? 'border-2 border-dashed border-slate-300 opacity-80 bg-slate-50 text-slate-600' : ''
+                                            "max-w-[70%] p-3 text-[13px] leading-relaxed shadow-none",
+                                            isInternal
+                                                ? "bg-[#FFFBEB] text-[#92400E] border border-[#FDE68A] rounded-lg"
+                                                : fromMe
+                                                    ? "bg-[#0F0F0F] text-white rounded-[12px_12px_0_12px]"
+                                                    : "bg-white text-[#0F0F0F] border border-[#F0F0F0] rounded-[0_12px_12px_12px]"
                                         )}>
-                                            {/* Corner Tails (Subtle) */}
-                                            {!msg.isInternal && !msg.isScheduled && (
-                                                <div className={cn(
-                                                    "absolute top-0 w-2 h-2",
-                                                    msg.fromMe ? "-right-1.5 bg-[#E7FFDB]" : "-left-1.5 bg-white border-l border-t border-slate-100",
-                                                    msg.fromMe ? "clip-path-tail-right" : "clip-path-tail-left"
-                                                )} />
-                                            )}
-
-                                            {msg.isInternal && (
-                                                <div className="flex items-center gap-1 mb-1 opacity-70 border-b border-yellow-200 pb-1">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider">Nota Interna</span>
-                                                </div>
-                                            )}
-
-                                            {msg.isScheduled && (
-                                                <div className="flex items-center gap-1 mb-1 opacity-70 border-b border-slate-200 pb-1 text-slate-500">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                                                        Agendado para {msg.scheduledTo?.toLocaleDateString()} às {msg.scheduledTo?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                </div>
-                                            )}
-
-                                            {msg.mediaUrl && (
-                                                <div className={cn(
-                                                    "mb-2 rounded-lg overflow-hidden",
-                                                    (msg.mediaType === 'sticker' || msg.type === 'STICKER' || msg.mimeType?.includes('webp') || msg.mediaUrl.toLowerCase().endsWith('.webp')) ? "" : "border border-black/5 bg-black/5"
-                                                )}>
-                                                    {(msg.mediaType === 'image' || msg.type === 'IMAGE') && (
-                                                        <img
-                                                            src={msg.mediaUrl}
-                                                            alt="Attachment"
-                                                            className="max-w-full h-auto object-cover max-h-[300px] cursor-pointer hover:opacity-90 transition-opacity"
-                                                            onClick={() => window.open(msg.mediaUrl, '_blank')}
-                                                            title="Clique para ampliar"
-                                                        />
-                                                    )}
-                                                    {(msg.mediaType === 'sticker' || msg.type === 'STICKER' || msg.mimeType?.includes('webp') || msg.mediaUrl.toLowerCase().endsWith('.webp')) && (
-                                                        <img src={msg.mediaUrl} alt="Sticker" className="max-w-[150px] h-[150px] object-contain mx-auto" />
-                                                    )}
-                                                    {(msg.mediaType === 'video' || msg.type === 'VIDEO') && (
-                                                        <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px]" />
-                                                    )}
-                                                    {(msg.mediaType === 'audio' || msg.mediaType === 'ptt' || msg.type === 'AUDIO') && (
-                                                        msg.isPtt ? (
-                                                            <div className="flex flex-col items-center">
-                                                                <AudioPttBubble
-                                                                    message={{
-                                                                        id: String(msg.id),
-                                                                        content: { mediaUrl: msg.mediaUrl, waveform: msg.waveform, duration: msg.duration }
-                                                                    } as any}
-                                                                    fromAgent={msg.fromMe}
-                                                                />
-                                                            </div>
-                                                        ) : (
-                                                            <div className="p-2">
-                                                                <audio src={msg.mediaUrl} controls className="max-w-full w-full" />
-                                                            </div>
-                                                        )
-                                                    )}
-                                                    {(msg.mediaType === 'document' || msg.type === 'DOCUMENT') && !(msg.mediaUrl.toLowerCase().endsWith('.webp') || msg.mimeType?.includes('webp')) && (
-                                                        <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
-                                                            <Paperclip className="h-5 w-5" />
-                                                            <span className="underline truncate max-w-[150px]">{(msg as any).fileName || "Ver Documento"}</span>
-                                                        </a>
-                                                    )}
-                                                    {msg.mediaUrl && !['image', 'sticker', 'video', 'audio', 'ptt', 'document'].includes((msg.mediaType || msg.type || '').toLowerCase()) && !msg.mimeType?.includes('webp') && !msg.mediaUrl.toLowerCase().endsWith('.webp') && (
-                                                        <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
-                                                            <Paperclip className="h-5 w-5" />
-                                                            <span className="underline">Baixar Arquivo</span>
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            <p className={cn("whitespace-pre-wrap", (msg.text || "").trim() === "" && msg.mediaUrl ? "hidden" : "")}>
-                                                {msg?.text === 'Media/Unsupported Type' ? "" : (msg?.text || "")}
-                                            </p>
-                                            <div className="flex items-center gap-1 mt-1 justify-end">
-                                                <span className={`text-[10px] ${msg?.fromMe ? 'text-slate-500' : 'text-slate-400'} ${msg?.isInternal ? 'text-yellow-700' : ''}`}>
-                                                    {msg?.time || ""}
-                                                </span>
-                                                {msg.fromMe && !msg.isInternal && !msg.isScheduled && (
-                                                    <>
-                                                        {msg.status === 'READ' && <CheckCheck className="h-3 w-3 text-blue-300" />}
-                                                        {msg.status === 'DELIVERED' && <CheckCheck className="h-3 w-3 text-white/90" />}
-                                                        {msg.status === 'SENT' && <Check className="h-3 w-3 text-white/90" />}
-                                                        {msg.status === 'PENDING' && <Clock className="h-3 w-3 text-white/60 animate-pulse" />}
-                                                        {msg.status === 'FAILED' && <AlertCircle className="h-3 w-3 text-white" />}
-                                                        {!msg.status && <CheckCheck className="h-3 w-3 text-white/90" />}
-                                                    </>
-                                                )}
-                                                {msg.isScheduled && <span className="text-[10px] text-slate-400">Agendado</span>}
+                                            {isInternal && <p className="text-[10px] font-bold uppercase mb-1 opacity-60 tracking-wider">Nota Interna</p>}
+                                            {msg.text}
+                                            <div className={cn("flex items-center gap-1 mt-1 justify-end opacity-60 text-[10px]", fromMe ? "text-white/80" : "text-[#9CA3AF]")}>
+                                                {msg.time}
+                                                {fromMe && !isInternal && <CheckCheck className="h-3 w-3" />}
                                             </div>
                                         </div>
                                     </div>
-                                )
+                                );
                             })}
+                            <div ref={messagesEndRef} />
                         </div>
-                        {/* Scroll anchor - always keeps to bottom of chat */}
-                        <div ref={messagesEndRef} className="h-0" />
 
-                        {/* Input Area */}
-                        {activeChat.status === 'pending' ? (
-                            <div className="p-4 bg-white border-t min-h-[80px] flex items-center justify-center bg-slate-50/50">
-                                <div className="text-center w-full max-w-md space-y-3">
-                                    <p className="text-sm text-slate-500">Esta conversa está pendente. Aceite para iniciar o atendimento.</p>
-                                    <Button
-                                        onClick={handleAcceptChat}
-                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 text-base"
-                                    >
-                                        <CheckCheck className="mr-2 h-5 w-5" />
-                                        INICIAR ATENDIMENTO
+                        {/* INPUT AREA */}
+                        <div className="bg-white border-t border-[#F0F0F0] p-4">
+                            {activeChat.status === 'pending' ? (
+                                <div className="flex flex-col items-center gap-3 py-4">
+                                    <p className="text-[12px] text-[#6B6B6B]">Essa conversa ainda não foi aceita.</p>
+                                    <Button onClick={handleAcceptChat} className="bg-[#000000] hover:bg-[#1a1a1a] text-white text-[12px] font-bold h-10 px-8">
+                                        ACEITAR CONVERSA
                                     </Button>
                                 </div>
-                            </div>
-                        ) : (
-                            <Composer onSendMessage={handleSendMessage} onScheduleMessage={handleScheduleMessage} />
-                        )}
+                            ) : (
+                                <Composer onSendMessage={handleSendMessage} onScheduleMessage={handleScheduleMessage} />
+                            )}
+                        </div>
                     </>
                 ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400 space-y-4">
-                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
-                            <MessageSquare className="h-8 w-8 text-slate-300" />
+                    <div className="flex-1 flex flex-col items-center justify-center text-[#9CA3AF] space-y-3">
+                        <div className="p-4 bg-white rounded-full border border-[#F0F0F0] shadow-sm">
+                            <MessageSquare className="h-6 w-6 stroke-[1.5px]" />
                         </div>
-                        <p className="text-sm font-medium">Selecione uma conversa para começar</p>
+                        <p className="text-[13px] font-medium">Selecione uma conversa para começar</p>
                     </div>
                 )}
             </div>
 
-            {/* Right Pane: Contact Details */}
+            {/* COLUMN 3: PROFILE (280px) */}
             {activeChat && (
-                <ContactProfilePanel
-                    workspaceId={workspaceId}
-                    contactId={activeChat.contactId}
-                />
+                <div className="w-[300px] border-l border-[#F0F0F0] bg-white flex flex-col overflow-y-auto no-scrollbar">
+                    <div className="p-8 flex flex-col items-center text-center border-b border-[#F0F0F0]">
+                        <Avatar className="h-20 w-20 mb-4 border-2 border-[#F5F5F5]">
+                            <AvatarImage src={activeChat?.contact?.avatarUrl} />
+                            <AvatarFallback className="text-xl bg-[#F5F5F5] text-[#0F0F0F] font-bold">
+                                {(activeChat?.contact?.name || "?").substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                        <h2 className="text-[16px] font-semibold text-[#0F0F0F]">{activeChat?.contact?.name || "Sem nome"}</h2>
+                        <p className="text-[12px] text-[#6B6B6B] mt-1">{activeChat?.contact?.phone || "Sem telefone"}</p>
+                    </div>
+
+                    <div className="p-6 space-y-6 text-[13px]">
+                        <div>
+                            <p className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-3">Informações</p>
+                            <div className="space-y-4">
+                                <div className="flex justify-between">
+                                    <span className="text-[#6B6B6B]">Canal</span>
+                                    <span className="font-medium text-[#0F0F0F]">{activeChat?.channel?.name || "WhatsApp"}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-[#6B6B6B]">Setor</span>
+                                    <span className="font-medium text-[#0F0F0F]">{activeChat?.sector?.name || "Vendas"}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-[#6B6B6B]">Tags</span>
+                                    <div className="flex gap-1">
+                                        <span className="px-2 py-0.5 bg-[#F5F5F5] rounded text-[10px] font-bold text-[#0F0F0F]">VIP</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-6 border-t border-[#F0F0F0]">
+                            <p className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-3">CRM</p>
+                            <div className="p-4 bg-[#F5F5F5] rounded-lg">
+                                <p className="text-[12px] font-semibold text-[#0F0F0F]">Oportunidade Aberta</p>
+                                <p className="text-[11px] text-[#6B6B6B] mt-1">Status: Negociação</p>
+                                <p className="text-[11px] text-[#E8202A] font-bold mt-2 hover:underline cursor-pointer">Ver no Funil →</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
 
-            <TransferAgentDialog
-                open={isTransferOpen}
-                onOpenChange={setIsTransferOpen}
-                onTransfer={handleTransfer}
-            />
+            <TransferAgentDialog open={isTransferOpen} onOpenChange={setIsTransferOpen} onTransfer={handleTransfer} />
+            <NewConversationDialog open={isNewChatOpen} onOpenChange={setIsNewChatOpen} onConversationCreated={(id) => { setActiveChatId(id); fetchConversations(); }} />
 
-            <NewConversationDialog
-                open={isNewChatOpen}
-                onOpenChange={setIsNewChatOpen}
-                onConversationCreated={(id) => {
-                    setActiveChatId(id)
-                    fetchConversations()
-                }}
-            />
+            {activeChat && (
+                <SaleModal
+                    isOpen={showSaleModal}
+                    onClose={() => setShowSaleModal(false)}
+                    workspaceId={workspaceId}
+                    contactId={activeChat.contactId}
+                    conversationId={activeChat.id}
+                    onSuccess={(sale) => {
+                        // Refresh contact labels/history if needed
+                        fetchConversations()
+                    }}
+                />
+            )}
         </div>
-    )
+    );
 }

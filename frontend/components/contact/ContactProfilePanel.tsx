@@ -9,9 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Phone, Mail, MapPin, Calendar, DollarSign, Tag, TrendingUp, User } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Phone, Mail, Tag, TrendingUp, ArrowUpRight } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 
 interface ContactProfilePanelProps {
     workspaceId: string
@@ -270,25 +270,44 @@ export function ContactProfilePanel({ workspaceId, contactId, onClose }: Contact
                                 <p className="text-xs text-slate-400">Nenhuma venda registrada</p>
                             </div>
                         ) : (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 {sales.map(sale => (
-                                    <div key={sale.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-slate-200 transition-colors">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <span className="text-xs font-medium text-slate-700 line-clamp-1" title={sale.title}>{sale.title}</span>
-                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${sale.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                                                sale.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
-                                                    'bg-slate-100 text-slate-600'
-                                                }`}>
-                                                {sale.status === 'COMPLETED' ? 'Pago' : sale.status}
-                                            </span>
+                                    <div key={sale.id} className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <span className="text-sm font-bold text-slate-800 line-clamp-1">{sale.title}</span>
+                                                <span className="text-[10px] text-slate-400 font-medium">{new Date(sale.saleDate || sale.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                            <Badge className={cn(
+                                                "text-[9px] font-bold px-1.5 py-0.5 border-0 uppercase tracking-tighter",
+                                                sale.paymentStatus === 'PAID' ? "bg-green-500" :
+                                                    sale.paymentStatus === 'PENDING' ? "bg-amber-500" : "bg-slate-400"
+                                            )}>
+                                                {sale.paymentStatus || sale.status}
+                                            </Badge>
                                         </div>
-                                        <div className="flex justify-between items-end">
-                                            <span className="text-xs text-slate-500">
-                                                {new Date(sale.createdAt).toLocaleDateString()}
-                                            </span>
-                                            <span className="text-sm font-bold text-slate-800">
-                                                R$ {(sale.amount || 0).toFixed(2)}
-                                            </span>
+
+                                        <div className="flex items-center gap-2 mb-3">
+                                            {sale.paymentMethod && (
+                                                <Badge variant="outline" className="text-[9px] text-slate-500 font-bold border-slate-200">
+                                                    {sale.paymentMethod === 'CREDIT_CARD' && 'Cartão'}
+                                                    {sale.paymentMethod === 'PIX' && 'PIX'}
+                                                    {sale.paymentMethod === 'BANK_SLIP' && 'Boleto'}
+                                                    {!['CREDIT_CARD', 'PIX', 'BANK_SLIP'].includes(sale.paymentMethod) && sale.paymentMethod}
+                                                </Badge>
+                                            )}
+                                        </div>
+
+                                        <div className="flex justify-between items-end border-t border-slate-50 pt-3 mt-1">
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] text-slate-400 font-bold uppercase">Valor Total</span>
+                                                <span className="text-base font-black text-slate-950">
+                                                    R$ {(sale.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                </span>
+                                            </div>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600">
+                                                <ArrowUpRight className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     </div>
                                 ))}

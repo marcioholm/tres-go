@@ -2,11 +2,30 @@
 
 import React, { useState, useEffect } from "react"
 import { useLanguage } from "@/lib/language-context"
-import { MessageSquare, CheckCircle, Reply, Timer, DollarSign, Award, Smile, AlertTriangle, Download, Filter, Bell, Search, Menu, Users } from "lucide-react"
+import {
+    MessageSquare,
+    Users,
+    CheckCircle,
+    Timer,
+    ArrowUpRight,
+    ArrowDownRight,
+    Globe,
+    AlertTriangle,
+    Download,
+    DollarSign,
+    Target,
+    Activity,
+    Zap,
+    Trophy,
+    TrendingUp
+} from 'lucide-react';
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { api } from "@/lib/api"
+import { SmartBanner } from "@/components/dashboard/SmartBanner"
+import { NorthwayScore } from "@/components/dashboard/NorthwayScore"
+import { PostOnboardingModal } from "@/components/dashboard/PostOnboardingModal"
 import {
     BarChart,
     Bar,
@@ -35,6 +54,8 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
     const [funnelData, setFunnelData] = useState<any[]>([])
     const [trafficData, setTrafficData] = useState<any[]>([])
     const [pendingConversations, setPendingConversations] = useState<any[]>([])
+    const [user, setUser] = useState<any>(null)
+    const [showPostOnboarding, setShowPostOnboarding] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
 
     // Fetch Sector Metrics
@@ -59,6 +80,12 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
                 setFunnelData(funnelRes.data)
                 setTrafficData(trafficRes.data)
                 setPendingConversations(pendingRes.data)
+
+                const userRes = await api.get(`/workspaces/${params.workspaceId}/users/me`)
+                setUser(userRes.data)
+                if (!userRes.data?.welcomeShown) {
+                    setShowPostOnboarding(true)
+                }
             } catch (error) {
                 console.error("Failed to fetch dashboard metrics", error)
             } finally {
@@ -99,440 +126,237 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
     return (
         <div className="min-h-screen bg-[#f4f5f7] pb-10">
             {/* ══ HEADER ══════════════════════════════════════════════════════════════ */}
-            {/* Cabeçalho da Página (Sub-header) */}
-            <div className="flex items-center justify-between px-6 py-4 bg-white/50 backdrop-blur-sm border-b sticky top-0 z-20 h-16">
+            {/* ══ HEADER ══════════════════════════════════════════════════════════════ */}
+            <div className="flex items-center justify-between px-8 py-3 bg-white border-b border-[#F0F0F0] h-14">
+                <h1 className="text-[16px] font-semibold text-[#0F0F0F]">Dashboard</h1>
                 <div className="flex items-center gap-2">
-                    <h1 className="text-xl font-black text-slate-800 tracking-tight tracking-[-0.02em]">Dashboard</h1>
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center bg-slate-100/80 rounded-xl p-1 gap-1">
-                        <button onClick={() => setPeriod('hoje')} className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", period === 'hoje' ? "bg-white shadow-sm text-nw-blue" : "text-slate-500 hover:text-slate-800")}>Hoje</button>
-                        <button onClick={() => setPeriod('7d')} className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", period === '7d' ? "bg-white shadow-sm text-nw-blue" : "text-slate-500 hover:text-slate-800")}>7 dias</button>
-                        <button onClick={() => setPeriod('30d')} className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", period === '30d' ? "bg-white shadow-sm text-nw-blue" : "text-slate-500 hover:text-slate-800")}>30 dias</button>
+                    <div className="flex items-center bg-[#F5F5F5] rounded-md p-0.5">
+                        <button onClick={() => setPeriod('hoje')} className={cn("px-3 py-1 text-[11px] font-medium rounded transition-all", period === 'hoje' ? "bg-white text-[#0F0F0F] shadow-sm" : "text-[#6B6B6B] hover:text-[#0F0F0F]")}>Hoje</button>
+                        <button onClick={() => setPeriod('7d')} className={cn("px-3 py-1 text-[11px] font-medium rounded transition-all", period === '7d' ? "bg-white text-[#0F0F0F] shadow-sm" : "text-[#6B6B6B] hover:text-[#0F0F0F]")}>7 dias</button>
+                        <button onClick={() => setPeriod('30d')} className={cn("px-3 py-1 text-[11px] font-medium rounded transition-all", period === '30d' ? "bg-white text-[#0F0F0F] shadow-sm" : "text-[#6B6B6B] hover:text-[#0F0F0F]")}>30 dias</button>
                     </div>
+                    <Button variant="outline" className="h-8 text-[11px] font-semibold border-[#F0F0F0] text-[#6B6B6B] hover:bg-[#F5F5F5]">
+                        <Download className="w-3.5 h-3.5 mr-2" /> Exportar
+                    </Button>
                 </div>
             </div>
 
             {/* ══ MAIN ════════════════════════════════════════════════════════════════ */}
-            <main className="max-w-[1440px] mx-auto p-6 space-y-6">
+            <main className="p-8 space-y-8 max-w-[1400px] mx-auto">
 
-                {/* Live status bar */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-800">Visão Geral</h2>
-                        <p className="text-xs text-slate-500 mt-0.5">Atualizado em tempo real · <span className="font-mono">{currentTime}</span></p>
+                {/* Smart Banner */}
+                <SmartBanner workspaceId={params.workspaceId} position="TOP" />
+
+                {/* Northway Score & Quick Actions */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+                    <div className="lg:col-span-2">
+                        <NorthwayScore workspaceId={params.workspaceId} />
                     </div>
-                    <div className="flex items-center gap-3">
-                        {/* Live indicators */}
-                        <div className="flex items-center gap-4 bg-white border border-border rounded-xl px-5 py-2.5 shadow-sm">
-                            <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 pulse-dot"></span>
-                                <span className="text-xs font-bold text-slate-800">6 agentes online</span>
+                    <Card className="p-6 border-[#F0F0F0] shadow-sm bg-black text-white flex flex-col justify-between overflow-hidden relative">
+                        <div className="absolute -right-4 -top-4 h-24 w-24 bg-white/10 rounded-full blur-2xl" />
+                        <div>
+                            <div className="h-10 w-10 rounded-lg bg-white/10 flex items-center justify-center mb-4">
+                                <Trophy className="h-5 w-5 text-white" />
                             </div>
-                            <div className="w-px h-4 bg-slate-200"></div>
-                            <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-amber-400 pulse-dot"></span>
-                                <span className="text-xs font-bold text-slate-800">12 na fila</span>
-                            </div>
-                            <div className="w-px h-4 bg-slate-200"></div>
-                            <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-primary pulse-dot"></span>
-                                <span className="text-xs font-bold text-slate-800">38 em atendimento</span>
-                            </div>
+                            <h4 className="text-[15px] font-bold mb-1">Crescimento Acelerado</h4>
+                            <p className="text-[13px] text-zinc-400">Desbloqueie estratégias avançadas de vendas e automação com a Assessoria.</p>
                         </div>
-                        <Button variant="outline" className="flex items-center gap-2 bg-white border-border rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500 hover:text-primary hover:border-primary/30 transition-all shadow-sm h-auto">
-                            <Download className="w-4 h-4" /> Exportar
+                        <Button className="w-full bg-white text-black hover:bg-zinc-200 font-bold h-10 mt-6">
+                            AGENDAR CONSULTORIA
                         </Button>
-                    </div>
+                    </Card>
                 </div>
 
-                {/* ── SETORES OVERVIEW ────────────────────────────────────────────────── */}
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Performance por Setor</h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {isLoading ? (
-                            [1, 2, 3, 4].map(i => (
-                                <Card key={i} className="p-4 h-32 animate-pulse bg-slate-100" />
-                            ))
-                        ) : sectors.map(sector => (
-                            <Card key={sector.id} className="p-5 relative overflow-hidden border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)] group hover:shadow-md transition-all">
-                                <div className="absolute top-0 right-0 w-16 h-16 opacity-10 rounded-full -translate-y-4 translate-x-4" style={{ backgroundColor: sector.color }}></div>
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: sector.color }}></div>
-                                        <span className="font-bold text-slate-800 text-sm">{sector.name}</span>
-                                    </div>
-                                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{sector.slaCompliance} SLA</span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 mt-4">
-                                    <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tight">Conversas</p>
-                                        <p className="text-xl font-black text-slate-800">{sector.totalConversations}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tight">Tempo (TMA)</p>
-                                        <p className="text-xl font-black text-slate-800">{sector.avgResponseTime}</p>
-                                    </div>
-                                </div>
-                                <div className="mt-3 flex items-center gap-3">
-                                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-1.5 rounded-full bg-emerald-400" style={{ width: sector.slaCompliance }}></div>
-                                    </div>
-                                </div>
-                            </Card>
-                        ))}
-                        {sectors.length === 0 && !isLoading && (
-                            <Card className="p-5 lg:col-span-4 flex items-center justify-center border-dashed border-2 text-slate-400 text-xs">
-                                Nenhum setor configurado. Vá em Configurações para adicionar.
-                            </Card>
-                        )}
-                    </div>
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                    {/* Conversas Hoje */}
+                    <Card className="p-5 bg-white border-[#F0F0F0] shadow-none rounded-lg relative group">
+                        <MessageSquare className="absolute top-5 right-5 w-4 h-4 text-[#D1D5DB] stroke-[1.5px]" />
+                        <p className="text-[12px] font-medium text-[#6B6B6B] mb-1">Conversas Hoje</p>
+                        <div className="flex items-end gap-2">
+                            <h2 className="text-[32px] font-semibold text-[#0F0F0F] leading-tight font-mono">
+                                {dashboardMetrics?.totalConversations?.value || 0}
+                            </h2>
+                            <span className="text-[13px] font-medium text-[#16A34A] mb-1.5">+12%</span>
+                        </div>
+                    </Card>
+
+                    {/* Faturamento */}
+                    <Card className="p-5 bg-white border-[#F0F0F0] shadow-none rounded-lg relative group overflow-hidden">
+                        <div className="absolute top-0 right-0 p-3">
+                            <TrendingUp className="w-4 h-4 text-green-500/30" />
+                        </div>
+                        <p className="text-[12px] font-bold text-[#6B6B6B] mb-1 uppercase tracking-tight">Faturamento (30d)</p>
+                        <div className="flex items-end gap-2">
+                            <h2 className="text-[28px] font-black text-[#0F0F0F] leading-tight">
+                                R$ {(dashboardMetrics?.revenue?.value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                            </h2>
+                            <span className="text-[13px] font-medium text-[#16A34A] mb-1.5">+15%</span>
+                        </div>
+                    </Card>
+
+                    {/* Ticket Médio */}
+                    <Card className="p-5 bg-white border-[#F0F0F0] shadow-none rounded-lg relative group">
+                        <DollarSign className="absolute top-5 right-5 w-4 h-4 text-[#D1D5DB] stroke-[1.5px]" />
+                        <p className="text-[12px] font-bold text-[#6B6B6B] mb-1 uppercase tracking-tight">Ticket Médio</p>
+                        <div className="flex items-end gap-2">
+                            <h2 className="text-[28px] font-black text-[#0F0F0F] leading-tight">
+                                R$ {(dashboardMetrics?.revenue?.ticketMedia || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                            </h2>
+                            <span className="text-[13px] font-medium text-[#6B6B6B] mb-1.5">estável</span>
+                        </div>
+                    </Card>
+
+                    {/* Resolvidas */}
+                    <Card className="p-5 bg-white border-[#F0F0F0] shadow-none rounded-lg relative group">
+                        <CheckCircle className="absolute top-5 right-5 w-4 h-4 text-[#D1D5DB] stroke-[1.5px]" />
+                        <p className="text-[12px] font-bold text-[#6B6B6B] mb-1 uppercase tracking-tight">Resolvidas</p>
+                        <div className="flex items-end gap-2">
+                            <h2 className="text-[28px] font-black text-[#0F0F0F] leading-tight">
+                                {dashboardMetrics?.resolved?.value || 0}
+                            </h2>
+                            <span className="text-[13px] font-medium text-[#16A34A] mb-1.5">
+                                {dashboardMetrics?.resolved?.rate || 0}%
+                            </span>
+                        </div>
+                    </Card>
+
+                    {/* Conversas Abertas (Moved here or simplified) */}
+                    <Card className="p-5 bg-white border-[#F0F0F0] shadow-none rounded-lg relative group">
+                        <Users className="absolute top-5 right-5 w-4 h-4 text-[#D1D5DB] stroke-[1.5px]" />
+                        <p className="text-[12px] font-bold text-[#6B6B6B] mb-1 uppercase tracking-tight">Novos Leads</p>
+                        <div className="flex items-end gap-2">
+                            <h2 className="text-[28px] font-black text-[#0F0F0F] leading-tight">
+                                {dashboardMetrics?.newContacts?.value || 0}
+                            </h2>
+                            <span className="text-[13px] font-medium text-[#16A34A] mb-1.5">+5%</span>
+                        </div>
+                    </Card>
                 </div>
 
-                {/* ── KPI GRID ──────────────────────────────────────────────────────── */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-
-                    {/* KPI 1: Total conversas */}
-                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm hover:shadow-md transition-all h-full group">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-nw-blue/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform"></div>
-                        <div className="flex items-start justify-between mb-4 relative z-10">
-                            <div className="w-10 h-10 rounded-xl bg-nw-blue/10 flex items-center justify-center">
-                                <MessageSquare className="text-nw-blue w-5 h-5" />
-                            </div>
+                {/* ROW 2: CHART & RECENT CONVERSATIONS */}
+                <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+                    {/* Volume Chart (60%) */}
+                    <Card className="lg:col-span-6 p-6 bg-white border-[#F0F0F0] shadow-none rounded-lg">
+                        <div className="flex flex-col mb-6">
+                            <h3 className="text-[14px] font-semibold text-[#0F0F0F]">Volume de Mensagens</h3>
+                            <p className="text-[12px] text-[#6B6B6B]">Atividade nos últimos 7 dias</p>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">Total Conversas</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim relative z-10">{dashboardMetrics?.totalConversations?.value || 0}</p>
-                    </Card>
-
-                    {/* KPI 2: Resolvidas */}
-                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm hover:shadow-md transition-all h-full group">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-nw-green/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform"></div>
-                        <div className="flex items-start justify-between mb-4 relative z-10">
-                            <div className="w-10 h-10 rounded-xl bg-nw-green/10 flex items-center justify-center">
-                                <CheckCircle className="text-nw-green w-5 h-5" />
-                            </div>
-                            <span className="text-[10px] font-bold text-nw-green bg-nw-green/10 px-2 py-0.5 rounded-full">{dashboardMetrics?.resolved?.rate || 0}%</span>
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">Resolvidas</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim relative z-10">{dashboardMetrics?.resolved?.value || 0}</p>
-                    </Card>
-
-                    {/* KPI 3: Novos Contatos */}
-                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm hover:shadow-md transition-all h-full group">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-nw-purple/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform"></div>
-                        <div className="flex items-start justify-between mb-4 relative z-10">
-                            <div className="w-10 h-10 rounded-xl bg-nw-purple/10 flex items-center justify-center">
-                                <Users className="text-nw-purple w-5 h-5" />
-                            </div>
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">Novos Contatos</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim relative z-10">{dashboardMetrics?.newContacts?.value || 0}</p>
-                    </Card>
-
-                    {/* KPI 4: TMA */}
-                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm hover:shadow-md transition-all h-full group font-geist-sans">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-nw-red/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform"></div>
-                        <div className="flex items-start justify-between mb-4 relative z-10">
-                            <div className="w-10 h-10 rounded-xl bg-nw-red/10 flex items-center justify-center">
-                                <Timer className="text-nw-red w-5 h-5" />
-                            </div>
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">TMA Médio</p>
-                        <p className="text-3xl font-black text-slate-800 count-anim relative z-10">{dashboardMetrics?.tma?.value || "12m"}</p>
-                    </Card>
-
-                    {/* KPI 5: Receita */}
-                    <Card className="p-5 relative overflow-hidden bg-white border-none shadow-sm hover:shadow-md transition-all h-full group">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform"></div>
-                        <div className="flex items-start justify-between mb-4 relative z-10">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                                <DollarSign className="text-emerald-500 w-5 h-5" />
-                            </div>
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">Receita</p>
-                        <p className="text-3xl font-black text-emerald-500 count-anim relative z-10">R$ {dashboardMetrics?.revenue?.value?.toLocaleString('pt-BR') || 0}</p>
-                        <p className="text-[10px] text-slate-400 mt-1 font-bold relative z-10">Ticket: R$ {dashboardMetrics?.revenue?.ticketMedia?.toLocaleString('pt-BR') || 0}</p>
-                    </Card>
-
-                </div>
-
-                {/* ── CHARTS ROW ─────────────────────────────────────────────────────── */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-                    {/* Volume Chart */}
-                    <Card className="p-5 lg:col-span-2 border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div className="flex items-center justify-between mb-5">
-                            <div>
-                                <h3 className="font-bold text-sm text-slate-800">Volume de Conversas</h3>
-                                <p className="text-[11px] text-slate-500">Recebidas vs Resolvidas por hora</p>
-                            </div>
-                            <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500">
-                                <span className="flex items-center gap-1.5"><span className="w-3 h-1 rounded bg-primary inline-block"></span>Recebidas</span>
-                                <span className="flex items-center gap-1.5"><span className="w-3 h-1 rounded bg-emerald-400 inline-block"></span>Resolvidas</span>
-                                <span className="flex items-center gap-1.5"><span className="w-3 h-1 rounded bg-blue-400 inline-block"></span>TMA (min)</span>
-                            </div>
-                        </div>
-                        <div className="h-[250px] w-full">
+                        <div className="h-[280px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <ComposedChart data={volumeChartData}>
-                                    <CartesianGrid vertical={false} stroke="#f1f5f9" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                                    <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', borderRadius: '8px', border: 'none', color: '#fff' }} itemStyle={{ color: '#fff' }} />
-                                    <Bar dataKey="total" fill="rgba(69, 10, 10, 0.12)" radius={[4, 4, 0, 0]} stroke="#f20d0d" strokeWidth={2} />
+                                <ComposedChart data={volumeData}>
+                                    <CartesianGrid vertical={false} stroke="#F0F0F0" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B6B6B' }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B6B6B' }} />
+                                    <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '6px', border: '1px solid #F0F0F0', boxShadow: 'none', fontSize: '11px' }} />
+                                    <Line type="monotone" dataKey="total" stroke="#E8202A" strokeWidth={2} dot={{ r: 4, fill: '#E8202A', strokeWidth: 0 }} activeDot={{ r: 6 }} />
                                 </ComposedChart>
                             </ResponsiveContainer>
                         </div>
                     </Card>
 
-                    {/* Channel Chart */}
-                    <Card className="p-5 border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div className="flex items-center justify-between mb-5">
-                            <div>
-                                <h3 className="font-bold text-sm text-slate-800">Volume por Canal</h3>
-                                <p className="text-[11px] text-slate-500">Distribuição do período</p>
-                            </div>
+                    {/* Recent Conversations (40%) */}
+                    <Card className="lg:col-span-4 p-6 bg-white border-[#F0F0F0] shadow-none rounded-lg flex flex-col">
+                        <h3 className="text-[14px] font-semibold text-[#0F0F0F] mb-4">Conversas Recentes</h3>
+                        <div className="space-y-4 flex-1">
+                            {pendingConversations.slice(0, 5).map((chat, i) => (
+                                <div key={i} className="flex items-center justify-between group cursor-pointer">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-[#F5F5F5] flex items-center justify-center text-[10px] font-bold text-[#0F0F0F] border border-[#F0F0F0]">
+                                            {(chat?.contact?.name || "?").substring(0, 2).toUpperCase()}
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[13px] font-medium text-[#0F0F0F] truncate">{chat.contact.name}</span>
+                                            <span className="text-[11px] text-[#6B6B6B]">Há 5 min</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[11px] px-2 py-0.5 rounded bg-[#F5F5F5] text-[#6B6B6B] font-medium">Aguardando</span>
+                                    </div>
+                                </div>
+                            ))}
+                            {pendingConversations.length === 0 && (
+                                <div className="h-full flex items-center justify-center text-[12px] text-[#6B6B6B] py-10">
+                                    Nenhuma conversa pendente.
+                                </div>
+                            )}
                         </div>
-                        <div className="h-[180px] w-full relative">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={channelData}
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {channelData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', borderRadius: '8px', border: 'none', color: '#fff' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                                <p className="text-2xl font-bold text-slate-800">{dashboardMetrics?.totalConversations?.value || 0}</p>
-                                <p className="text-[10px] text-slate-400">Total</p>
-                            </div>
-                        </div>
-                        <div className="mt-4 space-y-2">
-                            {channelData.map((channel, i) => (
-                                <div key={i} className="flex items-center justify-between text-xs">
-                                    <span className="flex items-center gap-2">
-                                        <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: channel.color }}></span>
-                                        {channel.name}
-                                    </span>
-                                    <span className="font-bold text-slate-800">{channel.value} <span className="text-slate-500 font-normal">({Math.round(channel.value / 247 * 100)}%)</span></span>
+                    </Card>
+                </div>
+
+                {/* ROW 3: TOP AGENTS, CHANNELS, FUNNEL */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Top Agentes */}
+                    <Card className="p-6 bg-white border-[#F0F0F0] shadow-none rounded-lg">
+                        <h3 className="text-[14px] font-semibold text-[#0F0F0F] mb-4">Top Agentes</h3>
+                        <div className="space-y-4">
+                            {agentPerformance.slice(0, 5).map((a, i) => (
+                                <div key={i} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[11px] font-bold text-[#9CA3AF] w-4">{i + 1}</span>
+                                        <div className="w-7 h-7 rounded-full bg-[#F5F5F5] flex items-center justify-center text-[9px] font-bold text-[#0F0F0F]">
+                                            {(a?.name || "?").substring(0, 2).toUpperCase()}
+                                        </div>
+                                        <span className="text-[13px] font-medium text-[#0F0F0F] truncate">{a.name}</span>
+                                    </div>
+                                    <span className="text-[12px] font-bold text-[#0F0F0F]">{a.resolved}</span>
                                 </div>
                             ))}
                         </div>
                     </Card>
 
-                </div>
-
-                {/* ── SEGUNDA LINHA DE GRÁFICOS ──────────────────────────────────────── */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-                    {/* Origem dos Clientes */}
-                    <Card className="p-5 border-none shadow-sm bg-white hover:shadow-md transition-all">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h3 className="font-bold text-sm text-slate-800">Origem dos Clientes</h3>
-                                <p className="text-[11px] text-slate-500">Fonte de tráfego (UTM Source)</p>
-                            </div>
-                        </div>
-                        <div className="space-y-3">
-                            {trafficData.length > 0 ? trafficData.map((s, i) => (
-                                <div key={i} className="flex items-center gap-3">
-                                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 bg-slate-50 font-bold text-slate-600">
-                                        {(s?.name || "?").substring(0, 1)}
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span className="font-semibold text-slate-700">{s.name}</span>
-                                            <span className="font-bold text-slate-800">{s.value} <span className="text-slate-500 font-normal">{s.pct}%</span></span>
+                    {/* Canais Conectados */}
+                    <Card className="p-6 bg-white border-[#F0F0F0] shadow-none rounded-lg">
+                        <h3 className="text-[14px] font-semibold text-[#0F0F0F] mb-4">Canais Conectados</h3>
+                        <div className="space-y-4">
+                            {sectors.slice(0, 5).map((s, i) => (
+                                <div key={i} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-7 h-7 rounded-full bg-[#F5F5F5] flex items-center justify-center">
+                                            <Globe className="w-3.5 h-3.5 text-[#6B6B6B]" />
                                         </div>
-                                        <div className="h-1.5 bg-slate-100 rounded-full">
-                                            <div className="h-1.5 rounded-full bg-primary" style={{ width: `${s.pct}%` }}></div>
-                                        </div>
+                                        <span className="text-[13px] font-medium text-[#0F0F0F]">{s.name}</span>
                                     </div>
-                                </div>
-                            )) : (
-                                <div className="h-full flex items-center justify-center text-slate-400 text-xs py-10">
-                                    Sem dados de origem cadastrados.
-                                </div>
-                            )}
-                        </div>
-                    </Card>
-
-                    {/* Funnel */}
-                    <Card className="p-5 border-none shadow-sm bg-white hover:shadow-md transition-all">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h3 className="font-bold text-sm text-slate-800">Funil de Conversão</h3>
-                                <p className="text-[11px] text-slate-500">Oportunidades no CRM</p>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            {funnelData.length > 0 ? funnelData.map((step, i) => (
-                                <div key={i}>
-                                    <div className="flex justify-between text-xs mb-1">
-                                        <span className="flex items-center gap-1.5">
-                                            <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: step.color }}></span>
-                                            {step.name}
-                                        </span>
-                                        <span className="font-bold text-slate-800">{step.value}</span>
-                                    </div>
-                                    <div className="h-6 bg-slate-50 rounded-md overflow-hidden relative border border-slate-100/50">
-                                        <div className="h-6 opacity-10 rounded-md bar-fill flex items-center justify-end pr-2 absolute top-0 left-0" style={{ width: '100%', backgroundColor: step.color }}></div>
-                                        <div className="h-6 rounded-md bar-fill flex items-center justify-end pr-2 absolute top-0 left-0" style={{ width: `${Math.max(10, (step.value / (funnelData[0]?.value || 1)) * 100)}%`, backgroundColor: step.color }}>
-                                            <span className="text-[9px] text-white font-bold">{Math.round((step.value / (funnelData[0]?.value || 1)) * 100)}%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )) : (
-                                <div className="h-full flex items-center justify-center text-slate-400 text-xs py-10">
-                                    Configure seu Kanban para ver o funil.
-                                </div>
-                            )}
-                        </div>
-                    </Card>
-
-                    {/* TMA per Agent */}
-                    <Card className="p-5 border-none shadow-sm bg-white hover:shadow-md transition-all">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h3 className="font-bold text-sm text-slate-800">TMA por Agente</h3>
-                                <p className="text-[11px] text-slate-500">Tempo médio atendimento</p>
-                            </div>
-                        </div>
-                        <div className="space-y-3">
-                            {agentPerformance.slice(0, 4).map((a, i) => (
-                                <div key={i} className="flex items-center gap-3 hover:bg-slate-50 p-1.5 rounded-lg -mx-1.5 transition-colors">
-                                    <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                                        {(a?.name || "?").substring(0, 2).toUpperCase()}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span className="font-semibold text-slate-700 truncate">{a.name}</span>
-                                            <span className="font-bold ml-2 text-emerald-600">{a.tma}</span>
-                                        </div>
-                                        <div className="h-1.5 bg-slate-100 rounded-full">
-                                            <div className="h-1.5 rounded-full bg-emerald-400 bar-fill" style={{ width: '60%' }}></div>
-                                        </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="h-1.5 w-1.5 rounded-full bg-[#16A34A]" />
+                                        <span className="text-[11px] text-[#6B6B6B] font-medium">On</span>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </Card>
 
-                </div>
-
-                {/* ── BOTTOM ROW ─────────────────────────────────────────────────────── */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-                    {/* Agent Ranking */}
-                    <Card className="lg:col-span-2 border-none shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div className="p-5 border-b border-border flex items-center justify-between">
-                            <div>
-                                <h3 className="font-bold text-sm text-slate-800">Ranking de Agentes</h3>
-                                <p className="text-[11px] text-slate-500">Performance completa do período</p>
-                            </div>
-                            <div className="flex items-center bg-slate-100 rounded-lg p-1 gap-1">
-                                <button onClick={() => setAgentTab('atendimento')} className={cn("px-3 py-1 text-[10px] font-bold rounded-md transition-all", agentTab === 'atendimento' ? "bg-white shadow-sm text-text-dark" : "text-slate-500")}>Atendimento</button>
-                                <button onClick={() => setAgentTab('vendas')} className={cn("px-3 py-1 text-[10px] font-bold rounded-md transition-all", agentTab === 'vendas' ? "bg-white shadow-sm text-text-dark" : "text-slate-500")}>Vendas</button>
-                            </div>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-slate-50">
-                                        <th className="text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider px-5 py-3">#</th>
-                                        <th className="text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 py-3">Agente</th>
-                                        <th className="text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 py-3">Atendidos</th>
-                                        <th className="text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 py-3">Resolvidos</th>
-                                        <th className="text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 py-3">TMR</th>
-                                        <th className="text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 py-3">TMA</th>
-                                        <th className="text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 py-3">CSAT</th>
-                                        <th className="text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 py-3">Receita</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {agentPerformance.map((a, i) => (
-                                        <tr key={i} className="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
-                                            <td className="px-5 py-3.5 text-xs font-black text-slate-400">{i + 1}</td>
-                                            <td className="px-3 py-3.5">
-                                                <div className="flex items-center gap-2.5">
-                                                    <div className={`w-8 h-8 rounded-full bg-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center`}>{(a?.name || "?").substring(0, 2).toUpperCase()}</div>
-                                                    <div><p className="text-xs font-bold text-slate-700">{a.name}</p><p className="text-[10px] text-slate-500">Agente</p></div>
-                                                </div>
-                                            </td>
-                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-slate-700">{a.conversations}</td>
-                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-emerald-600">{a.resolved}</td>
-                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-slate-700">{a.tmr || "0m"}</td>
-                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-slate-700">{a.tma}</td>
-                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-slate-700">⭐ 5.0</td>
-                                            <td className="px-3 py-3.5 text-right text-xs font-bold text-emerald-600">R$ 0</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                    {/* Funnel Resumido */}
+                    <Card className="p-6 bg-white border-[#F0F0F0] shadow-none rounded-lg">
+                        <h3 className="text-[14px] font-semibold text-[#0F0F0F] mb-4">Funil de Vendas</h3>
+                        <div className="space-y-4">
+                            {funnelData.slice(0, 5).map((step, i) => (
+                                <div key={i} className="space-y-1.5">
+                                    <div className="flex justify-between text-[12px]">
+                                        <span className="text-[#6B6B6B] font-medium">{step.name}</span>
+                                        <span className="text-[#0F0F0F] font-bold">{step.value}</span>
+                                    </div>
+                                    <div className="h-1 bg-[#F5F5F5] rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-[#E8202A] rounded-full transition-all duration-1000"
+                                            style={{ width: `${(step.value / (funnelData[0]?.value || 1)) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </Card>
-
-                    {/* Right Column: Alerts & Campaigns */}
-                    <div className="flex flex-col gap-4">
-                        {/* SLA Critical List */}
-                        <Card className="p-5 flex-1 border-none shadow-sm bg-white">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-                                    <AlertTriangle className="w-4 h-4 text-primary" /> Aguardando Resposta
-                                </h3>
-                                <span className="text-[10px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10 cursor-pointer hover:bg-primary/10 transition-colors">Ver no inbox</span>
-                            </div>
-                            <div className="space-y-2.5">
-                                {pendingConversations.length > 0 ? pendingConversations.map((c, i) => (
-                                    <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl border border-red-100 bg-red-50/50">
-                                        <div className="w-8 h-8 rounded-full bg-white border border-red-100 text-red-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                                            {(c?.contact?.firstName || c?.contact?.name || "?").substring(0, 2).toUpperCase()}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-bold text-slate-800 truncate">{c.contact.firstName || c.contact.name}</p>
-                                            <p className="text-[10px] text-red-600 font-bold">⏱ {Math.round((new Date().getTime() - new Date(c.createdAt).getTime()) / 60000)} min sem resposta</p>
-                                        </div>
-                                        <div className="w-1 h-8 rounded-full bg-red-400 flex-shrink-0"></div>
-                                    </div>
-                                )) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs py-10 text-center gap-2">
-                                        <CheckCircle className="w-8 h-8 text-emerald-400 opacity-20" />
-                                        Nenhuma conversa aguardando resposta.
-                                    </div>
-                                )}
-                            </div>
-                        </Card>
-
-                        {/* Recent Campaigns */}
-                        <Card className="p-5 border-none shadow-sm bg-white">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-bold text-sm text-slate-800">Campanhas Ativas</h3>
-                                <button className="text-[10px] font-bold text-primary hover:underline">Ver todas</button>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="p-10 border-2 border-dashed border-slate-100 rounded-xl flex flex-col items-center justify-center gap-2">
-                                    <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center">
-                                        <MessageSquare className="w-5 h-5 text-slate-300" />
-                                    </div>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Sem Campanhas Ativas</p>
-                                </div>
-                            </div>
-                        </Card>
-                    </div>
-
                 </div>
 
             </main>
+            {/* Dashboard Footer / Extra Space */}
+            <div className="h-20" />
+
+            <PostOnboardingModal
+                isOpen={showPostOnboarding}
+                onClose={() => setShowPostOnboarding(false)}
+                workspaceId={params.workspaceId}
+            />
         </div>
     )
 }

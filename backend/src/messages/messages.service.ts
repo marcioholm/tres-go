@@ -78,8 +78,8 @@ export class MessagesService {
     agentId?: string,
   ) {
     // Prepare content structure
-    const contentPayload = data.text ? data.text : undefined;
-    let dbContent: any = { body: contentPayload };
+    const textContent = data.text || (data as any).content?.body || '';
+    let dbContent: any = { body: textContent };
 
     // Se a chamada vier direta da API sem encapsulamento de `content`, reagrupamos os atributos.
     if ((data as any).content && typeof (data as any).content === 'object') {

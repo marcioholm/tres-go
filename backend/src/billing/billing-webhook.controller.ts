@@ -11,6 +11,7 @@ import { BillingService } from './billing.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AsaasService } from './asaas.service';
 import { AppGateway } from '../gateway/app.gateway';
+import { ImplementationService } from '../implementation/implementation.service';
 
 @Controller('billing')
 export class BillingWebhookController {
@@ -21,7 +22,8 @@ export class BillingWebhookController {
     private prisma: PrismaService,
     private asaas: AsaasService,
     private gateway: AppGateway,
-  ) {}
+    private implementationService: ImplementationService,
+  ) { }
 
   @Post('webhook')
   @HttpCode(200)
@@ -40,6 +42,16 @@ export class BillingWebhookController {
       // ── Pagamento confirmado ──────────────────────────────────────────────
       case 'PAYMENT_RECEIVED':
       case 'PAYMENT_CONFIRMED': {
+        // Try to handle as implementation payment first
+        const implementationOrder = await this.prisma.implementationOrder.findFirst({
+          where: { asaasPaymentId: payment.id }
+        });
+
+        if (implementationOrder) {
+          await this.implementationService.markAsPaid(payment.id);
+          break;
+        }
+
         const invoice = await this.prisma.invoice.findUnique({
           where: { asaasPaymentId: payment.id },
           include: { subscription: true },

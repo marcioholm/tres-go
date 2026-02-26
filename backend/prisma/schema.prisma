@@ -38,6 +38,7 @@ model Workspace {
   performanceConfig WorkspacePerformanceConfig?
   conversions       ConversationConversion[]
   pipelines         Pipeline[]
+  implementation    ImplementationOrder?
 }
 
 model Channel {
@@ -76,6 +77,7 @@ model Channel {
 
   conversations     Conversation[]
   scheduledMessages ScheduledMessage[]
+  sales             Sale[]
 }
 
 model MetaIntegration {
@@ -477,6 +479,12 @@ model User {
   firstName         String?
   lastName          String?
   niche             String?            // Farmácia, Gastronomia, Varejo, etc.
+  teamSize          String?            // 1-5, 6-20, 20+
+  mainChallenge     String?            // Atendimento lento, Perda de leads, etc.
+  referralSource    String?            // Google, Indicação, Instagram, etc.
+  welcomeShown      Boolean            @default(false)
+  onboardingStep    Int                @default(0)
+  onboardingModalShown Boolean           @default(false)
   password          String
   status            String             @default("ONLINE") // ONLINE, BUSY, OFFLINE
   createdAt         DateTime           @default(now())
@@ -493,6 +501,66 @@ model User {
   superAdmin        SuperAdmin?
   legalAcceptance   LegalAcceptance?
   sessions          ConversationSession[]
+  bannerDismissals  BannerDismissal[]
+}
+
+model SmartBanner {
+  id                String             @id @default(cuid())
+  title             String
+  description       String
+  ctaText           String?
+  ctaUrl            String?
+  type              BannerType         @default(INFO)
+  position          BannerPosition     @default(DASHBOARD_TOP)
+  triggerCondition  String?            // LOW_CONVERSATIONS | LOW_CONVERSION | CHANNEL_NO_TRAFFIC | null
+  
+  // Targeted rules
+  targetNiche       String?            // null = all
+  targetPlan        String?            // null = all
+  minTrialDays      Int?               // null = all
+  maxTrialDays      Int?               // null = all
+  
+  isActive          Boolean            @default(true)
+  priority          Int                @default(0)
+  
+  // Stats
+  views             Int                @default(0)
+  clicks            Int                @default(0)
+  
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  
+  dismissals        BannerDismissal[]
+}
+
+model BannerDismissal {
+  id                String             @id @default(cuid())
+  bannerId          String
+  userId            String
+  dismissedAt       DateTime           @default(now())
+  
+  banner            SmartBanner        @relation(fields: [bannerId], references: [id], onDelete: Cascade)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([bannerId, userId])
+}
+
+enum BannerType {
+  INFO
+  WARNING
+  SUCCESS
+  UPSELL
+  FEATURE
+  EDUCATIONAL
+  SOCIAL_PROOF
+  PROMO
+}
+
+enum BannerPosition {
+  DASHBOARD_TOP
+  SIDEBAR
+  INBOX_EMPTY
+  MODAL
 }
 
 // ── Legal Acceptance: auditoria LGPD
@@ -611,11 +679,24 @@ model Sale {
   contact        Contact       @relation(fields: [contactId], references: [id])
   conversation   Conversation? @relation(fields: [conversationId], references: [id])
   agent          User          @relation(fields: [agentId], references: [id])
+  
+  paymentMethod  String?            // PIX | CARTAO_CREDITO | CARTAO_DEBITO | BOLETO | DINHEIRO | TRANSFERENCIA | OUTRO
+  paymentStatus  PaymentStatus      @default(PENDING)
+  notes          String?            // observações internas
+  channelId      String?            // canal onde a venda aconteceu
+  channel        Channel?           @relation(fields: [channelId], references: [id])
+
   items          SaleItem[]
 
   @@index([workspaceId, contactId])
   @@index([workspaceId, createdAt])
   @@index([workspaceId, agentId])
+}
+
+enum PaymentStatus {
+  PENDING    // aguardando pagamento
+  PAID       // pago
+  CANCELLED  // cancelado
 }
 
 enum SaleStatus {
@@ -849,6 +930,46 @@ model Plan {
   updatedAt           DateTime @updatedAt
 
   subscriptions       Subscription[]
+}
+
+model ImplementationOrder {
+  id              String   @id @default(cuid())
+  workspaceId     String   @unique
+  workspace       Workspace @relation(fields: [workspaceId], references: [id])
+  
+  status          ImplementationStatus @default(PENDING_PAYMENT)
+  
+  // Asaas
+  asaasPaymentId  String?  // ID do pagamento no Asaas
+  asaasPaymentUrl String?  // Link de pagamento gerado
+  amount          Float    @default(497.00)
+  paidAt          DateTime?
+  
+  // Agendamento
+  scheduledAt     DateTime?  // data agendada pela NorthWay
+  completedAt     DateTime?  // data que foi concluída
+  
+  // Escopo contratado
+  includesFunnel        Boolean @default(true)
+  includesChannels      Boolean @default(true)
+  includesSectors       Boolean @default(true)
+  includesCampaigns     Boolean @default(true)
+  includesTraining      Boolean @default(true)
+  
+  // Notas internas (visível só pro admin)
+  adminNotes      String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum ImplementationStatus {
+  PENDING_PAYMENT   // aguardando pagamento
+  PAID              // pago, aguardando agendamento
+  SCHEDULED         // agendado
+  IN_PROGRESS       // em andamento
+  COMPLETED         // concluído
+  CANCELLED         // cancelado
 }
 
 // ── ASSINATURA DO WORKSPACE ───────────────────────────────────────────────────
