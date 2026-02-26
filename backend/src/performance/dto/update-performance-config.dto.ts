@@ -1,13 +1,11 @@
 export class UpdatePerformanceConfigDto {
-  saleAttribution?: 'LAST_AGENT' | 'FIRST_AGENT' | 'EQUAL_SPLIT' | 'MANUAL';
-  manualAttribution?: boolean;
-  timeCalculation?: 'TOTAL' | 'ACTIVE_ONLY';
-  inactivityThreshold?: number;
-  resetTimerOnTransfer?: boolean;
-  transferCountsConversion?: boolean;
-  firstResponseGoal?: number;
-  resolutionGoal?: number;
-  conversionRateGoal?: number;
-  reportVisibility?: 'ADMIN_ONLY' | 'ALL_AGENTS';
-  defaultReportPeriod?: 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+  salesAssignmentRule?: 'LAST_INTERACTION' | 'FIRST_INTERACTION' | 'LINEAR' | 'MANUAL';
+  autoAssignLeads?: boolean;
+  firstResponseSlaMinutes?: number;
+  idleConversationAlertMinutes?: number;
+  targetConversionRate?: number;
+  targetCsat?: number;
+  targetMonthlyVolume?: number;
+  defaultViewPeriod?: 'TODAY' | 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'THIS_MONTH';
+  showRevenueToAgents?: boolean;
 }

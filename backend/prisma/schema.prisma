@@ -944,28 +944,38 @@ model WorkspacePerformanceConfig {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   // Atribuição de vendas
-  saleAttribution      SaleAttribution  @default(LAST_AGENT)
-  manualAttribution    Boolean          @default(false)
+  salesAssignmentRule     SalesAssignmentRule @default(LAST_INTERACTION)
+  autoAssignLeads         Boolean             @default(false)
 
-  // Cálculo de tempo
-  timeCalculation      TimeCalculation  @default(ACTIVE_ONLY)
-  inactivityThreshold  Int              @default(30)  // minutos
-
-  // Transferências
-  resetTimerOnTransfer Boolean          @default(false)
-  transferCountsConversion Boolean      @default(false)
+  // SLAs
+  firstResponseSlaMinutes     Int @default(15)
+  idleConversationAlertMinutes Int @default(30)
 
   // Metas
-  firstResponseGoal    Int              @default(5)    // minutos
-  resolutionGoal       Int              @default(1440) // minutos (24h)
-  conversionRateGoal   Float            @default(30.0) // percentual
+  targetConversionRate  Float @default(30.0)
+  targetCsat            Float @default(4.5)
+  targetMonthlyVolume   Int   @default(100)
 
-  // Visibilidade de relatórios
-  reportVisibility     ReportVisibility @default(ADMIN_ONLY)
-  defaultReportPeriod  ReportPeriod     @default(MONTHLY)
+  // Visibilidade e Dashboards
+  defaultViewPeriod     DefaultViewPeriod @default(LAST_7_DAYS)
+  showRevenueToAgents   Boolean           @default(false)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+enum SalesAssignmentRule {
+  LAST_INTERACTION
+  FIRST_INTERACTION
+  LINEAR
+  MANUAL
+}
+
+enum DefaultViewPeriod {
+  TODAY
+  LAST_7_DAYS
+  LAST_30_DAYS
+  THIS_MONTH
 }
 
 model ConversationSession {
@@ -1011,33 +1021,11 @@ model ConversationConversion {
   createdAt      DateTime @default(now())
 }
 
-enum SaleAttribution {
-  LAST_AGENT
-  FIRST_AGENT
-  EQUAL_SPLIT
-  MANUAL
-}
-
-enum TimeCalculation {
-  TOTAL
-  ACTIVE_ONLY
-}
-
-enum ReportVisibility {
-  ADMIN_ONLY
-  ALL_AGENTS
-}
-
-enum ReportPeriod {
-  WEEKLY
-  MONTHLY
-  CUSTOM
-}
-
 enum SessionEndReason {
   RESOLVED
   TRANSFERRED
   REASSIGNED
+  REOPENED
 }
 
 // ── USO DO WORKSPACE (MÉTRICAS) ───────────────────────────────────────────────
