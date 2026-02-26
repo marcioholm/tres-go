@@ -7,7 +7,7 @@ export class MetricsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sessionService: SessionService,
-  ) {}
+  ) { }
 
   async getAgentMetrics(workspaceId: string, agentId: string, period: any) {
     const config = await this.prisma.workspacePerformanceConfig.findUnique({
@@ -43,11 +43,11 @@ export class MetricsService {
     // Médias
     const avgFirstResponse =
       sessions.reduce((acc, s) => acc + (s.firstResponseMinutes || 0), 0) /
-        sessions.filter((s) => s.firstResponseMinutes != null).length || 0;
+      sessions.filter((s) => s.firstResponseMinutes != null).length || 0;
 
     const avgResolution =
       sessions.reduce((acc, s) => acc + (s.durationMinutes || 0), 0) /
-        sessions.filter((s) => s.durationMinutes != null).length || 0;
+      sessions.filter((s) => s.durationMinutes != null).length || 0;
 
     // Vendas/Conversões
     const totalSales = await this.prisma.conversationConversion.count({
@@ -69,19 +69,19 @@ export class MetricsService {
       conversionRate,
       totalSales,
       goals: {
-        firstResponse: config?.firstResponseGoal || 5,
-        resolution: config?.resolutionGoal || 1440,
-        conversion: config?.conversionRateGoal || 30,
+        firstResponse: config?.firstResponseSlaMinutes || 15,
+        resolution: 1440, // Default 24h as it was removed from UI
+        conversion: config?.targetConversionRate || 30,
       },
       fulfillment: {
         firstResponse:
-          avgFirstResponse <= (config?.firstResponseGoal || 5)
+          avgFirstResponse <= (config?.firstResponseSlaMinutes || 15)
             ? 'MET'
             : 'BEHIND',
         resolution:
-          avgResolution <= (config?.resolutionGoal || 1440) ? 'MET' : 'BEHIND',
+          avgResolution <= 1440 ? 'MET' : 'BEHIND',
         conversion:
-          conversionRate >= (config?.conversionRateGoal || 30)
+          conversionRate >= (config?.targetConversionRate || 30)
             ? 'MET'
             : 'BEHIND',
       },
@@ -122,10 +122,10 @@ export class MetricsService {
 
     let primaryAgentId = agentId; // Default: quem clicou em converter
 
-    if (config?.saleAttribution === 'FIRST_AGENT' && sessions.length > 0) {
+    if (config?.salesAssignmentRule === 'FIRST_INTERACTION' && sessions.length > 0) {
       primaryAgentId = sessions[0].agentId;
     } else if (
-      config?.saleAttribution === 'LAST_AGENT' &&
+      config?.salesAssignmentRule === 'LAST_INTERACTION' &&
       sessions.length > 0
     ) {
       primaryAgentId = sessions[sessions.length - 1].agentId;

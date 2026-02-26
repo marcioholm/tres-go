@@ -7,7 +7,7 @@ export class SessionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: PerformanceConfigService,
-  ) {}
+  ) { }
 
   // Iniciar sessão quando atendente assume conversa
   async startSession(conversationId: string, agentId: string): Promise<void> {
@@ -96,31 +96,16 @@ export class SessionService {
     });
   }
 
-  // Calcular tempo de atendimento conforme regra configurada
+  // Calcular tempo de atendimento
   async calculateAttendanceTime(
     conversationId: string,
     workspaceId: string,
   ): Promise<number> {
-    const config = await this.configService.getConfig(workspaceId);
     const sessions = await this.prisma.conversationSession.findMany({
       where: { conversationId },
     });
 
-    if (config.timeCalculation === 'TOTAL') {
-      // Soma duração de todas as sessões
-      return sessions.reduce((acc, s) => acc + (s.durationMinutes || 0), 0);
-    }
-
-    // ACTIVE_ONLY — exclui períodos de inatividade
-    let activeMinutes = 0;
-    for (const session of sessions) {
-      if (!session.durationMinutes) continue;
-      // Considerar apenas até o threshold de inatividade
-      activeMinutes += Math.min(
-        session.durationMinutes,
-        config.inactivityThreshold,
-      );
-    }
-    return activeMinutes;
+    // Soma duração de todas as sessões
+    return sessions.reduce((acc, s) => acc + (s.durationMinutes || 0), 0);
   }
 }
