@@ -145,7 +145,7 @@ export default function DashboardPage({ params: paramsPromise }: { params: Promi
             <main className="p-8 space-y-8 max-w-[1400px] mx-auto">
 
                 {/* Smart Banner */}
-                <SmartBanner workspaceId={params.workspaceId} position="TOP" />
+                <SmartBanner workspaceId={params.workspaceId} position="DASHBOARD_TOP" />
 
                 {/* Northway Score & Quick Actions */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">

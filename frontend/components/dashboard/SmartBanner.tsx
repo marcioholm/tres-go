@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion"
 
 interface SmartBannerProps {
     workspaceId: string
-    position: 'TOP' | 'SIDEBAR' | 'INBOX_EMPTY' | 'DASHBOARD_BOTTOM'
+    position: 'DASHBOARD_TOP' | 'SIDEBAR' | 'INBOX_EMPTY' | 'MODAL'
 }
 
 export function SmartBanner({ workspaceId, position }: SmartBannerProps) {
