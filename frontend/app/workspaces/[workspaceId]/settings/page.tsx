@@ -8,8 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { BarChart3 } from "lucide-react"
 
-export default function SettingsPage({ params }: { params: { workspaceId: string } }) {
+import { useRouter, useParams } from "next/navigation"
+
+export default function SettingsPage() {
     const { t } = useLanguage()
+    const router = useRouter()
+    const params = useParams()
+    const workspaceId = params.workspaceId as string
 
     return (
         <div className="p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -45,8 +50,7 @@ export default function SettingsPage({ params }: { params: { workspaceId: string
                 </Card>
 
                 <Card className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => {
-                    const wsId = params?.workspaceId;
-                    if (wsId && wsId !== 'undefined') window.location.href = `/workspaces/${wsId}/settings/team`;
+                    if (workspaceId && workspaceId !== 'undefined') router.push(`/workspaces/${workspaceId}/settings/team`);
                 }}>
                     <CardHeader>
                         <CardTitle>Membros da Equipe</CardTitle>
@@ -58,8 +62,7 @@ export default function SettingsPage({ params }: { params: { workspaceId: string
                 </Card>
 
                 <Card className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => {
-                    const wsId = params?.workspaceId;
-                    if (wsId && wsId !== 'undefined') window.location.href = `/workspaces/${wsId}/settings/sectors`;
+                    if (workspaceId && workspaceId !== 'undefined') router.push(`/workspaces/${workspaceId}/settings/sectors`);
                 }}>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -73,8 +76,7 @@ export default function SettingsPage({ params }: { params: { workspaceId: string
                 </Card>
 
                 <Card className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => {
-                    const wsId = params?.workspaceId;
-                    if (wsId && wsId !== 'undefined') window.location.href = `/workspaces/${wsId}/settings/performance`;
+                    if (workspaceId && workspaceId !== 'undefined') router.push(`/workspaces/${workspaceId}/settings/performance`);
                 }}>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-indigo-600">
@@ -89,8 +91,7 @@ export default function SettingsPage({ params }: { params: { workspaceId: string
                 </Card>
 
                 <Card className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => {
-                    const wsId = params?.workspaceId;
-                    if (wsId && wsId !== 'undefined') window.location.href = `/workspaces/${wsId}/settings/tags`;
+                    if (workspaceId && workspaceId !== 'undefined') router.push(`/workspaces/${workspaceId}/settings/tags`);
                 }}>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
